@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Ky8\\PRM393\\Code\\PRM393\\backend\\backend.csproj": {}
+    "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj": {}
   },
   "projects": {
-    "D:\\Ky8\\PRM393\\Code\\PRM393\\backend\\backend.csproj": {
+    "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Ky8\\PRM393\\Code\\PRM393\\backend\\backend.csproj",
+        "projectUniqueName": "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj",
         "projectName": "backend",
-        "projectPath": "D:\\Ky8\\PRM393\\Code\\PRM393\\backend\\backend.csproj",
+        "projectPath": "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj",
         "packagesPath": "C:\\Users\\admin\\.nuget\\packages\\",
-        "outputPath": "D:\\Ky8\\PRM393\\Code\\PRM393\\backend\\obj\\",
+        "outputPath": "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -30,6 +30,7 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -44,12 +45,33 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
@@ -74,7 +96,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.314/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
