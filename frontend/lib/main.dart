@@ -13,23 +13,46 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 
-// Learner screens (legacy monolithic — only import what's not in subfolders)
+// Learner — Home
 import 'screens/learner/home_screen.dart';
-import 'screens/learner/learner_screens.dart';
-import 'screens/learner/learner_screens_2.dart';
-import 'screens/learner/media_screens.dart';
-// Learner subfolders
+
+// Learner — Notifications
+import 'screens/learner/notifications/notifications_screen.dart';
+
+// Learner — Classes
+import 'screens/learner/classes/class_detail_screen.dart';
+import 'screens/learner/classes/members_screen.dart';
+
+// Learner — Courses
 import 'screens/learner/course/course_screen.dart';
+
+// Learner — Learning Paths
+import 'screens/learner/learning_path/learning_path_overview_screen.dart';
 import 'screens/learner/learning_path/learning_path_screen.dart';
+
+// Learner — Activities
+import 'screens/learner/activities/activity_list_screen.dart';
 import 'screens/learner/activities/activity_screens.dart';
+
+// Learner — Evidence
 import 'screens/learner/evidence/evidence_screens.dart';
+import 'screens/learner/evidence/submit_evidence_screen.dart';
+import 'screens/learner/evidence/evidence_comments_screen.dart';
+
+// Learner — Projects
 import 'screens/learner/projects/project_screens.dart';
+
+// Learner — Review
 import 'screens/learner/review/review_screens.dart';
+
+// Learner — Progress, Profile, Materials, Media
 import 'screens/learner/progress/progress_screen.dart';
 import 'screens/learner/profile/profile_screen.dart';
 import 'screens/learner/materials/materials_screen.dart';
+import 'screens/learner/media/video_player_screen.dart';
+import 'screens/learner/media/document_viewer_screen.dart';
 
-// Screens — Instructor (tổ chức theo subfolder)
+// Screens — Instructor
 import 'screens/instructor/instructor_screens.dart';
 import 'screens/instructor/courses/manage_courses_screen.dart';
 import 'screens/instructor/classes/manage_classes_screen.dart';
@@ -72,7 +95,7 @@ class FlippedClassroomApp extends StatelessWidget {
         title: 'Flipped Classroom',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        initialRoute: '/splash',
+        initialRoute: '/home',
         onGenerateRoute: _generateRoute,
       ),
     );
