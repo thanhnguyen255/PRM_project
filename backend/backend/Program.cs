@@ -1,4 +1,8 @@
+using backend.BLL.Interfaces;
+using backend.BLL.Services;
 using backend.DAL;
+using backend.DAL.Interfaces;
+using backend.DAL.Repositories;
 using backend.Middleware;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +11,14 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Database ──────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<ILearningPathService, LearningPathService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IActivityService, ActivityService>();
+builder.Services.AddScoped<IEvidenceService, EvidenceService>();
 
 // ── CORS (cho Flutter app) ────────────────────────────────────────────────
 builder.Services.AddCors(options =>
