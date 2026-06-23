@@ -54,8 +54,7 @@
               "RelativeToolTip": "backend\\BLL\\Services\\CourseService.cs",
               "ViewState": "AgIAAAoAAAAAAAAAAAAuwBIAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T02:28:01.814Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T02:28:01.814Z"
             },
             {
               "$type": "Document",
@@ -67,8 +66,7 @@
               "RelativeToolTip": "backend\\Controllers\\CourseController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T02:27:55.662Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T02:27:55.662Z"
             },
             {
               "$type": "Document",
@@ -80,8 +78,7 @@
               "RelativeToolTip": "backend\\Program.cs",
               "ViewState": "AgIAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T02:19:18.165Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T02:19:18.165Z"
             },
             {
               "$type": "Document",
@@ -93,8 +90,7 @@
               "RelativeToolTip": "backend\\appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-17T02:19:14.731Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T02:19:14.731Z"
             },
             {
               "$type": "Document",
@@ -106,8 +102,7 @@
               "RelativeToolTip": "backend\\DAL\\Repositories\\UnitOfWork.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T02:19:08.33Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T02:19:08.33Z"
             },
             {
               "$type": "Document",
@@ -117,7 +112,7 @@
               "RelativeDocumentMoniker": "backend\\DAL\\Repositories\\GenericRepository.cs",
               "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Repositories\\GenericRepository.cs",
               "RelativeToolTip": "backend\\DAL\\Repositories\\GenericRepository.cs",
-              "ViewState": "AgIAAAUAAAAAAAAAAAAxwAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-17T02:19:04.921Z",
               "EditorCaption": ""
@@ -132,8 +127,7 @@
               "RelativeToolTip": "backend\\DAL\\Interfaces\\IUnitOfWork.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T02:18:59.314Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T02:18:59.314Z"
             },
             {
               "$type": "Document",
@@ -145,8 +139,7 @@
               "RelativeToolTip": "backend\\DAL\\Interfaces\\IGenericRepository.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-17T02:18:51.664Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-17T02:18:51.664Z"
             }
           ]
         }

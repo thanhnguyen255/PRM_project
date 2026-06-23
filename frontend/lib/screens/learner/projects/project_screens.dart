@@ -39,7 +39,7 @@ class _LearnerProjectsState extends State<LearnerProjectsScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: vm.projects.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
                       final p = vm.projects[i];
                       return _ProjectCard(
@@ -201,7 +201,7 @@ class _LearnerProjectDetailState extends State<LearnerProjectDetailScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                     sliver: SliverList.separated(
                       itemCount: vm.milestones.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (_, i) => _MilestoneCard(
                         milestone: vm.milestones[i],
                         index: i + 1,

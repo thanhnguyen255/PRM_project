@@ -138,7 +138,7 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                   Expanded(child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                     itemCount: vm.activities.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (_, i) {
                       final a = vm.activities[i];
                       return Dismissible(

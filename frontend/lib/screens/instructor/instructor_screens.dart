@@ -24,11 +24,11 @@ class _InstructorDashboardState extends State<InstructorDashboardScreen> {
       backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _currentIndex,
-        children: [
-          _DashboardTab(onTabChanged: (i) => setState(() => _currentIndex = i)),
-          const ManageCoursesTab(),
-          const EvidenceListTab(),
-          const _AnalyticsTab(),
+        children: const [
+          _DashboardTab(),
+          _ManageCoursesTabPlaceholder(),
+          _EvidenceTabPlaceholder(),
+          _AnalyticsTab(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -47,8 +47,7 @@ class _InstructorDashboardState extends State<InstructorDashboardScreen> {
 
 // ─── Dashboard Tab ────────────────────────────────────────────────────────────
 class _DashboardTab extends StatefulWidget {
-  final Function(int) onTabChanged;
-  const _DashboardTab({required this.onTabChanged});
+  const _DashboardTab();
   @override
   State<_DashboardTab> createState() => _DashboardTabState();
 }
@@ -124,13 +123,13 @@ class _DashboardTabState extends State<_DashboardTab> {
               const SectionHeader(title: 'Truy cập nhanh'),
               const SizedBox(height: 8),
               Row(children: [
-                _QuickLink('Quản lý\nKhóa học', Icons.book_rounded, AppColors.primary, () => widget.onTabChanged(1)),
+                _QuickLink('Quản lý\nKhóa học', Icons.book_rounded, AppColors.primary, () => Navigator.pushNamed(context, '/instructor/courses/create')),
                 const SizedBox(width: 10),
-                _QuickLink('Duyệt\nEvidence', Icons.task_alt_rounded, AppColors.warning, () => widget.onTabChanged(2)),
+                _QuickLink('Duyệt\nEvidence', Icons.task_alt_rounded, AppColors.warning, () {}),
                 const SizedBox(width: 10),
-                _QuickLink('Peer\nReview', Icons.rate_review_rounded, AppColors.secondary, () => Navigator.pushNamed(context, '/instructor/review/1')),
+                _QuickLink('Peer\nReview', Icons.rate_review_rounded, AppColors.secondary, () {}),
                 const SizedBox(width: 10),
-                _QuickLink('Analytics', Icons.bar_chart_rounded, AppColors.info, () => Navigator.pushNamed(context, '/instructor/analytics/1')),
+                _QuickLink('Analytics', Icons.bar_chart_rounded, AppColors.info, () {}),
               ]),
             ]),
           ),
@@ -143,7 +142,7 @@ class _DashboardTabState extends State<_DashboardTab> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList.separated(
               itemCount: homeVm.courses.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final c = homeVm.courses[i];
                 return CourseCard(
@@ -168,7 +167,7 @@ class _DashboardTabState extends State<_DashboardTab> {
             child: SectionHeader(
               title: 'Evidence cần duyệt',
               actionLabel: 'Xem tất cả',
-              onAction: () => widget.onTabChanged(2),
+              onAction: () {},
             ),
           ),
           SliverPadding(
@@ -222,6 +221,22 @@ class _DashboardTabState extends State<_DashboardTab> {
 }
 
 // ─── Placeholder tabs (real implementations in subfolders) ────────────────────
+class _ManageCoursesTabPlaceholder extends StatelessWidget {
+  const _ManageCoursesTabPlaceholder();
+  @override
+  Widget build(BuildContext context) => const Center(
+    child: Text('→ courses/manage_courses_screen.dart', style: TextStyle(color: AppColors.textHint)),
+  );
+}
+
+class _EvidenceTabPlaceholder extends StatelessWidget {
+  const _EvidenceTabPlaceholder();
+  @override
+  Widget build(BuildContext context) => const Center(
+    child: Text('→ evidence_review/evidence_detail_screen.dart', style: TextStyle(color: AppColors.textHint)),
+  );
+}
+
 class _AnalyticsTab extends StatelessWidget {
   const _AnalyticsTab();
   @override

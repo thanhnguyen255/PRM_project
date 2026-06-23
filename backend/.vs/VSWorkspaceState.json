@@ -1,7 +1,10 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\backend",
+    "\\backend\\DAL",
+    "\\backend\\DAL\\Repositories"
   ],
-  "SelectedNode": "\\PRM393.sln",
+  "SelectedNode": "\\backend\\DAL\\Repositories\\GenericRepository.cs",
   "PreviewInSolutionExplorer": false
 }

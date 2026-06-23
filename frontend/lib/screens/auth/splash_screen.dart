@@ -58,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       child: SafeArea(
         child: AnimatedBuilder(
           animation: _ctrl,
-          builder: (_, __) => FadeTransition(
+          builder: (_, _) => FadeTransition(
             opacity: _fadeAnim,
             child: Transform.translate(
               offset: Offset(0, _slideAnim.value),

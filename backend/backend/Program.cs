@@ -19,6 +19,8 @@ builder.Services.AddScoped<ILearningPathService, LearningPathService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IEvidenceService, EvidenceService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 // ── CORS (cho Flutter app) ────────────────────────────────────────────────
 builder.Services.AddCors(options =>

@@ -3,8 +3,36 @@
   "WorkspaceRootPath": "D:\\Project\\prm\\PRM_project\\backend\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\dal\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\dal\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\controllers\\coursecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\controllers\\coursecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\bll\\services\\courseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\bll\\services\\courseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\dal\\repositories\\unitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\dal\\repositories\\unitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\dal\\interfaces\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\dal\\interfaces\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|d:\\project\\prm\\prm_project\\backend\\backend\\dal\\interfaces\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EDAC2DFF-9715-4499-AE9B-54B6DF54AF39}|backend\\backend.csproj|solutionrelative:backend\\dal\\interfaces\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,19 +42,110 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
+              "Title": "CourseService.cs",
+              "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\BLL\\Services\\CourseService.cs",
+              "RelativeDocumentMoniker": "backend\\BLL\\Services\\CourseService.cs",
+              "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\BLL\\Services\\CourseService.cs",
+              "RelativeToolTip": "backend\\BLL\\Services\\CourseService.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAuwBIAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T02:28:01.814Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "CourseController.cs",
+              "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\Controllers\\CourseController.cs",
+              "RelativeDocumentMoniker": "backend\\Controllers\\CourseController.cs",
+              "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\Controllers\\CourseController.cs",
+              "RelativeToolTip": "backend\\Controllers\\CourseController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T02:27:55.662Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\Program.cs",
+              "RelativeDocumentMoniker": "backend\\Program.cs",
+              "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\Program.cs",
+              "RelativeToolTip": "backend\\Program.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T02:19:18.165Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "appsettings.json",
               "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\appsettings.json",
               "RelativeDocumentMoniker": "backend\\appsettings.json",
               "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\appsettings.json",
               "RelativeToolTip": "backend\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAoAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-06-17T00:52:24.106Z",
+              "WhenOpened": "2026-06-17T02:19:14.731Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "UnitOfWork.cs",
+              "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Repositories\\UnitOfWork.cs",
+              "RelativeDocumentMoniker": "backend\\DAL\\Repositories\\UnitOfWork.cs",
+              "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Repositories\\UnitOfWork.cs",
+              "RelativeToolTip": "backend\\DAL\\Repositories\\UnitOfWork.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T02:19:08.33Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "GenericRepository.cs",
+              "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Repositories\\GenericRepository.cs",
+              "RelativeDocumentMoniker": "backend\\DAL\\Repositories\\GenericRepository.cs",
+              "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Repositories\\GenericRepository.cs",
+              "RelativeToolTip": "backend\\DAL\\Repositories\\GenericRepository.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAxwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T02:19:04.921Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "IUnitOfWork.cs",
+              "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Interfaces\\IUnitOfWork.cs",
+              "RelativeDocumentMoniker": "backend\\DAL\\Interfaces\\IUnitOfWork.cs",
+              "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Interfaces\\IUnitOfWork.cs",
+              "RelativeToolTip": "backend\\DAL\\Interfaces\\IUnitOfWork.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T02:18:59.314Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "IGenericRepository.cs",
+              "DocumentMoniker": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Interfaces\\IGenericRepository.cs",
+              "RelativeDocumentMoniker": "backend\\DAL\\Interfaces\\IGenericRepository.cs",
+              "ToolTip": "D:\\Project\\prm\\PRM_project\\backend\\backend\\DAL\\Interfaces\\IGenericRepository.cs",
+              "RelativeToolTip": "backend\\DAL\\Interfaces\\IGenericRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-17T02:18:51.664Z",
               "EditorCaption": ""
             }
           ]
