@@ -1,5 +1,7 @@
 using backend.BLL.DTOs.Material;
 using backend.BLL.Interfaces;
+using backend.DAL;
+using backend.DAL.Enums;
 using backend.DAL.Interfaces;
 using backend.DAL.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,12 +10,33 @@ namespace backend.BLL.Services;
 
 public class MaterialService : IMaterialService
 {
+    private readonly AppDbContext _db;
     private readonly IUnitOfWork _unitOfWork;
 
-    public MaterialService(IUnitOfWork unitOfWork)
+    public MaterialService(AppDbContext db, IUnitOfWork unitOfWork)
     {
+        _db = db;
         _unitOfWork = unitOfWork;
     }
+
+    public async Task<List<MaterialDto>> GetByPathAsync(int pathId, string? type)
+    {
+        var query = _db.LearningMaterials.Where(m => m.LearningPathId == pathId);
+
+        if (!string.IsNullOrEmpty(type) && Enum.TryParse<MaterialType>(type, true, out var materialType))
+            query = query.Where(m => m.Type == materialType);
+
+        return await query
+            .Select(m => new MaterialDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                Type = m.Type.ToString(),
+                FileUrl = m.FileUrl,
+                LinkUrl = m.LinkUrl,
+                LearningPathId = m.LearningPathId
+            })
+            .ToListAsync();
 
     public async Task<IEnumerable<MaterialDto>> GetMaterialsByPathAsync(int pathId, int instructorId)
     {
@@ -32,7 +55,7 @@ public class MaterialService : IMaterialService
         {
             Id = m.Id,
             Title = m.Title,
-            Type = m.Type,
+            Type = m.Type.ToString(),
             FileUrl = m.FileUrl,
             LinkUrl = m.LinkUrl,
             LearningPathId = m.LearningPathId
@@ -64,7 +87,7 @@ public class MaterialService : IMaterialService
         {
             Id = material.Id,
             Title = material.Title,
-            Type = material.Type,
+            Type = material.Type.ToString(),
             FileUrl = material.FileUrl,
             LinkUrl = material.LinkUrl,
             LearningPathId = material.LearningPathId
