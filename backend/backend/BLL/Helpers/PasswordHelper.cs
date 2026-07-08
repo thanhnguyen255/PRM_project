@@ -1,6 +1,14 @@
-﻿namespace backend.BLL.Helpers;
+namespace backend.BLL.Helpers;
 
 public static class PasswordHelper
 {
-    // TODO: Hash and verify password using BCrypt
+    public static string Hash(string password)
+    {
+        return BCrypt.Net.BCrypt.HashPassword(password);
+    }
+
+    public static bool Verify(string password, string hash)
+    {
+        return BCrypt.Net.BCrypt.Verify(password, hash);
+    }
 }

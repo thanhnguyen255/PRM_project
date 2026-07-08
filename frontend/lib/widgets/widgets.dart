@@ -367,7 +367,7 @@ class CourseCard extends StatelessWidget {
             ),
           ),
           child: coverImageUrl != null
-              ? Image.network(coverImageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _placeholder())
+              ? Image.network(coverImageUrl!, fit: BoxFit.cover, errorBuilder: (_, _, _) => _placeholder())
               : _placeholder(),
         ),
         // Content

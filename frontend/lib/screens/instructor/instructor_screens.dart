@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../viewmodels/viewmodels.dart';
 import '../../widgets/widgets.dart';
+import 'courses/manage_courses_screen.dart';
+import 'evidence_review/evidence_detail_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════════
 // SCR-I01 — Instructor Dashboard
@@ -22,11 +24,11 @@ class _InstructorDashboardState extends State<InstructorDashboardScreen> {
       backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _currentIndex,
-        children: const [
-          _DashboardTab(),
-          _ManageCoursesTabPlaceholder(),
-          _EvidenceTabPlaceholder(),
-          _AnalyticsTab(),
+        children: [
+          _DashboardTab(onTabSelected: (i) => setState(() => _currentIndex = i)),
+          const ManageCoursesTab(),
+          const EvidenceListTab(),
+          const InstructorAnalyticsTab(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -45,7 +47,8 @@ class _InstructorDashboardState extends State<InstructorDashboardScreen> {
 
 // ─── Dashboard Tab ────────────────────────────────────────────────────────────
 class _DashboardTab extends StatefulWidget {
-  const _DashboardTab();
+  final Function(int) onTabSelected;
+  const _DashboardTab({required this.onTabSelected});
   @override
   State<_DashboardTab> createState() => _DashboardTabState();
 }
@@ -123,11 +126,11 @@ class _DashboardTabState extends State<_DashboardTab> {
               Row(children: [
                 _QuickLink('Quản lý\nKhóa học', Icons.book_rounded, AppColors.primary, () => Navigator.pushNamed(context, '/instructor/courses/create')),
                 const SizedBox(width: 10),
-                _QuickLink('Duyệt\nEvidence', Icons.task_alt_rounded, AppColors.warning, () {}),
+                _QuickLink('Duyệt\nEvidence', Icons.task_alt_rounded, AppColors.warning, () => widget.onTabSelected(2)),
                 const SizedBox(width: 10),
-                _QuickLink('Peer\nReview', Icons.rate_review_rounded, AppColors.secondary, () {}),
+                _QuickLink('Peer\nReview', Icons.rate_review_rounded, AppColors.secondary, () => Navigator.pushNamed(context, '/instructor/review/1')),
                 const SizedBox(width: 10),
-                _QuickLink('Analytics', Icons.bar_chart_rounded, AppColors.info, () {}),
+                _QuickLink('Analytics', Icons.bar_chart_rounded, AppColors.info, () => widget.onTabSelected(3)),
               ]),
             ]),
           ),
@@ -140,7 +143,7 @@ class _DashboardTabState extends State<_DashboardTab> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverList.separated(
               itemCount: homeVm.courses.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final c = homeVm.courses[i];
                 return CourseCard(
@@ -218,29 +221,67 @@ class _DashboardTabState extends State<_DashboardTab> {
   );
 }
 
-// ─── Placeholder tabs (real implementations in subfolders) ────────────────────
-class _ManageCoursesTabPlaceholder extends StatelessWidget {
-  const _ManageCoursesTabPlaceholder();
-  @override
-  Widget build(BuildContext context) => const Center(
-    child: Text('→ courses/manage_courses_screen.dart', style: TextStyle(color: AppColors.textHint)),
-  );
-}
+// ─── Instructor Analytics Tab ──────────────────────────────────────────────────
+class InstructorAnalyticsTab extends StatelessWidget {
+  const InstructorAnalyticsTab({super.key});
 
-class _EvidenceTabPlaceholder extends StatelessWidget {
-  const _EvidenceTabPlaceholder();
   @override
-  Widget build(BuildContext context) => const Center(
-    child: Text('→ evidence_review/evidence_detail_screen.dart', style: TextStyle(color: AppColors.textHint)),
-  );
-}
+  Widget build(BuildContext context) {
+    final homeVm = context.watch<HomeViewModel>();
+    final coursesWithClasses = homeVm.courses.where((c) => c.activeClassId != null).toList();
 
-class _AnalyticsTab extends StatelessWidget {
-  const _AnalyticsTab();
-  @override
-  Widget build(BuildContext context) => const Center(
-    child: Text('→ analytics/class_analytics_screen.dart', style: TextStyle(color: AppColors.textHint)),
-  );
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(title: const Text('Thống kê Lớp học')),
+      body: homeVm.isLoading
+          ? const LoadingWidget()
+          : coursesWithClasses.isEmpty
+              ? const EmptyState(
+                  icon: Icons.bar_chart_outlined,
+                  title: 'Chưa có lớp học',
+                  message: 'Không có lớp học hoạt động nào để thống kê.',
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: coursesWithClasses.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (_, i) {
+                    final c = coursesWithClasses[i];
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 2))],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: Container(
+                          width: 48, height: 48,
+                          decoration: BoxDecoration(color: AppColors.info.withAlpha(20), borderRadius: BorderRadius.circular(12)),
+                          child: const Icon(Icons.analytics_rounded, color: AppColors.info, size: 24),
+                        ),
+                        title: Text(c.activeClassName ?? 'Lớp học', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text('Khóa học: ${c.title}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                          ],
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/instructor/analytics/${c.activeClassId}',
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+    );
+  }
 }
 
 // EvidenceDetailScreen → screens/instructor/evidence_review/evidence_detail_screen.dart

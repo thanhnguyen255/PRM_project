@@ -91,7 +91,7 @@ class _LearnerCourseListState extends State<LearnerCourseListScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
                       itemCount: courses.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (_, i) => CourseCard(
                         title: courses[i].title,
                         instructorName: courses[i].instructorName,
@@ -218,7 +218,7 @@ class _LearnerCourseDetailState extends State<LearnerCourseDetailScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                 sliver: SliverList.separated(
                   itemCount: pathVm.paths.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (_, i) {
                     final p = pathVm.paths[i];
                     return _WeekCard(

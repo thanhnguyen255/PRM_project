@@ -1,11 +1,15 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class ApiConfig {
   ApiConfig._();
 
   // ── Base URL ───────────────────────────────────────────────────────────────
-  // Đổi sang IP thực của máy khi chạy trên điện thoại thật hoặc emulator khác
-  static const String baseUrl = 'http://DESKTOP-KN8VR1N:5111/api';
-  // static const String baseUrl = 'http://10.0.2.2:5111/api'; // Android emulator
-  // static const String baseUrl = 'http://localhost:5111/api';  // Chrome/Windows
+  static String get baseUrl {
+    if (kIsWeb) return 'http://localhost:5111/api';
+    if (Platform.isAndroid) return 'http://10.0.2.2:5111/api';
+    return 'http://localhost:5111/api';
+  }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
   static const String login    = '/auth/login';
@@ -21,6 +25,7 @@ class ApiConfig {
   static String deleteCourse(int id) => '/courses/$id';
 
   // ── Classes ────────────────────────────────────────────────────────────────
+  static const String myClasses                = '/classes/my';
   static String classesByCourse(int courseId) => '/classes?courseId=$courseId';
   static String classDetail(int id)            => '/classes/$id';
   static const String createClass              = '/classes';
@@ -28,6 +33,7 @@ class ApiConfig {
   static String deleteClass(int id)            => '/classes/$id';
   static String classMembers(int id)           => '/classes/$id/members';
   static String removeMember(int classId, int userId) => '/classes/$classId/members/$userId';
+
 
   // ── Learning Paths ─────────────────────────────────────────────────────────
   static String learningPaths(int classId) => '/learning-paths?classId=$classId';
