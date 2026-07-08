@@ -115,7 +115,7 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.classes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _ClassCard(
                     cls: vm.classes[i],
                     onTap: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}'),
@@ -356,7 +356,7 @@ class _ClassMembersManageScreenState extends State<ClassMembersManageScreen> {
                 ? const EmptyState(icon: Icons.person_search_rounded, title: 'Không tìm thấy', message: 'Không có học viên phù hợp.')
                 : ListView.separated(
                     itemCount: members.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
+                    separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
                     itemBuilder: (_, i) {
                       final m = members[i];
                       return MemberListTile(

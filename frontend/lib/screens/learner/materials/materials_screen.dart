@@ -36,7 +36,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.materials.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (_, i) {
                     final m = vm.materials[i];
                     return _MaterialCard(material: m);
@@ -214,7 +214,7 @@ class _ManageMaterialsState extends State<ManageMaterialsScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.materials.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (_, i) {
                     final m = vm.materials[i];
                     return Dismissible(

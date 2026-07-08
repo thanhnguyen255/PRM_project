@@ -1,14 +1,16 @@
+using backend.DAL.Enums;
 namespace backend.BLL.DTOs.Activity;
 
 public class ActivityDto
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty; // PreClass | InClass | PostClass
     public string? Description { get; set; }
+    public string Type { get; set; } = string.Empty; // Changed to string to unify
     public DateTime? Deadline { get; set; }
+    public int LearningPathId { get; set; }
     public int? SubmissionId { get; set; }
-    public string? SubmissionStatus { get; set; } // Pending | Approved | Rejected | null
+    public string? SubmissionStatus { get; set; } 
     public DateTime? SubmittedAt { get; set; }
 }
 
@@ -33,4 +35,21 @@ public class SubmissionDetailDto
     public DateTime SubmittedAt { get; set; }
     public DateTime? ReviewedAt { get; set; }
     public int CommentCount { get; set; }
+}
+
+public class CreateActivityDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public ActivityType Type { get; set; }
+    public DateTime? Deadline { get; set; }
+    public int LearningPathId { get; set; }
+}
+
+public class UpdateActivityDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public ActivityType Type { get; set; }
+    public DateTime? Deadline { get; set; }
 }

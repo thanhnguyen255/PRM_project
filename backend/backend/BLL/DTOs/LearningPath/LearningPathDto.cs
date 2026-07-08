@@ -8,6 +8,7 @@ public class LearningPathDto
     public int TotalActivities { get; set; }
     public int CompletedActivities { get; set; }
     public string State { get; set; } = string.Empty; // completed | inProgress | locked
+    public int ClassId { get; set; }
 }
 
 public class LearningPathDetailDto
@@ -37,5 +38,12 @@ public class ActivitySummaryDto
     public string Title { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public DateTime? Deadline { get; set; }
-    public string? SubmissionStatus { get; set; } // Pending | Approved | Rejected | null
+    public string? SubmissionStatus { get; set; } 
+}
+
+public class CreateLearningPathDto
+{
+    public string Title { get; set; } = string.Empty;
+    public int ClassId { get; set; }
+    public int WeekNumber { get; set; }
 }

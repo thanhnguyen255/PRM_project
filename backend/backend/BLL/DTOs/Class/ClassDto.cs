@@ -22,3 +22,16 @@ public class ClassMemberDto
     public string? AvatarUrl { get; set; }
     public DateTime JoinedAt { get; set; }
 }
+
+public class CreateClassDto
+{
+    public string Name { get; set; } = string.Empty;
+    public int CourseId { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+}
+
+public class AddClassMemberDto
+{
+    public string Email { get; set; } = string.Empty;
+}

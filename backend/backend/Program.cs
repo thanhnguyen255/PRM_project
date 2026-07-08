@@ -4,6 +4,7 @@ using backend.BLL.Interfaces;
 using backend.BLL.Services;
 using backend.DAL;
 using backend.DAL.Interfaces;
+using backend.DAL.Repositories;
 using backend.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +58,10 @@ builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IEvidenceService, EvidenceService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 // ── Controllers & Swagger ─────────────────────────────────────────────────
 builder.Services.AddControllers();

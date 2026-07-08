@@ -119,7 +119,7 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: vm.sessions.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (_, i) => _ReviewSessionCard(
                       session: vm.sessions[i],
                       onMonitor: () => Navigator.pushNamed(context, '/instructor/review/${vm.sessions[i].id}/monitor'),

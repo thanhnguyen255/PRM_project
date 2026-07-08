@@ -147,7 +147,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.projects.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) {
                     final p = vm.projects[i];
                     return _ProjectCard(
