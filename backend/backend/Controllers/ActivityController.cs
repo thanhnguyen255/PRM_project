@@ -1,12 +1,14 @@
 using backend.BLL.DTOs.Activity;
 using backend.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/activities")]
-public class ActivityController : ControllerBase
+[Authorize]
+public class ActivityController : BaseController
 {
     private readonly IActivityService _activityService;
 
@@ -15,25 +17,13 @@ public class ActivityController : ControllerBase
         _activityService = activityService;
     }
 
-    private int CurrentInstructorId
-    {
-        get
-        {
-            if (Request.Headers.TryGetValue("X-Instructor-Id", out var value) && int.TryParse(value, out var id))
-            {
-                return id;
-            }
-            return 1; // Default to instructor 1 for easy testing
-        }
-    }
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivityDto>>> GetActivities([FromQuery] int pathId, [FromQuery] string? type)
     {
         try
         {
-            var activities = await _activityService.GetActivitiesByPathAsync(pathId, type, CurrentInstructorId);
-            return Ok(activities);
+            var activities = await _activityService.GetActivitiesByPathAsync(pathId, type, GetCurrentUserId());
+            return Ok(ApiResponse.Success(activities));
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -41,13 +31,21 @@ public class ActivityController : ControllerBase
         }
     }
 
+    [HttpGet("upcoming")]
+    public async Task<IActionResult> GetUpcoming([FromQuery] int? classId, [FromQuery] int limit = 5)
+    {
+        if (GetCurrentUserRole() != "Learner") return Forbid();
+        var activities = await _activityService.GetUpcomingActivitiesAsync(GetCurrentUserId(), classId, limit);
+        return Ok(ApiResponse.Success(activities));
+    }
+
     [HttpPost]
-    public async Task<ActionResult<ActivityDto>> CreateActivity(CreateActivityDto dto)
+    public async Task<IActionResult> CreateActivity(CreateActivityDto dto)
     {
         try
         {
-            var newActivity = await _activityService.CreateActivityAsync(dto, CurrentInstructorId);
-            return Ok(newActivity);
+            var newActivity = await _activityService.CreateActivityAsync(dto, GetCurrentUserId());
+            return Ok(ApiResponse.Success(newActivity));
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -56,18 +54,18 @@ public class ActivityController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ActivityDto>> UpdateActivity(int id, UpdateActivityDto dto)
+    public async Task<IActionResult> UpdateActivity(int id, UpdateActivityDto dto)
     {
-        var updatedActivity = await _activityService.UpdateActivityAsync(id, dto, CurrentInstructorId);
-        if (updatedActivity == null) return NotFound("Không tìm thấy hoạt động hoặc bạn không có quyền cập nhật.");
-        return Ok(updatedActivity);
+        var updatedActivity = await _activityService.UpdateActivityAsync(id, dto, GetCurrentUserId());
+        if (updatedActivity == null) return NotFound(ApiResponse.Fail("Không tìm thấy hoạt động hoặc bạn không có quyền cập nhật."));
+        return Ok(ApiResponse.Success(updatedActivity));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteActivity(int id)
     {
-        var result = await _activityService.DeleteActivityAsync(id, CurrentInstructorId);
-        if (!result) return NotFound("Không tìm thấy hoạt động hoặc bạn không có quyền xóa.");
-        return NoContent();
+        var result = await _activityService.DeleteActivityAsync(id, GetCurrentUserId());
+        if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy hoạt động hoặc bạn không có quyền xóa."));
+        return Ok(ApiResponse.Success(new { success = true }, "Xóa thành công."));
     }
 }

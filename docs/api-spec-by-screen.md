@@ -643,6 +643,7 @@ else → '/home'
     "submission": {
       "id": 1,
       "status": "Approved",
+      "isLate": false,
       "note": "Em đã xem video và ghi chú đầy đủ.",
       "fileUrl": "/evidences/learner1-week1-pre-notes.pdf",
       "submittedAt": "2026-06-08T10:30:00Z",
@@ -686,14 +687,15 @@ else → '/home'
 }
 ```
 
-**Response 409** (đã nộp rồi):
+**Response 409** (Đã duyệt, không được nộp lại):
 ```json
 {
   "success": false,
   "data": null,
-  "message": "Bạn đã nộp evidence cho hoạt động này."
+  "message": "Bài nộp đã được phê duyệt, bạn không thể nộp lại."
 }
 ```
+*(Nếu đã nộp và trạng thái là Pending hoặc Rejected, hệ thống sẽ tự động update evidence cũ thay vì báo lỗi)*
 
 **Response 400** (quá hạn):
 ```json
@@ -1511,6 +1513,7 @@ else → '/home'
       "id": 1,
       "reviewerName": "Lê Văn Minh",
       "revieweeName": "Phạm Thị Lan",
+      "status": 1,
       "hasFeedback": true,
       "feedbackRating": 4
     },
@@ -1518,10 +1521,30 @@ else → '/home'
       "id": 2,
       "reviewerName": "Phạm Thị Lan",
       "revieweeName": "Hoàng Văn Hùng",
+      "status": 2,
       "hasFeedback": false,
       "feedbackRating": null
     }
   ]
+}
+```
+
+### API 4: PUT `/api/review-assignments/{id}/reassign`
+
+**Purpose**: Instructor phân công lại hoặc chấm thay.
+
+**Request Body**:
+```json
+{
+  "newReviewerId": 5
+}
+```
+
+**Response 200**:
+```json
+{
+  "success": true,
+  "message": "Phân công lại thành công."
 }
 ```
 
@@ -1683,6 +1706,32 @@ else → '/home'
   }
 }
 ```
+
+---
+
+# INSTRUCTOR — PROFILE
+
+---
+
+## SCR-I22 Profile
+
+**Auth**: Bearer Token (Instructor)
+
+### API: GET `/api/users/me`
+
+*(Cùng response như SCR-L40)*
+
+---
+
+## SCR-I23 Edit Profile
+
+**Auth**: Bearer Token (Instructor)
+
+### API: PUT `/api/users/me`
+
+*(Cùng format như SCR-L41)*
+
+---
 
 ---
 

@@ -95,7 +95,7 @@ class FlippedClassroomApp extends StatelessWidget {
         title: 'Flipped Classroom',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        initialRoute: '/home',
+        initialRoute: '/login',
         onGenerateRoute: _generateRoute,
       ),
     );
@@ -106,22 +106,27 @@ class FlippedClassroomApp extends StatelessWidget {
     final args = settings.arguments as Map<String, dynamic>?;
 
     // ── Auth ─────────────────────────────────────────────────────────────────
-    if (name == '/splash')         return _page(const SplashScreen(),         settings);
-    if (name == '/login')          return _page(const LoginScreen(),          settings);
-    if (name == '/register')       return _page(const RegisterScreen(),       settings);
-    if (name == '/forgot-password') return _page(const ForgotPasswordScreen(), settings);
+    if (name == '/splash') return _page(const SplashScreen(), settings);
+    if (name == '/login') return _page(const LoginScreen(), settings);
+    if (name == '/register') return _page(const RegisterScreen(), settings);
+    if (name == '/forgot-password')
+      return _page(const ForgotPasswordScreen(), settings);
 
     // Link from LoginScreen
     // /login → /forgot-password
 
     // ── Learner Core ──────────────────────────────────────────────────────────
     if (name == '/home') return _page(const HomeScreen(), settings);
-    if (name == '/notifications') return _page(const NotificationsScreen(), settings);
+    if (name == '/notifications')
+      return _page(const NotificationsScreen(), settings);
 
     // /courses/:id
-    if (_matches(name, '/courses/') && !name.contains('/classes') && !name.contains('/edit')) {
+    if (_matches(name, '/courses/') &&
+        !name.contains('/classes') &&
+        !name.contains('/edit')) {
       final id = _parseId(name, '/courses/');
-      if (id != null) return _page(LearnerCourseDetailScreen(courseId: id), settings);
+      if (id != null)
+        return _page(LearnerCourseDetailScreen(courseId: id), settings);
     }
 
     // /classes/:id
@@ -143,10 +148,13 @@ class FlippedClassroomApp extends StatelessWidget {
     }
 
     // /paths/:id → Week Detail
-    if (_matches(name, '/paths/') && !name.contains('/activities') && !name.contains('/materials')) {
+    if (_matches(name, '/paths/') &&
+        !name.contains('/activities') &&
+        !name.contains('/materials')) {
       final id = _parseId(name, '/paths/');
       // Also support new subfolder LearningPathDetailScreen
-      if (id != null) return _page(LearningPathDetailScreen(pathId: id), settings);
+      if (id != null)
+        return _page(LearningPathDetailScreen(pathId: id), settings);
     }
 
     // /paths/:id/materials
@@ -164,15 +172,17 @@ class FlippedClassroomApp extends StatelessWidget {
     // /learning-paths/:id
     if (_matches(name, '/learning-paths/')) {
       final id = _parseId(name, '/learning-paths/');
-      if (id != null) return _page(LearningPathDetailScreen(pathId: id), settings);
+      if (id != null)
+        return _page(LearningPathDetailScreen(pathId: id), settings);
     }
 
     // /activities?pathId=X&type=Y
     if (name.startsWith('/activities') && name.contains('?')) {
-      final uri    = Uri.parse(name);
+      final uri = Uri.parse(name);
       final pathId = int.tryParse(uri.queryParameters['pathId'] ?? '');
-      final type   = uri.queryParameters['type'] ?? 'PreClass';
-      if (pathId != null) return _page(ActivityListScreen(pathId: pathId, type: type), settings);
+      final type = uri.queryParameters['type'] ?? 'PreClass';
+      if (pathId != null)
+        return _page(ActivityListScreen(pathId: pathId, type: type), settings);
     }
 
     // /activities/:id — route by type from args
@@ -180,47 +190,60 @@ class FlippedClassroomApp extends StatelessWidget {
       final id = _parseId(name, '/activities/');
       if (id != null) {
         final type = args?['type'] as String? ?? 'PreClass';
-        if (type == 'InClass')   return _page(InClassActivityScreen(activityId: id), settings);
-        if (type == 'PostClass') return _page(PostClassActivityScreen(activityId: id), settings);
+        if (type == 'InClass')
+          return _page(InClassActivityScreen(activityId: id), settings);
+        if (type == 'PostClass')
+          return _page(PostClassActivityScreen(activityId: id), settings);
         return _page(PreClassActivityScreen(activityId: id), settings);
       }
     }
 
     // /submit-evidence
     if (name == '/submit-evidence' && args != null) {
-      return _page(SubmitEvidenceScreen(
-        activityId:    args['activityId'] as int,
-        activityTitle: args['activityTitle'] as String? ?? '',
-      ), settings);
+      return _page(
+        SubmitEvidenceScreen(
+          activityId: args['activityId'] as int,
+          activityTitle: args['activityTitle'] as String? ?? '',
+        ),
+        settings,
+      );
     }
 
     // /video-player
     if (name == '/video-player' && args != null) {
-      return _page(VideoPlayerScreen(
-        url:   args['url'] as String,
-        title: args['title'] as String? ?? 'Video',
-      ), settings);
+      return _page(
+        VideoPlayerScreen(
+          url: args['url'] as String,
+          title: args['title'] as String? ?? 'Video',
+        ),
+        settings,
+      );
     }
 
     // /document-viewer
     if (name == '/document-viewer' && args != null) {
-      return _page(DocumentViewerScreen(
-        url:   args['url'] as String,
-        title: args['title'] as String? ?? 'Tài liệu',
-        type:  args['type'] as String?,
-      ), settings);
+      return _page(
+        DocumentViewerScreen(
+          url: args['url'] as String,
+          title: args['title'] as String? ?? 'Tài liệu',
+          type: args['type'] as String?,
+        ),
+        settings,
+      );
     }
 
     // /evidences/:id
     if (_matchesExact(name, r'^/evidences/\d+$')) {
       final id = _parseLastSegment(name);
-      if (id != null) return _page(LearnerEvidenceDetailScreen(evidenceId: id), settings);
+      if (id != null)
+        return _page(LearnerEvidenceDetailScreen(evidenceId: id), settings);
     }
 
     // /evidences/:id/comments
     if (name.contains('/comments') && _matches(name, '/evidences/')) {
       final id = _parseSegment(name, 1);
-      if (id != null) return _page(EvidenceCommentsScreen(evidenceId: id), settings);
+      if (id != null)
+        return _page(EvidenceCommentsScreen(evidenceId: id), settings);
     }
 
     // /projects
@@ -232,18 +255,23 @@ class FlippedClassroomApp extends StatelessWidget {
     // /projects/:id
     if (_matchesExact(name, r'^/projects/\d+$')) {
       final id = _parseLastSegment(name);
-      if (id != null) return _page(LearnerProjectDetailScreen(projectId: id), settings);
+      if (id != null)
+        return _page(LearnerProjectDetailScreen(projectId: id), settings);
     }
 
     // /milestones/:id
     if (_matches(name, '/milestones/')) {
       final id = _parseId(name, '/milestones/');
-      if (id != null) return _page(MilestoneDetailScreen(milestoneId: id), settings);
+      if (id != null)
+        return _page(MilestoneDetailScreen(milestoneId: id), settings);
     }
 
     // /review-sessions
     if (name == '/review-sessions' && args != null) {
-      return _page(ReviewSessionsScreen(classId: args['classId'] as int), settings);
+      return _page(
+        ReviewSessionsScreen(classId: args['classId'] as int),
+        settings,
+      );
     }
 
     // /review-sessions/:id
@@ -254,10 +282,13 @@ class FlippedClassroomApp extends StatelessWidget {
 
     // /submit-feedback
     if (name == '/submit-feedback' && args != null) {
-      return _page(SubmitFeedbackScreen(
-        assignmentId: args['assignmentId'] as int,
-        revieweeName: args['revieweeName'] as String? ?? '',
-      ), settings);
+      return _page(
+        SubmitFeedbackScreen(
+          assignmentId: args['assignmentId'] as int,
+          revieweeName: args['revieweeName'] as String? ?? '',
+        ),
+        settings,
+      );
     }
 
     // /progress
@@ -266,38 +297,58 @@ class FlippedClassroomApp extends StatelessWidget {
     }
 
     // /edit-profile
-    if (name == '/edit-profile') return _page(const EditProfileScreen(), settings);
+    if (name == '/edit-profile')
+      return _page(const EditProfileScreen(), settings);
 
     // ── Instructor ────────────────────────────────────────────────────────────
-    if (name == '/instructor/dashboard') return _page(const InstructorDashboardScreen(), settings);
+    if (name == '/instructor/dashboard')
+      return _page(const InstructorDashboardScreen(), settings);
 
     // /instructor/evidence/:id
     if (_matches(name, '/instructor/evidence/')) {
       final id = _parseId(name, '/instructor/evidence/');
-      if (id != null) return _page(EvidenceDetailScreen(evidenceId: id), settings);
+      if (id != null)
+        return _page(EvidenceDetailScreen(evidenceId: id), settings);
     }
 
     // /instructor/courses/create
-    if (name == '/instructor/courses/create') return _page(const CreateEditCourseScreen(), settings);
+    if (name == '/instructor/courses/create')
+      return _page(const CreateEditCourseScreen(), settings);
 
     // /instructor/courses/:id/edit
-    if (name.contains('/edit') && _matches(name, '/instructor/courses/') && args != null) {
+    if (name.contains('/edit') &&
+        _matches(name, '/instructor/courses/') &&
+        args != null) {
       final id = _parseSegment(name, 2);
-      return _page(CreateEditCourseScreen(
-        courseId:     id,
-        initialTitle: args['title'] as String?,
-        initialDesc:  args['description'] as String?,
-      ), settings);
+      return _page(
+        CreateEditCourseScreen(
+          courseId: id,
+          initialTitle: args['title'] as String?,
+          initialDesc: args['description'] as String?,
+        ),
+        settings,
+      );
     }
 
     // /instructor/courses/:id/classes
-    if (name.contains('/classes') && _matches(name, '/instructor/courses/') && args != null) {
+    if (name.contains('/classes') &&
+        _matches(name, '/instructor/courses/') &&
+        args != null) {
       final id = _parseSegment(name, 2);
-      if (id != null) return _page(ManageClassesScreen(courseId: id, courseTitle: args['courseTitle'] as String? ?? ''), settings);
+      if (id != null)
+        return _page(
+          ManageClassesScreen(
+            courseId: id,
+            courseTitle: args['courseTitle'] as String? ?? '',
+          ),
+          settings,
+        );
     }
 
     // /instructor/classes/:id
-    if (_matches(name, '/instructor/classes/') && !name.contains('/members') && !name.contains('/paths')) {
+    if (_matches(name, '/instructor/classes/') &&
+        !name.contains('/members') &&
+        !name.contains('/paths')) {
       final id = _parseId(name, '/instructor/classes/');
       if (id != null) return _page(ClassDetailScreen(classId: id), settings);
     }
@@ -305,19 +356,22 @@ class FlippedClassroomApp extends StatelessWidget {
     // /instructor/classes/:id/members
     if (_matches(name, '/instructor/classes/') && name.contains('/members')) {
       final id = _parseSegment(name, 2);
-      if (id != null) return _page(ClassMembersManageScreen(classId: id), settings);
+      if (id != null)
+        return _page(ClassMembersManageScreen(classId: id), settings);
     }
 
     // /instructor/classes/:id/paths
     if (_matches(name, '/instructor/classes/') && name.contains('/paths')) {
       final id = _parseSegment(name, 2);
-      if (id != null) return _page(ManageLearningPathsScreen(classId: id), settings);
+      if (id != null)
+        return _page(ManageLearningPathsScreen(classId: id), settings);
     }
 
     // /instructor/paths/:id/activities
     if (_matches(name, '/instructor/paths/') && name.contains('/activities')) {
       final id = _parseSegment(name, 2);
-      if (id != null) return _page(ManageActivitiesScreen(pathId: id), settings);
+      if (id != null)
+        return _page(ManageActivitiesScreen(pathId: id), settings);
     }
 
     // /instructor/classes/:id/projects
@@ -329,13 +383,15 @@ class FlippedClassroomApp extends StatelessWidget {
     // /instructor/review/:classId
     if (_matches(name, '/instructor/review/') && !name.contains('/monitor')) {
       final id = _parseId(name, '/instructor/review/');
-      if (id != null) return _page(InstructorReviewScreen(classId: id), settings);
+      if (id != null)
+        return _page(InstructorReviewScreen(classId: id), settings);
     }
 
     // /instructor/review/:sessionId/monitor
     if (_matches(name, '/instructor/review/') && name.contains('/monitor')) {
       final id = _parseSegment(name, 2);
-      if (id != null) return _page(ReviewMonitorScreen(sessionId: id), settings);
+      if (id != null)
+        return _page(ReviewMonitorScreen(sessionId: id), settings);
     }
 
     // /instructor/analytics/:classId
@@ -350,10 +406,16 @@ class FlippedClassroomApp extends StatelessWidget {
 
   // Helpers
   static bool _matches(String name, String prefix) => name.startsWith(prefix);
-  static bool _matchesExact(String name, String pattern) => RegExp(pattern).hasMatch(name);
+  static bool _matchesExact(String name, String pattern) =>
+      RegExp(pattern).hasMatch(name);
 
   static int? _parseId(String name, String prefix) {
-    final rest = name.replaceFirst(prefix, '').split('/').first.split('?').first;
+    final rest = name
+        .replaceFirst(prefix, '')
+        .split('/')
+        .first
+        .split('?')
+        .first;
     return int.tryParse(rest);
   }
 
@@ -381,15 +443,38 @@ class _NotFoundScreen extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Không tìm thấy')),
     body: Center(
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.search_off_rounded, size: 64, color: AppColors.textHint),
-        const SizedBox(height: 16),
-        const Text('404', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800, color: AppColors.textHint)),
-        const SizedBox(height: 8),
-        Text('Trang "$path" không tồn tại', style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-        const SizedBox(height: 24),
-        ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Quay lại')),
-      ]),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.search_off_rounded,
+            size: 64,
+            color: AppColors.textHint,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '404',
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textHint,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Trang "$path" không tồn tại',
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Quay lại'),
+          ),
+        ],
+      ),
     ),
   );
 }

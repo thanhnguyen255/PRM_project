@@ -1,11 +1,15 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class ApiConfig {
   ApiConfig._();
 
   // ── Base URL ───────────────────────────────────────────────────────────────
-  // Đổi sang IP thực của máy khi chạy trên điện thoại thật hoặc emulator khác
-  static const String baseUrl = 'http://DESKTOP-KN8VR1N:5111/api';
-  // static const String baseUrl = 'http://10.0.2.2:5111/api'; // Android emulator
-  // static const String baseUrl = 'http://localhost:5111/api';  // Chrome/Windows
+  static String get baseUrl {
+    if (kIsWeb) return 'http://localhost:5111/api';
+    if (Platform.isAndroid) return 'http://10.0.2.2:5111/api';
+    return 'http://localhost:5111/api';
+  }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
   static const String login    = '/auth/login';

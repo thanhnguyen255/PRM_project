@@ -167,6 +167,7 @@ Xây dựng một ứng dụng mobile tập trung, cho phép:
 | FR-06.4 | Learner xem evidence của người được review và gửi feedback (rating + comment) | Learner | High |
 | FR-06.5 | Learner xem feedback nhận được từ bạn | Learner | High |
 | FR-06.6 | Instructor theo dõi trạng thái peer review của từng học viên | Instructor | Medium |
+| FR-06.7 | Instructor có thể phân công lại (re-assign) hoặc chấm thay nếu reviewer vắng mặt | Instructor | Medium |
 
 ---
 
@@ -270,7 +271,7 @@ Project (1) ─────────────── (*) Milestone
 Milestone (1) ───────────── (*) MilestoneSubmission  [Learner submits]
 Class (1) ──────────────── (*) ReviewSession
 ReviewSession (1) ────────── (*) ReviewAssignment
-ReviewAssignment (1) ─────── (*) Feedback
+ReviewAssignment (1) ─────── (1) Feedback
 User (1) ──────────────── (*) Notification
 ```
 
@@ -296,6 +297,7 @@ User (1) ──────────────── (*) Notification
 | CoverImageUrl | nvarchar(500) | NULL | |
 | InstructorId | int | FK → User | |
 | CreatedAt | datetime | NOT NULL | |
+| IsDeleted | bit | NOT NULL, Default=0 | Soft delete |
 
 #### Class
 | Field | Type | Constraint | Mô tả |
@@ -305,6 +307,7 @@ User (1) ──────────────── (*) Notification
 | Name | nvarchar(100) | NOT NULL | |
 | StartDate | datetime | NOT NULL | |
 | EndDate | datetime | NOT NULL | |
+| IsDeleted | bit | NOT NULL, Default=0 | Soft delete |
 
 #### ClassMember
 | Field | Type | Constraint | Mô tả |
@@ -321,6 +324,7 @@ User (1) ──────────────── (*) Notification
 | ClassId | int | FK → Class | |
 | Title | nvarchar(200) | NOT NULL | |
 | WeekNumber | int | NOT NULL | |
+| IsDeleted | bit | NOT NULL, Default=0 | Soft delete |
 
 #### LearningMaterial
 | Field | Type | Constraint | Mô tả |
@@ -341,6 +345,7 @@ User (1) ──────────────── (*) Notification
 | Description | nvarchar(3000) | NULL | |
 | Type | int | NOT NULL | 0=PreClass, 1=InClass, 2=PostClass |
 | Deadline | datetime | NULL | |
+| IsDeleted | bit | NOT NULL, Default=0 | Soft delete |
 
 #### ActivitySubmission (Evidence)
 | Field | Type | Constraint | Mô tả |
@@ -351,6 +356,7 @@ User (1) ──────────────── (*) Notification
 | FileUrl | nvarchar(500) | NULL | |
 | Note | nvarchar(2000) | NULL | |
 | Status | int | NOT NULL | 0=Pending, 1=Approved, 2=Rejected |
+| IsLate | bit | NOT NULL, Default=0 | Đánh dấu nộp muộn |
 | SubmittedAt | datetime | NOT NULL | |
 | ReviewedAt | datetime | NULL | |
 
@@ -388,6 +394,7 @@ User (1) ──────────────── (*) Notification
 | UserId | int | FK → User | |
 | FileUrl | nvarchar(500) | NULL | |
 | Description | nvarchar(2000) | NULL | |
+| IsLate | bit | NOT NULL, Default=0 | Đánh dấu nộp muộn |
 | SubmittedAt | datetime | NOT NULL | |
 
 #### ReviewSession
@@ -406,6 +413,7 @@ User (1) ──────────────── (*) Notification
 | SessionId | int | FK → ReviewSession | |
 | ReviewerId | int | FK → User | |
 | RevieweeId | int | FK → User | |
+| Status | int | NOT NULL | 0=Assigned, 1=Completed, 2=Overdue |
 
 #### Feedback
 | Field | Type | Constraint | Mô tả |
@@ -465,8 +473,8 @@ User (1) ──────────────── (*) Notification
 
 | Tình huống | Xử lý |
 |------------|-------|
-| Learner nộp evidence sau deadline | Cảnh báo "Đã quá hạn nộp." nhưng vẫn cho phép nộp (Instructor quyết định) |
-| Learner đã nộp evidence, nộp lại | Cho phép nộp lại, ghi đè submission cũ |
+| Learner nộp evidence sau deadline | Cảnh báo "Đã quá hạn nộp" nhưng vẫn cho phép nộp (hệ thống set `IsLate`=true) |
+| Learner đã nộp evidence, nộp lại | Chỉ cho phép ghi đè khi trạng thái là Pending/Rejected. Nếu nộp lại lúc Rejected, tự động chuyển về Pending |
 | Reviewer tự review chính mình | Backend từ chối, hiển thị "Không thể tự review bản thân." |
 | Upload file sai định dạng | "Chỉ chấp nhận file ảnh (JPG, PNG), PDF, và video (MP4, MOV)." |
 
