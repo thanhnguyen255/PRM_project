@@ -26,6 +26,15 @@ class CourseService {
 class ClassService {
   final _api = ApiService.instance;
 
+  Future<List<ClassModel>> getMyClasses() async {
+    final res = await _api.get(ApiConfig.myClasses);
+    if (res['success'] == true) {
+      final list = res['data'] as List<dynamic>;
+      return list.map((e) => ClassModel.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
+
   Future<List<ClassModel>> getClassesByCourse(int courseId) async {
     final res = await _api.get(ApiConfig.classesByCourse(courseId));
     if (res['success'] == true) {
@@ -52,6 +61,7 @@ class ClassService {
     return [];
   }
 }
+
 
 class LearningPathService {
   final _api = ApiService.instance;
@@ -186,4 +196,25 @@ class NotificationService {
 
   Future<void> markRead(int id) => _api.put(ApiConfig.markRead(id));
   Future<void> markAllRead() => _api.put(ApiConfig.markAllRead);
+}
+
+class ProfileService {
+  final _api = ApiService.instance;
+
+  Future<Map<String, dynamic>?> getProfile() async {
+    final res = await _api.get('/profile');
+    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
+    return null;
+  }
+
+  Future<({bool success, String? error})> updateProfile({
+    required String fullName,
+    String? avatarUrl,
+  }) async {
+    final res = await _api.put('/profile', data: {
+      'fullName': fullName,
+      if (avatarUrl != null) 'avatarUrl': avatarUrl,
+    });
+    return (success: res['success'] == true, error: res['message'] as String?);
+  }
 }

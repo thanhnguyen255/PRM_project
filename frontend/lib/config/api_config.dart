@@ -21,6 +21,7 @@ class ApiConfig {
   static String deleteCourse(int id) => '/courses/$id';
 
   // ── Classes ────────────────────────────────────────────────────────────────
+  static const String myClasses                = '/classes/my';
   static String classesByCourse(int courseId) => '/classes?courseId=$courseId';
   static String classDetail(int id)            => '/classes/$id';
   static const String createClass              = '/classes';
@@ -28,6 +29,7 @@ class ApiConfig {
   static String deleteClass(int id)            => '/classes/$id';
   static String classMembers(int id)           => '/classes/$id/members';
   static String removeMember(int classId, int userId) => '/classes/$classId/members/$userId';
+
 
   // ── Learning Paths ─────────────────────────────────────────────────────────
   static String learningPaths(int classId) => '/learning-paths?classId=$classId';
