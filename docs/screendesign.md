@@ -570,6 +570,8 @@ Background: LinearGradient(#4F46E5 → #06B6D4)
 │  │          NỘP           │  │  Primary btn
 │  └────────────────────────┘  │
 └──────────────────────────────┘
+
+**Logic**: Chỉ cho phép nộp (hoặc nộp lại) khi trạng thái là `null`, `Pending` hoặc `Rejected`. Nếu trạng thái là `Approved`, ẩn nút NỘP.
 ```
 
 ---
@@ -1184,10 +1186,10 @@ Tương tự SCR-L19 với thêm field "Mô tả báo cáo"
 
 | **File** | `screens/instructor/review/review_monitoring_screen.dart` |
 |----------|----------------------------------------------------------|
-| **API** | `GET /api/review-assignments/:sessionId` |
+| **API** | `GET /api/review-assignments/:sessionId`, `PUT /api/review-assignments/{id}/reassign` |
 | **Status** | ❌ Chưa implement |
 
-**Layout**: List assignments — Reviewer → Reviewee + Feedback status (Done/Pending)
+**Layout**: List assignments — Reviewer → Reviewee + Feedback status (Done/Pending) + Nút "Re-assign" hoặc "Chấm thay (Override)" cho Instructor nếu Reviewer không hoàn thành.
 
 ---
 
@@ -1324,6 +1326,35 @@ Tương tự SCR-L19 với thêm field "Mô tả báo cáo"
 
 ---
 
+## 2.11 Profile
+
+---
+
+### SCR-I22 · Profile
+
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **File** | `screens/instructor/profile/profile_screen.dart` |
+| **Route** | `/instructor/profile` (Tab 5 BottomNav) |
+| **API** | `GET /api/users/me` |
+| **Status** | ❌ Chưa implement |
+
+**Layout**: Tương tự SCR-L40 Profile của Learner nhưng hiển thị badge "Giảng viên" và thông số lớp đang dạy.
+
+---
+
+### SCR-I23 · Edit Profile
+
+| **File** | `screens/instructor/profile/edit_profile_screen.dart` |
+|----------|--------------------------------------------------|
+| **Route** | `/instructor/profile/edit` |
+| **API** | `PUT /api/users/me` |
+| **Status** | ❌ Chưa implement |
+
+**Layout**: Tương tự SCR-L41 Edit Profile.
+
+---
+
 ---
 
 # Navigation Flow
@@ -1408,5 +1439,6 @@ Tương tự SCR-L19 với thêm field "Mô tả báo cáo"
 | Review Management | 2 | 0✅ 2❌ |
 | Evidence Review | 3 | 0✅ 3❌ |
 | Analytics | 2 | 0✅ 2❌ |
-| **Instructor Total** | **21** | **0✅ 21❌** |
-| **GRAND TOTAL** | **62** | **2✅ 60❌** |
+| Profile | 2 | 0✅ 2❌ |
+| **Instructor Total** | **23** | **0✅ 23❌** |
+| **GRAND TOTAL** | **64** | **2✅ 62❌** |

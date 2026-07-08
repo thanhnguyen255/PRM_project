@@ -127,6 +127,7 @@ public class ClassService : IClassService
                 JoinedAt = cm.JoinedAt
             })
             .ToListAsync();
+    }
 
     public async Task<IEnumerable<ClassDto>> GetClassesByCourseAsync(int courseId, int instructorId)
     {

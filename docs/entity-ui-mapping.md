@@ -353,6 +353,7 @@ class ActivityModel {
 | `FileUrl` | string? | SCR-L35 (preview), SCR-I18 (preview) | Image / PDF preview widget |
 | `Note` | string? | SCR-L19/22/25 (input), SCR-L35 (display), SCR-I18 | AppTextField (4 lines), Text Card |
 | `Status` | EvidenceStatus | SCR-L17/20/23 (badge), SCR-L18/21/24, SCR-L35, SCR-I17, SCR-I18 | **StatusBadge** (Pending/Approved/Rejected) |
+| `IsLate` | bool | SCR-I17, SCR-I18, SCR-L35 | Badge "Nộp muộn" (nếu IsLate = true) |
 | `SubmittedAt` | DateTime | SCR-L35, SCR-I17, SCR-I18 | Text "Nộp: 08/06 · 10:30" |
 | `ReviewedAt` | DateTime? | SCR-L35 (nếu có), SCR-I18 | Text "Duyệt: 08/06 · 15:00" |
 | User.FullName | *(join)* | SCR-I17, SCR-I18 | EvidenceCard learnerName |
@@ -389,6 +390,7 @@ class EvidenceDto {
   final String? fileUrl;
   final String? note;
   final String status;          // "Pending" | "Approved" | "Rejected"
+  final bool isLate;
   final DateTime submittedAt;
   final DateTime? reviewedAt;
   final int commentCount;
@@ -509,6 +511,7 @@ class EvidenceCommentDto {
 | `UserId` | int | FK | — |
 | `FileUrl` | string? | SCR-L30 (file picker preview) | FilePickerWidget |
 | `Description` | string? | SCR-L30 (input), SCR-L29 (view if submitted) | AppTextField (5 lines), Text |
+| `IsLate` | bool | SCR-L29 (if submitted late) | Badge "Nộp muộn" |
 | `SubmittedAt` | DateTime | SCR-L29 (if submitted: "Đã nộp lúc …") | Text |
 
 ### API Endpoints
@@ -562,6 +565,7 @@ class EvidenceCommentDto {
 | `SessionId` | int | FK | — |
 | `ReviewerId` | int | FK | — |
 | `RevieweeId` | int | FK | — |
+| `Status` | int | SCR-I16, SCR-L31 | 0=Assigned, 1=Completed, 2=Overdue |
 | Reviewer.FullName | *(join)* | SCR-I16 | ListTile "Reviewer → Reviewee" |
 | Reviewee.FullName | *(join)* | SCR-L32, SCR-L33, SCR-I16 | ListTile, AppBar "Đánh giá: [Name]" |
 | `HasFeedback` | *(computed)* | SCR-L32, SCR-I16 | Badge "Done ✓" / "Pending ○" |
@@ -700,6 +704,8 @@ class EvidenceCommentDto {
 | SCR-I19 Comment & Feedback | EvidenceComment, User | **EvidenceComment** |
 | SCR-I20 Analytics | Course, Activity, ActivitySubmission, Feedback | — |
 | SCR-I21 Student Progress | User, Activity, ActivitySubmission | — |
+| SCR-I22 Profile | User | — |
+| SCR-I23 Edit Profile | — | **User** |
 
 ---
 
@@ -713,8 +719,8 @@ class EvidenceCommentDto {
 |---|--------|------|---------|
 | 1 | POST | `/api/auth/register` | L03 |
 | 2 | POST | `/api/auth/login` | L02 |
-| 3 | GET | `/api/users/me` | L40, I01 |
-| 4 | PUT | `/api/users/me` | L41 |
+| 3 | GET | `/api/users/me` | L40, I01, I22 |
+| 4 | PUT | `/api/users/me` | L41, I23 |
 
 ### Course
 

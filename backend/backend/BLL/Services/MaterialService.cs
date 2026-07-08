@@ -37,6 +37,7 @@ public class MaterialService : IMaterialService
                 LearningPathId = m.LearningPathId
             })
             .ToListAsync();
+    }
 
     public async Task<IEnumerable<MaterialDto>> GetMaterialsByPathAsync(int pathId, int instructorId)
     {

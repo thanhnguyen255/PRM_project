@@ -52,6 +52,53 @@ public class ActivityService : IActivityService
         }).ToList();
     }
 
+    public async Task<IEnumerable<UpcomingActivityDto>> GetUpcomingActivitiesAsync(int learnerId, int? classId, int limit = 5)
+    {
+        var query = _db.Activities
+            .Include(a => a.LearningPath)
+            .Where(a => a.Deadline > DateTime.UtcNow);
+
+        if (classId.HasValue)
+        {
+            query = query.Where(a => a.LearningPath.ClassId == classId.Value);
+        }
+        else
+        {
+            // If no classId is provided, optionally filter by all classes the learner is enrolled in
+            var userClassIds = await _db.ClassMembers
+                .Where(cm => cm.UserId == learnerId)
+                .Select(cm => cm.ClassId)
+                .ToListAsync();
+
+            query = query.Where(a => userClassIds.Contains(a.LearningPath.ClassId));
+        }
+
+        var activities = await query
+            .OrderBy(a => a.Deadline)
+            .Take(limit)
+            .ToListAsync();
+
+        var activityIds = activities.Select(a => a.Id).ToList();
+
+        var submissions = await _db.ActivitySubmissions
+            .Where(s => s.UserId == learnerId && activityIds.Contains(s.ActivityId))
+            .ToDictionaryAsync(s => s.ActivityId);
+
+        return activities.Select(a =>
+        {
+            submissions.TryGetValue(a.Id, out var sub);
+            return new UpcomingActivityDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Type = a.Type.ToString(),
+                Deadline = a.Deadline!.Value,
+                SubmissionStatus = sub?.Status.ToString(),
+                LearningPathTitle = a.LearningPath.Title
+            };
+        }).Where(a => a.SubmissionStatus != "Approved").ToList(); // Filter out approved ones
+    }
+
     public async Task<ActivityDetailDto> GetByIdAsync(int activityId, int userId)
     {
         var activity = await _db.Activities

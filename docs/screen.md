@@ -217,7 +217,7 @@
 | ID      | Screen Name       | Description                    |
 | ------- | ----------------- | ------------------------------ |
 | SCR-I15 | Review Sessions   | Manage review sessions         |
-| SCR-I16 | Review Monitoring | Monitor peer review activities |
+| SCR-I16 | Review Monitoring | Monitor, re-assign, and override peer reviews |
 
 ---
 
@@ -237,6 +237,15 @@
 | ------- | -------------------------- | ----------------------------- |
 | SCR-I20 | Learning Analytics         | Learning statistics dashboard |
 | SCR-I21 | Student Progress Analytics | Track learner progress        |
+
+---
+
+## 2.11 Profile
+
+| ID      | Screen Name  | Description                |
+| ------- | ------------ | -------------------------- |
+| SCR-I22 | Profile      | View instructor profile    |
+| SCR-I23 | Edit Profile | Update profile information |
 
 ---
 
@@ -263,8 +272,8 @@ Login
 
 ## Instructor App
 
-21 Screens
+23 Screens
 
 ## Total
 
-62 Screens
+64 Screens

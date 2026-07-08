@@ -33,6 +33,27 @@ public class CourseService : ICourseService
         });
     }
 
+    public async Task<IEnumerable<MyCourseDto>> GetCoursesByLearnerAsync(int learnerId)
+    {
+        var classMembers = await _unitOfWork.Repository<ClassMember>().GetQueryable()
+            .Include(cm => cm.Class)
+                .ThenInclude(c => c.Course)
+                    .ThenInclude(course => course.Instructor)
+            .Where(cm => cm.UserId == learnerId)
+            .ToListAsync();
+
+        return classMembers.Select(cm => new MyCourseDto
+        {
+            Id = cm.Class.CourseId,
+            Title = cm.Class.Course.Title,
+            CoverImageUrl = cm.Class.Course.CoverImageUrl,
+            InstructorName = cm.Class.Course.Instructor.FullName,
+            ProgressPercent = 0.0, // Calculated dynamically when activities are tracked
+            ActiveClassId = cm.ClassId,
+            ActiveClassName = cm.Class.Name
+        });
+    }
+
     public async Task<CourseDto?> GetCourseByIdAsync(int id, int instructorId)
     {
         var course = await _unitOfWork.Repository<Course>().GetQueryable()
