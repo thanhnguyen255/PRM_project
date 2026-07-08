@@ -238,7 +238,7 @@ class FlippedClassroomApp extends StatelessWidget {
     // /milestones/:id
     if (_matches(name, '/milestones/')) {
       final id = _parseId(name, '/milestones/');
-      if (id != null) return _page(LearnerProjectDetailScreen(projectId: id), settings);
+      if (id != null) return _page(MilestoneDetailScreen(milestoneId: id), settings);
     }
 
     // /review-sessions

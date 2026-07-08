@@ -38,7 +38,7 @@ class _ReviewSessionsState extends State<ReviewSessionsScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.sessions.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) {
                     final s = vm.sessions[i];
                     return _SessionCard(
@@ -339,6 +339,59 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> {
               Text(widget.revieweeName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               const SizedBox(height: 4),
               const Text('Bạn đang review bài của người này', style: TextStyle(fontSize: 13, color: AppColors.textHint)),
+            ]),
+          ),
+          const SizedBox(height: 24),
+
+          // Student Evidence Preview
+          const Text('Bằng chứng học tập (Evidence)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(color: AppColors.errorLight, borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.description_rounded, color: AppColors.error, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Bao_cao_hoat_dong_${widget.revieweeName.replaceAll(' ', '_')}.pdf', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  const Text('Kích thước: 2.4 MB  •  Đã nộp 2 ngày trước', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                ])),
+              ]),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: AppColors.border),
+              const SizedBox(height: 12),
+              const Text('Ghi chú của học viên:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+              const SizedBox(height: 4),
+              const Text(
+                'Đây là báo cáo hoạt động nhóm của chúng em. Chúng em đã nghiên cứu tài liệu pre-class và thực hiện thảo luận, thiết kế mô hình giải pháp hoàn chỉnh đính kèm trong file báo cáo trên. Mong nhận được ý kiến đóng góp từ các bạn!',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    AppSnackBar.show(context, 'Mở tài liệu báo cáo của ${widget.revieweeName}...', type: SnackType.info);
+                  },
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: const Text('Xem tài liệu đính kèm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary),
+                    foregroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
             ]),
           ),
           const SizedBox(height: 28),

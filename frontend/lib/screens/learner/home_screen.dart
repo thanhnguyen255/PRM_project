@@ -130,7 +130,7 @@ class _HomeTab extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: vm.courses.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (_, i) {
                     final c = vm.courses[i];
                     return CourseCard(
@@ -164,7 +164,7 @@ class _HomeTab extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList.separated(
                 itemCount: vm.upcoming.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (_, i) {
                   final a = vm.upcoming[i];
                   return ActivityCard(
@@ -242,7 +242,7 @@ class _CoursesTabState extends State<_CoursesTab> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: vm.courses.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
                       final c = vm.courses[i];
                       return CourseCard(

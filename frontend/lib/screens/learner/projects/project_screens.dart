@@ -39,7 +39,7 @@ class _LearnerProjectsState extends State<LearnerProjectsScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: vm.projects.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
                       final p = vm.projects[i];
                       return _ProjectCard(
@@ -201,12 +201,21 @@ class _LearnerProjectDetailState extends State<LearnerProjectDetailScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                     sliver: SliverList.separated(
                       itemCount: vm.milestones.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) => _MilestoneCard(
-                        milestone: vm.milestones[i],
-                        index: i + 1,
-                        onSubmit: () => Navigator.pushNamed(context, '/milestones/${vm.milestones[i].id}'),
-                      ),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (_, i) {
+                        final m = vm.milestones[i];
+                        return _MilestoneCard(
+                          milestone: m,
+                          index: i + 1,
+                          onSubmit: () async {
+                            await Navigator.pushNamed(context, '/milestones/${m.id}');
+                            if (context.mounted) {
+                              context.read<ProjectViewModel>().loadMilestones(widget.projectId);
+                              context.read<ProjectViewModel>().loadProjectDetail(widget.projectId);
+                            }
+                          },
+                        );
+                      },
                     ),
                   ),
               ],
@@ -283,4 +292,159 @@ class _InfoBadge extends StatelessWidget {
       Text(label, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
     ]),
   );
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// SCR-L29 — Milestone Detail + SCR-L30 — Submit Milestone
+// ════════════════════════════════════════════════════════════════════════════════
+class MilestoneDetailScreen extends StatefulWidget {
+  final int milestoneId;
+  const MilestoneDetailScreen({super.key, required this.milestoneId});
+  @override
+  State<MilestoneDetailScreen> createState() => _MilestoneDetailScreenState();
+}
+
+class _MilestoneDetailScreenState extends State<MilestoneDetailScreen> {
+  final _descCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectViewModel>().loadMilestoneDetail(widget.milestoneId);
+    });
+  }
+
+  @override
+  void dispose() { _descCtrl.dispose(); super.dispose(); }
+
+  Future<void> _submit() async {
+    final vm  = context.read<ProjectViewModel>();
+    final err = await vm.submitMilestone(milestoneId: widget.milestoneId, description: _descCtrl.text.trim());
+    if (!mounted) return;
+    if (err == null) {
+      AppSnackBar.show(context, 'Nộp milestone thành công!', type: SnackType.success);
+      Navigator.pop(context);
+    } else {
+      AppSnackBar.show(context, err, type: SnackType.error);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<ProjectViewModel>();
+    final m  = vm.milestone;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(title: const Text('Chi tiết Milestone')),
+      body: vm.isLoading
+          ? const LoadingWidget()
+          : m == null
+              ? const EmptyState(icon: Icons.error_outline_rounded, title: 'Không tìm thấy', message: '')
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          Text('Milestone ${m.stepNumber}', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+                          const Spacer(),
+                          StatusBadge(status: m.isSubmitted ? BadgeStatus.approved : BadgeStatus.pending),
+                        ]),
+                        const SizedBox(height: 8),
+                        Text(m.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                        if (m.dueDate != null) ...[
+                          const SizedBox(height: 6),
+                          Row(children: [
+                            const Icon(Icons.event_rounded, size: 14, color: AppColors.textHint),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Hạn: ${m.dueDate!.day.toString().padLeft(2,'0')}/${m.dueDate!.month.toString().padLeft(2,'0')}/${m.dueDate!.year}',
+                              style: const TextStyle(fontSize: 13, color: AppColors.textHint),
+                            ),
+                          ]),
+                        ],
+                      ]),
+                    ),
+                    const SizedBox(height: 16),
+
+                    if ((m.description ?? '').isNotEmpty) ...[
+                      const Text('Mô tả & Yêu cầu', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(m.description!, style: const TextStyle(fontSize: 14, height: 1.7, color: AppColors.textSecondary)),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Submit form (nếu chưa nộp)
+                    if (!m.isSubmitted) ...[
+                      const Text('Nộp báo cáo Milestone', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        label: 'Mô tả kết quả',
+                        hint: 'Nhập mô tả về những gì nhóm đã hoàn thành...',
+                        controller: _descCtrl,
+                        maxLines: 5,
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.attach_file_rounded, color: AppColors.textHint),
+                          const SizedBox(width: 10),
+                          const Expanded(child: Text('Chọn file báo cáo', style: TextStyle(color: AppColors.textSecondary))),
+                          AppButton(label: 'Chọn file', onPressed: () {}, variant: ButtonVariant.outline, isFullWidth: false),
+                        ]),
+                      ),
+                      const SizedBox(height: 24),
+                      AppButton(
+                        label: 'NỘP MILESTONE',
+                        onPressed: _submit,
+                        isLoading: vm.isSaving,
+                        icon: Icons.upload_rounded,
+                      ),
+                    ] else
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.successLight,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.success.withAlpha(80)),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
+                          const SizedBox(width: 10),
+                          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            const Text('Đã nộp', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.success)),
+                            if (m.submittedAt != null)
+                              Text(
+                                'Nộp: ${m.submittedAt!.day.toString().padLeft(2,'0')}/${m.submittedAt!.month.toString().padLeft(2,'0')}/${m.submittedAt!.year}',
+                                style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                              ),
+                          ]),
+                        ]),
+                      ),
+                  ]),
+                ),
+    );
+  }
 }
