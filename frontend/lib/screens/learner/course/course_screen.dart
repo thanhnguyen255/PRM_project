@@ -123,14 +123,12 @@ class _LearnerCourseDetailState extends State<LearnerCourseDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CourseViewModel>().loadCourseDetail(widget.courseId);
-      context.read<LearningPathViewModel>().loadPaths(widget.courseId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final vm      = context.watch<CourseViewModel>();
-    final pathVm  = context.watch<LearningPathViewModel>();
     final course  = vm.detail;
 
     return Scaffold(
@@ -183,51 +181,41 @@ class _LearnerCourseDetailState extends State<LearnerCourseDetailScreen> {
                       const Icon(Icons.person_rounded, size: 16, color: AppColors.textHint),
                       const SizedBox(width: 6),
                       Text('GV: ${course.instructorName ?? 'N/A'}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                      const Spacer(),
-                      // Overall progress
-                      _ProgressBadge(course.progressPercent ?? 0),
                     ]),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: course.progressPercent ?? 0,
-                        backgroundColor: AppColors.border,
-                        valueColor: AlwaysStoppedAnimation(
-                          (course.progressPercent ?? 0) >= 1.0 ? AppColors.success : AppColors.primary,
-                        ),
-                        minHeight: 8,
-                      ),
-                    ),
                   ]),
                 ),
               ),
             ),
 
-            // Learning paths
+            // Classes list
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text('Lộ trình học', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                child: Text('Danh sách lớp học', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               ),
             ),
-            if (pathVm.isLoading)
-              const SliverToBoxAdapter(child: LoadingWidget())
+            
+            if (course.classes == null || course.classes!.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: Text('Chưa có lớp học nào.', style: TextStyle(color: AppColors.textHint))),
+                )
+              )
             else
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                 sliver: SliverList.separated(
-                  itemCount: pathVm.paths.length,
+                  itemCount: course.classes!.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (_, i) {
-                    final p = pathVm.paths[i];
-                    return _WeekCard(
-                      weekNumber: p.weekNumber,
-                      title: p.title,
-                      totalActivities: p.totalActivities,
-                      completedActivities: p.completedActivities,
-                      progress: p.progress,
-                      onTap: () => Navigator.pushNamed(context, '/learning-paths/${p.id}'),
+                    final cls = course.classes![i];
+                    return _ClassCard(
+                      name: cls['name'] as String? ?? 'Unnamed Class',
+                      startDate: cls['startDate'] as String?,
+                      endDate: cls['endDate'] as String?,
+                      memberCount: cls['memberCount'] as int? ?? 0,
+                      onTap: () => Navigator.pushNamed(context, '/classes/${cls['id']}'),
                     );
                   },
                 ),
@@ -239,37 +227,23 @@ class _LearnerCourseDetailState extends State<LearnerCourseDetailScreen> {
   }
 }
 
-class _ProgressBadge extends StatelessWidget {
-  final double pct;
-  const _ProgressBadge(this.pct);
-  @override
-  Widget build(BuildContext context) {
-    final color = pct >= 1.0 ? AppColors.success : pct >= 0.5 ? AppColors.info : AppColors.primary;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withAlpha(20), borderRadius: BorderRadius.circular(20)),
-      child: Text('${(pct * 100).toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
-    );
-  }
-}
-
-class _WeekCard extends StatelessWidget {
-  final int weekNumber;
-  final String title;
-  final int totalActivities;
-  final int completedActivities;
-  final double progress;
+class _ClassCard extends StatelessWidget {
+  final String name;
+  final String? startDate;
+  final String? endDate;
+  final int memberCount;
   final VoidCallback onTap;
 
-  const _WeekCard({
-    required this.weekNumber, required this.title,
-    required this.totalActivities, required this.completedActivities,
-    required this.progress, required this.onTap,
+  const _ClassCard({
+    required this.name,
+    this.startDate,
+    this.endDate,
+    required this.memberCount,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isComplete = progress >= 1.0;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -278,35 +252,29 @@ class _WeekCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isComplete ? AppColors.success.withAlpha(80) : AppColors.border),
+          border: Border.all(color: AppColors.border),
           boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 6)],
         ),
         child: Row(children: [
           Container(
             width: 48, height: 48,
             decoration: BoxDecoration(
-              color: isComplete ? AppColors.successLight : AppColors.primaryLight,
+              color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: isComplete
-                ? const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24)
-                : Center(child: Text('W$weekNumber', style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w800))),
+            child: const Center(child: Icon(Icons.class_outlined, color: AppColors.primary, size: 24)),
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             const SizedBox(height: 4),
-            Text('$completedActivities/$totalActivities hoạt động', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                backgroundColor: AppColors.border,
-                valueColor: AlwaysStoppedAnimation(isComplete ? AppColors.success : AppColors.primary),
-                minHeight: 5,
-              ),
-            ),
+            Row(
+              children: [
+                const Icon(Icons.people_outline, size: 14, color: AppColors.textHint),
+                const SizedBox(width: 4),
+                Text('$memberCount thành viên', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+              ],
+            )
           ])),
           const SizedBox(width: 8),
           const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
@@ -315,3 +283,4 @@ class _WeekCard extends StatelessWidget {
     );
   }
 }
+

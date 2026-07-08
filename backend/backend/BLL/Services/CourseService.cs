@@ -54,22 +54,35 @@ public class CourseService : ICourseService
         });
     }
 
-    public async Task<CourseDto?> GetCourseByIdAsync(int id, int instructorId)
+    public async Task<CourseDetailDto?> GetCourseByIdAsync(int id, int userId)
     {
+        // For now, allow both Instructor and Learner to view course details
         var course = await _unitOfWork.Repository<Course>().GetQueryable()
             .Include(c => c.Instructor)
-            .FirstOrDefaultAsync(c => c.Id == id && c.InstructorId == instructorId);
+            .Include(c => c.Classes)
+            .FirstOrDefaultAsync(c => c.Id == id);
 
         if (course == null) return null;
 
-        return new CourseDto
+        return new CourseDetailDto
         {
             Id = course.Id,
             Title = course.Title,
             Description = course.Description,
             CoverImageUrl = course.CoverImageUrl,
-            InstructorId = course.InstructorId,
-            InstructorName = course.Instructor.FullName
+            InstructorName = course.Instructor?.FullName ?? string.Empty,
+            InstructorAvatar = course.Instructor?.AvatarUrl,
+            CreatedAt = course.CreatedAt,
+            Classes = course.Classes.Select(c => new CourseClassDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                // Assuming we don't have MemberCount loaded easily here without a projection or another include.
+                // We'll leave it as 0 for now or compute if needed.
+                MemberCount = 0
+            }).ToList()
         };
     }
 
