@@ -1,12 +1,14 @@
 using backend.BLL.DTOs.LearningPath;
 using backend.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/learning-paths")]
-public class LearningPathController : ControllerBase
+[Authorize]
+public class LearningPathController : BaseController
 {
     private readonly ILearningPathService _learningPathService;
 
@@ -15,25 +17,22 @@ public class LearningPathController : ControllerBase
         _learningPathService = learningPathService;
     }
 
-    private int CurrentInstructorId
-    {
-        get
-        {
-            if (Request.Headers.TryGetValue("X-Instructor-Id", out var value) && int.TryParse(value, out var id))
-            {
-                return id;
-            }
-            return 1; // Default to instructor 1 for easy testing
-        }
-    }
-
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<LearningPathDto>>> GetPaths([FromQuery] int classId)
+    public async Task<IActionResult> GetPaths([FromQuery] int classId)
     {
         try
         {
-            var paths = await _learningPathService.GetLearningPathsByClassAsync(classId, CurrentInstructorId);
-            return Ok(paths);
+            var role = GetCurrentUserRole();
+            if (role == "Learner")
+            {
+                var paths = await _learningPathService.GetByClassAsync(classId, GetCurrentUserId());
+                return Ok(ApiResponse.Success(paths));
+            }
+            else
+            {
+                var paths = await _learningPathService.GetLearningPathsByClassAsync(classId, GetCurrentUserId());
+                return Ok(ApiResponse.Success(paths));
+            }
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -41,13 +40,29 @@ public class LearningPathController : ControllerBase
         }
     }
 
-    [HttpPost]
-    public async Task<ActionResult<LearningPathDto>> CreatePath(CreateLearningPathDto dto)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetLearningPathDetail(int id)
     {
         try
         {
-            var newPath = await _learningPathService.CreateLearningPathAsync(dto, CurrentInstructorId);
-            return Ok(newPath);
+            var detail = await _learningPathService.GetByIdAsync(id, GetCurrentUserId());
+            return Ok(ApiResponse.Success(detail));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse.Fail(ex.Message));
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreatePath(CreateLearningPathDto dto)
+    {
+        try
+        {
+            var role = GetCurrentUserRole();
+            if (role == "Learner") return Forbid("Chỉ giảng viên mới tạo được lộ trình học.");
+            var newPath = await _learningPathService.CreateLearningPathAsync(dto, GetCurrentUserId());
+            return Ok(ApiResponse.Success(newPath));
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -58,8 +73,10 @@ public class LearningPathController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePath(int id)
     {
-        var result = await _learningPathService.DeleteLearningPathAsync(id, CurrentInstructorId);
-        if (!result) return NotFound("Không tìm thấy tuần học hoặc bạn không có quyền xóa.");
-        return NoContent();
+        var role = GetCurrentUserRole();
+        if (role == "Learner") return Forbid("Chỉ giảng viên mới xóa được lộ trình học.");
+        var result = await _learningPathService.DeleteLearningPathAsync(id, GetCurrentUserId());
+        if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy tuần học hoặc bạn không có quyền xóa."));
+        return Ok(ApiResponse.Success(new { success = true }, "Xóa thành công."));
     }
 }

@@ -81,6 +81,7 @@ class CourseModel {
   final String? activeClassName;
   final int classCount;
   final DateTime? createdAt;
+  final List<dynamic>? classes;
 
   const CourseModel({
     required this.id,
@@ -94,6 +95,7 @@ class CourseModel {
     this.activeClassName,
     this.classCount = 0,
     this.createdAt,
+    this.classes,
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) => CourseModel(
@@ -108,6 +110,7 @@ class CourseModel {
     activeClassName: json['activeClassName'] as String?,
     classCount:      json['classCount'] as int? ?? 0,
     createdAt:       json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+    classes:         json['classes'] as List<dynamic>?,
   );
 }
 
