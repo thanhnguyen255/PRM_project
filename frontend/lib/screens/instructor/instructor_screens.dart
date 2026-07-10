@@ -98,6 +98,15 @@ class _DashboardTabState extends State<_DashboardTab> {
                   child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
                 ),
               ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/profile'),
+                child: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(51), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.person_rounded, color: Colors.white, size: 22),
+                ),
+              ),
             ]),
           ),
         ),

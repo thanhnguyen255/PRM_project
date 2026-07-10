@@ -62,6 +62,7 @@ import 'screens/instructor/projects/manage_projects_screen.dart';
 import 'screens/instructor/review/instructor_review_screen.dart';
 import 'screens/instructor/analytics/class_analytics_screen.dart';
 import 'screens/instructor/evidence_review/evidence_detail_screen.dart';
+import 'screens/instructor/materials/materials_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -296,6 +297,10 @@ class FlippedClassroomApp extends StatelessWidget {
       return _page(ProgressScreen(classId: args?['classId'] as int?), settings);
     }
 
+    // /profile
+    if (name == '/profile')
+      return _page(const ProfileScreen(), settings);
+
     // /edit-profile
     if (name == '/edit-profile')
       return _page(const EditProfileScreen(), settings);
@@ -372,6 +377,13 @@ class FlippedClassroomApp extends StatelessWidget {
       final id = _parseSegment(name, 2);
       if (id != null)
         return _page(ManageActivitiesScreen(pathId: id), settings);
+    }
+
+    // /instructor/paths/:id/materials
+    if (_matches(name, '/instructor/paths/') && name.contains('/materials')) {
+      final id = _parseSegment(name, 2);
+      if (id != null)
+        return _page(ManageMaterialsScreen(pathId: id), settings);
     }
 
     // /instructor/classes/:id/projects

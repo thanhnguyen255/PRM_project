@@ -9,9 +9,20 @@ class AuthViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _error;
+  int? _userId;
+
+  AuthViewModel() {
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    _userId = await _auth.getUserId();
+    notifyListeners();
+  }
 
   bool get isLoading => _isLoading;
   String? get error  => _error;
+  int? get userId    => _userId;
 
   void _setLoading(bool v) { _isLoading = v; notifyListeners(); }
   void _setError(String? v) { _error = v; notifyListeners(); }
@@ -21,7 +32,12 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true); _setError(null);
     final result = await _auth.login(email: email, password: password);
     _setLoading(false);
-    if (!result.success) _setError(result.error);
+    if (!result.success) {
+      _setError(result.error);
+    } else if (result.data != null) {
+      _userId = result.data!.userId;
+      notifyListeners();
+    }
     return result.success ? result.data!.role : null;
   }
 
@@ -29,11 +45,20 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true); _setError(null);
     final result = await _auth.register(fullName: fullName, email: email, password: password);
     _setLoading(false);
-    if (!result.success) _setError(result.error);
+    if (!result.success) {
+      _setError(result.error);
+    } else if (result.data != null) {
+      _userId = result.data!.userId;
+      notifyListeners();
+    }
     return result.success ? result.data!.role : null;
   }
 
-  Future<void> logout() => _auth.logout();
+  Future<void> logout() async {
+    await _auth.logout();
+    _userId = null;
+    notifyListeners();
+  }
 }
 
 // ─── HomeViewModel ────────────────────────────────────────────────────────────
