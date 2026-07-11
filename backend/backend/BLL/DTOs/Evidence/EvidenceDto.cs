@@ -35,3 +35,10 @@ public class CreateEvidenceCommentDto
 {
     public string Content { get; set; } = string.Empty;
 }
+
+public class CreateEvidenceDto
+{
+    public int ActivityId { get; set; }
+    public string? Note { get; set; }
+    public Microsoft.AspNetCore.Http.IFormFile? File { get; set; }
+}

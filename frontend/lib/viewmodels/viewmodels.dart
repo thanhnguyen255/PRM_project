@@ -269,9 +269,9 @@ class EvidenceViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> submitEvidence({required int activityId, String? note}) async {
+  Future<String?> submitEvidence({required int activityId, String? note, String? filePath, String? fileName}) async {
     _isSubmitting = true; notifyListeners();
-    final result = await _service.submitEvidence(activityId: activityId, note: note);
+    final result = await _service.submitEvidence(activityId: activityId, note: note, filePath: filePath, fileName: fileName);
     _isSubmitting = false; notifyListeners();
     return result.success ? null : result.error;
   }

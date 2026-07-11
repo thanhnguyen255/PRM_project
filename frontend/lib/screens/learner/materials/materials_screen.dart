@@ -8,8 +8,8 @@ import '../../../widgets/widgets.dart';
 // SCR-L15/L16 — Materials List (Learner) — links to VideoPlayer/DocViewer
 // ════════════════════════════════════════════════════════════════════════════════
 class MaterialsScreen extends StatefulWidget {
-  final int activityId;
-  const MaterialsScreen({super.key, required this.activityId});
+  final int pathId;
+  const MaterialsScreen({super.key, required this.pathId});
   @override
   State<MaterialsScreen> createState() => _MaterialsScreenState();
 }
@@ -19,7 +19,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MaterialViewModel>().loadMaterials(widget.activityId);
+      context.read<MaterialViewModel>().loadMaterials(widget.pathId);
     });
   }
 
@@ -59,17 +59,7 @@ class _MaterialCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        if (_isVideo) {
-          Navigator.pushNamed(context, '/video-player', arguments: {
-            'url': material['linkUrl'] ?? '',
-            'title': material['title'] ?? '',
-          });
-        } else {
-          Navigator.pushNamed(context, '/document-viewer', arguments: {
-            'url': material['linkUrl'] ?? '',
-            'title': material['title'] ?? '',
-          });
-        }
+        Navigator.pushNamed(context, '/material-detail', arguments: material['id']);
       },
       borderRadius: BorderRadius.circular(14),
       child: Container(

@@ -137,25 +137,26 @@ class EvidenceService {
     String? filePath,
     String? fileName,
   }) async {
-    final Map<String, dynamic> fields = {'activityId': activityId.toString()};
-    if (note != null && note.isNotEmpty) fields['note'] = note;
+    try {
+      final Map<String, dynamic> data = {'ActivityId': activityId};
+      if (note != null && note.isNotEmpty) data['Note'] = note;
 
-    dynamic requestData = fields;
-    if (filePath != null && filePath.isNotEmpty) {
-      requestData = FormData.fromMap({
-        ...fields,
-        'file': await MultipartFile.fromFile(
+      if (filePath != null && filePath.isNotEmpty) {
+        data['File'] = await MultipartFile.fromFile(
           filePath,
           filename: fileName ?? filePath.split('/').last,
-        ),
-      });
-    }
+        );
+      }
 
-    final res = await _api.post(ApiConfig.evidences, data: requestData);
-    return (
-      success: res['success'] == true,
-      error: res['message'] as String?,
-    );
+      final formData = FormData.fromMap(data);
+      final res = await _api.postForm(ApiConfig.evidences, formData);
+      return (
+        success: res['success'] == true,
+        error: res['message'] as String?,
+      );
+    } catch (e) {
+      return (success: false, error: e.toString());
+    }
   }
 
   Future<({bool success, String? error})> approveEvidence(int id, {String? comment}) async {

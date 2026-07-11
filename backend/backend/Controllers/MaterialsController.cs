@@ -24,4 +24,13 @@ public class MaterialsController : BaseController
         var result = await _service.GetByPathAsync(pathId, type);
         return Ok(ApiResponse.Success(result));
     }
+
+    /// <summary>GET /api/materials/{id} — Chi tiết tài liệu</summary>
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var result = await _service.GetByIdAsync(id);
+        if (result == null) return NotFound(ApiResponse.Fail("Không tìm thấy tài liệu."));
+        return Ok(ApiResponse.Success(result));
+    }
 }

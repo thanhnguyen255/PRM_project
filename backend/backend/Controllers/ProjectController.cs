@@ -6,7 +6,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/projects")]
-public class ProjectController : ControllerBase
+public class ProjectController : BaseController
 {
     private readonly IProjectService _projectService;
 
@@ -16,32 +16,32 @@ public class ProjectController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects([FromQuery] int classId)
+    public async Task<IActionResult> GetProjects([FromQuery] int classId)
     {
         var projects = await _projectService.GetProjectsByClassAsync(classId);
-        return Ok(projects);
+        return Ok(ApiResponse.Success(projects));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProjectDto>> GetProject(int id)
+    public async Task<IActionResult> GetProject(int id)
     {
         var project = await _projectService.GetProjectByIdAsync(id);
-        if (project == null) return NotFound("Không tìm thấy dự án.");
-        return Ok(project);
+        if (project == null) return NotFound(ApiResponse.Fail("Không tìm thấy dự án."));
+        return Ok(ApiResponse.Success(project));
     }
 
     [HttpPost]
-    public async Task<ActionResult<ProjectDto>> CreateProject(CreateProjectDto dto)
+    public async Task<IActionResult> CreateProject(CreateProjectDto dto)
     {
         var project = await _projectService.CreateProjectAsync(dto);
-        return CreatedAtAction(nameof(GetProject), new { id = project.Id }, project);
+        return StatusCode(201, ApiResponse.Success(project, "Project created"));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProject(int id)
     {
         var result = await _projectService.DeleteProjectAsync(id);
-        if (!result) return NotFound("Không tìm thấy dự án để xóa.");
-        return NoContent();
+        if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy dự án để xóa."));
+        return Ok(ApiResponse.Success<object?>(null));
     }
 }
