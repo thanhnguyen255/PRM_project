@@ -110,4 +110,20 @@ public class MaterialService : IMaterialService
         await _unitOfWork.SaveChangesAsync();
         return true;
     }
+
+    public async Task<MaterialDto?> GetByIdAsync(int id)
+    {
+        var m = await _db.LearningMaterials.FirstOrDefaultAsync(m => m.Id == id);
+        if (m == null) return null;
+        
+        return new MaterialDto
+        {
+            Id = m.Id,
+            Title = m.Title,
+            Type = m.Type.ToString(),
+            FileUrl = m.FileUrl,
+            LinkUrl = m.LinkUrl,
+            LearningPathId = m.LearningPathId
+        };
+    }
 }

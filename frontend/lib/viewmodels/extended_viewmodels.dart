@@ -83,9 +83,9 @@ class ProjectViewModel extends ChangeNotifier {
     return r.success ? null : r.error;
   }
 
-  Future<String?> submitMilestone({required int milestoneId, String? description}) async {
+  Future<String?> submitMilestone({required int milestoneId, String? description, String? filePath}) async {
     _isSaving = true; notifyListeners();
-    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description);
+    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description, filePath: filePath);
     _isSaving = false; notifyListeners();
     return r.success ? null : r.error;
   }
@@ -196,12 +196,20 @@ class MaterialViewModel extends ChangeNotifier {
   final _svc = MaterialService();
 
   List<Map<String,dynamic>> _materials = [];
+  Map<String,dynamic>?      _materialDetail;
   bool                      _isLoading = false;
   bool                      _isSaving  = false;
 
-  List<Map<String,dynamic>> get materials => _materials;
-  bool                      get isLoading => _isLoading;
-  bool                      get isSaving  => _isSaving;
+  List<Map<String,dynamic>> get materials      => _materials;
+  Map<String,dynamic>?      get materialDetail => _materialDetail;
+  bool                      get isLoading      => _isLoading;
+  bool                      get isSaving       => _isSaving;
+
+  Future<void> loadMaterialDetail(int id) async {
+    _isLoading      = true; notifyListeners();
+    _materialDetail = await _svc.getMaterialDetail(id);
+    _isLoading      = false; notifyListeners();
+  }
 
   Future<void> loadMaterials(int pathId) async {
     _isLoading = true; notifyListeners();
@@ -229,6 +237,35 @@ class MaterialViewModel extends ChangeNotifier {
     final r = await _svc.deleteMaterial(id);
     if (r.success) await loadMaterials(pathId);
     return r.success ? null : r.error;
+  }
+}
+
+// ─── ExtendedActivityViewModel ────────────────────────────────────────────────────────
+class ExtendedActivityViewModel extends ChangeNotifier {
+  final _svc = ActivityService();
+
+  List<Map<String, dynamic>> _activities = [];
+  Map<String, dynamic>? _activityDetail;
+  bool _isLoading = false;
+
+  List<Map<String, dynamic>> get activities => _activities;
+  Map<String, dynamic>? get activityDetail => _activityDetail;
+  bool get isLoading => _isLoading;
+
+  Future<void> loadActivities(int pathId, {String? type}) async {
+    _isLoading = true;
+    notifyListeners();
+    _activities = await _svc.getActivities(pathId, type: type);
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadActivityDetail(int id) async {
+    _isLoading = true;
+    notifyListeners();
+    _activityDetail = await _svc.getActivityDetail(id);
+    _isLoading = false;
+    notifyListeners();
   }
 }
 

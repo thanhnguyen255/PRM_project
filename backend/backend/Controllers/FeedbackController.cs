@@ -6,7 +6,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/feedbacks")]
-public class FeedbackController : ControllerBase
+public class FeedbackController : BaseController
 {
     private readonly IReviewService _reviewService;
 
@@ -28,38 +28,42 @@ public class FeedbackController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<FeedbackDto>> SubmitFeedback(CreateFeedbackDto dto)
+    public async Task<IActionResult> SubmitFeedback(CreateFeedbackDto dto)
     {
         try
         {
             var feedback = await _reviewService.SubmitFeedbackAsync(dto, CurrentUserId);
-            return Ok(feedback);
+            return StatusCode(201, ApiResponse.Success(feedback, "Feedback created"));
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(ApiResponse.Fail(ex.Message));
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(ApiResponse.Fail(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse.Fail(ex.Message));
         }
     }
 
     [HttpGet("received")]
-    public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetReceivedFeedback([FromQuery] int sessionId)
+    public async Task<IActionResult> GetReceivedFeedback([FromQuery] int sessionId)
     {
         var feedbacks = await _reviewService.GetReceivedFeedbackAsync(sessionId, CurrentUserId);
-        return Ok(feedbacks);
+        return Ok(ApiResponse.Success(feedbacks));
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetAllFeedbacks([FromQuery] int sessionId)
+    public async Task<IActionResult> GetAllFeedbacks([FromQuery] int sessionId)
     {
         var feedbacks = await _reviewService.GetAllFeedbacksInSessionAsync(sessionId);
-        return Ok(feedbacks);
+        return Ok(ApiResponse.Success(feedbacks));
     }
 }

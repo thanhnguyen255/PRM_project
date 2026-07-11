@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../config/api_config.dart';
 import '../models/models.dart';
 import 'api_service.dart';
@@ -100,11 +102,15 @@ class MilestoneService {
   Future<({bool success, String? error})> submitMilestone({
     required int milestoneId,
     String? description,
+    String? filePath,
   }) async {
-    final res = await _api.post(ApiConfig.submitMilestone, data: {
+    final formData = FormData.fromMap({
       'milestoneId': milestoneId,
-      'description': description,
+      if (description != null && description.isNotEmpty) 'description': description,
+      if (filePath != null) 'file': await MultipartFile.fromFile(filePath),
     });
+
+    final res = await _api.postForm(ApiConfig.submitMilestone, formData);
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 }
@@ -213,6 +219,12 @@ class MaterialService {
     return [];
   }
 
+  Future<Map<String, dynamic>?> getMaterialDetail(int id) async {
+    final res = await _api.get(ApiConfig.materialDetail(id));
+    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
+    return null;
+  }
+
   Future<({bool success, String? error})> createMaterial({
     required int learningPathId,
     required String title,
@@ -233,3 +245,23 @@ class MaterialService {
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 }
+
+// ─── ActivityService ──────────────────────────────────────────────────────────
+class ActivityService {
+  final _api = ApiService.instance;
+
+  Future<List<Map<String, dynamic>>> getActivities(int pathId, {String? type}) async {
+    final res = await _api.get(ApiConfig.activities(pathId, type: type));
+    if (res['success'] == true) {
+      return (res['data'] as List<dynamic>).cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> getActivityDetail(int id) async {
+    final res = await _api.get(ApiConfig.activityDetail(id));
+    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
+    return null;
+  }
+}
+

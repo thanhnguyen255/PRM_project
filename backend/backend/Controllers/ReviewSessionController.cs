@@ -6,7 +6,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/review-sessions")]
-public class ReviewSessionController : ControllerBase
+public class ReviewSessionController : BaseController
 {
     private readonly IReviewService _reviewService;
 
@@ -16,39 +16,39 @@ public class ReviewSessionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ReviewSessionDto>>> GetSessions([FromQuery] int classId)
+    public async Task<IActionResult> GetSessions([FromQuery] int classId)
     {
         var sessions = await _reviewService.GetSessionsByClassAsync(classId);
-        return Ok(sessions);
+        return Ok(ApiResponse.Success(sessions));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ReviewSessionDto>> GetSession(int id)
+    public async Task<IActionResult> GetSession(int id)
     {
         var session = await _reviewService.GetSessionByIdAsync(id);
-        if (session == null) return NotFound("Không tìm thấy phiên đánh giá chéo.");
-        return Ok(session);
+        if (session == null) return NotFound(ApiResponse.Fail("Không tìm thấy phiên đánh giá chéo."));
+        return Ok(ApiResponse.Success(session));
     }
 
     [HttpPost]
-    public async Task<ActionResult<ReviewSessionDto>> CreateSession(CreateReviewSessionDto dto)
+    public async Task<IActionResult> CreateSession(CreateReviewSessionDto dto)
     {
         var session = await _reviewService.CreateSessionAsync(dto);
-        return CreatedAtAction(nameof(GetSession), new { id = session.Id }, session);
+        return StatusCode(201, ApiResponse.Success(session, "Session created"));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteSession(int id)
     {
         var result = await _reviewService.DeleteSessionAsync(id);
-        if (!result) return NotFound("Không tìm thấy phiên đánh giá chéo để xóa.");
-        return NoContent();
+        if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy phiên đánh giá chéo để xóa."));
+        return Ok(ApiResponse.Success<object?>(null));
     }
 
     [HttpGet("{id}/monitor")]
-    public async Task<ActionResult<IEnumerable<ReviewMonitorDto>>> GetMonitor(int id)
+    public async Task<IActionResult> GetMonitor(int id)
     {
         var monitor = await _reviewService.GetReviewMonitorAsync(id);
-        return Ok(monitor);
+        return Ok(ApiResponse.Success(monitor));
     }
 }
