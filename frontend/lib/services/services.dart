@@ -141,8 +141,11 @@ class EvidenceService {
       final Map<String, dynamic> data = {'ActivityId': activityId};
       if (note != null && note.isNotEmpty) data['Note'] = note;
 
-      if (filePath != null && fileName != null) {
-        data['File'] = await MultipartFile.fromFile(filePath, filename: fileName);
+      if (filePath != null && filePath.isNotEmpty) {
+        data['File'] = await MultipartFile.fromFile(
+          filePath,
+          filename: fileName ?? filePath.split('/').last,
+        );
       }
 
       final formData = FormData.fromMap(data);

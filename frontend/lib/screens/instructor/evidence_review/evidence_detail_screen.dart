@@ -279,7 +279,7 @@ class _EvidenceDetailScreenState extends State<EvidenceDetailScreen> {
                           isInstructor: c.isInstructor,
                           content:      c.content,
                           createdAt:    c.createdAt,
-                          currentUserId: 1, // TODO: from AuthViewModel
+                          currentUserId: context.watch<AuthViewModel>().userId ?? 1,
                         )),
                     ]),
                   )),

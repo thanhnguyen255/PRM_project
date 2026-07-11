@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../config/app_colors.dart';
 import '../../../viewmodels/viewmodels.dart';
 import '../../../widgets/widgets.dart';
+import '../../../services/services.dart';
+
 
 // ════════════════════════════════════════════════════════════════════════════════
 // SCR-L23/L24 — Profile & Edit Profile (Learner)
@@ -126,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
+
 // ── Edit Profile ───────────────────────────────────────────────────────────────
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -151,12 +154,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    // TODO: call profile update API via service directly
-    await Future.delayed(const Duration(milliseconds: 600));
+    
+    final name = _nameCtrl.text.trim();
+    final res = await ProfileService().updateProfile(fullName: name);
+    
     if (!mounted) return;
     setState(() => _saving = false);
-    AppSnackBar.show(context, 'Cập nhật thành công!', type: SnackType.success);
-    Navigator.pop(context);
+    
+    if (res.success) {
+      context.read<HomeViewModel>().init(); // Refresh profile name on home screen
+      AppSnackBar.show(context, 'Cập nhật thành công!', type: SnackType.success);
+      Navigator.pop(context);
+    } else {
+      AppSnackBar.show(context, res.error ?? 'Đã xảy ra lỗi', type: SnackType.error);
+    }
   }
 
   @override

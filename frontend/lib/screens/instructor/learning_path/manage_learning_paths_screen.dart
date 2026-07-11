@@ -189,6 +189,11 @@ class _PathCard extends StatelessWidget {
         ]),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
           IconButton(
+            icon: const Icon(Icons.folder_shared_rounded, color: AppColors.secondary, size: 22),
+            tooltip: 'Quản lý tài liệu',
+            onPressed: () => Navigator.pushNamed(context, '/instructor/paths/${path.id}/materials'),
+          ),
+          IconButton(
             icon: const Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 22),
             tooltip: 'Quản lý hoạt động',
             onPressed: onManage,
