@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../config/api_config.dart';
 import '../models/models.dart';
 import 'api_service.dart';
@@ -136,16 +137,23 @@ class EvidenceService {
     String? filePath,
     String? fileName,
   }) async {
-    final formData = {'activityId': activityId.toString()};
-    if (note != null && note.isNotEmpty) formData['note'] = note;
+    try {
+      final Map<String, dynamic> data = {'ActivityId': activityId};
+      if (note != null && note.isNotEmpty) data['Note'] = note;
 
-    // TODO: Thêm file nếu có filePath
+      if (filePath != null && fileName != null) {
+        data['File'] = await MultipartFile.fromFile(filePath, filename: fileName);
+      }
 
-    final res = await _api.post(ApiConfig.evidences, data: formData);
-    return (
-      success: res['success'] == true,
-      error: res['message'] as String?,
-    );
+      final formData = FormData.fromMap(data);
+      final res = await _api.postForm(ApiConfig.evidences, formData);
+      return (
+        success: res['success'] == true,
+        error: res['message'] as String?,
+      );
+    } catch (e) {
+      return (success: false, error: e.toString());
+    }
   }
 
   Future<({bool success, String? error})> approveEvidence(int id, {String? comment}) async {

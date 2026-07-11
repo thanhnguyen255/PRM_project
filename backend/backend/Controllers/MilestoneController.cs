@@ -6,7 +6,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api")]
-public class MilestoneController : ControllerBase
+public class MilestoneController : BaseController
 {
     private readonly IProjectService _projectService;
 
@@ -28,53 +28,57 @@ public class MilestoneController : ControllerBase
     }
 
     [HttpGet("milestones")]
-    public async Task<ActionResult<IEnumerable<MilestoneDto>>> GetMilestones([FromQuery] int projectId)
+    public async Task<IActionResult> GetMilestones([FromQuery] int projectId)
     {
         var milestones = await _projectService.GetMilestonesByProjectAsync(projectId);
-        return Ok(milestones);
+        return Ok(ApiResponse.Success(milestones));
     }
 
     [HttpGet("milestones/{id}")]
-    public async Task<ActionResult<MilestoneDto>> GetMilestone(int id)
+    public async Task<IActionResult> GetMilestone(int id)
     {
         var milestone = await _projectService.GetMilestoneByIdAsync(id);
-        if (milestone == null) return NotFound("Không tìm thấy Milestone.");
-        return Ok(milestone);
+        if (milestone == null) return NotFound(ApiResponse.Fail("Không tìm thấy Milestone."));
+        return Ok(ApiResponse.Success(milestone));
     }
 
     [HttpPost("milestones")]
-    public async Task<ActionResult<MilestoneDto>> CreateMilestone(CreateMilestoneDto dto)
+    public async Task<IActionResult> CreateMilestone(CreateMilestoneDto dto)
     {
         var milestone = await _projectService.CreateMilestoneAsync(dto);
-        return CreatedAtAction(nameof(GetMilestone), new { id = milestone.Id }, milestone);
+        return StatusCode(201, ApiResponse.Success(milestone, "Milestone created"));
     }
 
     [HttpDelete("milestones/{id}")]
     public async Task<IActionResult> DeleteMilestone(int id)
     {
         var result = await _projectService.DeleteMilestoneAsync(id);
-        if (!result) return NotFound("Không tìm thấy Milestone để xóa.");
-        return NoContent();
+        if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy Milestone để xóa."));
+        return Ok(ApiResponse.Success<object?>(null));
     }
 
     [HttpPost("milestone-submissions")]
-    public async Task<ActionResult<MilestoneSubmissionDto>> SubmitMilestone(CreateMilestoneSubmissionDto dto)
+    public async Task<IActionResult> SubmitMilestone([FromForm] CreateMilestoneSubmissionDto dto)
     {
         try
         {
             var submission = await _projectService.SubmitMilestoneAsync(dto, CurrentUserId);
-            return Ok(submission);
+            return StatusCode(201, ApiResponse.Success(submission, "Milestone submission created"));
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(ApiResponse.Fail(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse.Fail(ex.Message));
         }
     }
 
     [HttpGet("milestones/{id}/submissions")]
-    public async Task<ActionResult<IEnumerable<MilestoneSubmissionDto>>> GetSubmissions(int id)
+    public async Task<IActionResult> GetSubmissions(int id)
     {
         var submissions = await _projectService.GetSubmissionsByMilestoneAsync(id);
-        return Ok(submissions);
+        return Ok(ApiResponse.Success(submissions));
     }
 }

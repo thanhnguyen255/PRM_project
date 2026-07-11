@@ -166,4 +166,59 @@ public class EvidenceService : IEvidenceService
             CreatedAt = comment.CreatedAt
         };
     }
+
+    public async Task<EvidenceDto?> SubmitEvidenceAsync(CreateEvidenceDto dto, int learnerId)
+    {
+        var user = await _unitOfWork.Repository<User>().GetByIdAsync(learnerId);
+        if (user == null) return null;
+
+        var activity = await _unitOfWork.Repository<Activity>().GetByIdAsync(dto.ActivityId);
+        if (activity == null) return null;
+
+        string? fileUrl = null;
+        if (dto.File != null && dto.File.Length > 0)
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.File.FileName;
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await dto.File.CopyToAsync(stream);
+            }
+
+            fileUrl = "/uploads/" + uniqueFileName;
+        }
+
+        var submission = new ActivitySubmission
+        {
+            ActivityId = dto.ActivityId,
+            UserId = learnerId,
+            FileUrl = fileUrl,
+            Note = dto.Note,
+            Status = backend.DAL.Enums.EvidenceStatus.Pending,
+            SubmittedAt = DateTime.UtcNow
+        };
+
+        await _unitOfWork.Repository<ActivitySubmission>().AddAsync(submission);
+        await _unitOfWork.SaveChangesAsync();
+
+        return new EvidenceDto
+        {
+            Id = submission.Id,
+            ActivityId = submission.ActivityId,
+            ActivityTitle = activity.Title,
+            UserId = learnerId,
+            UserFullName = user.FullName,
+            FileUrl = submission.FileUrl,
+            Note = submission.Note,
+            Status = submission.Status,
+            SubmittedAt = submission.SubmittedAt
+        };
+    }
 }
