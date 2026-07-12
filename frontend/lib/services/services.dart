@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/models.dart';
 import 'api_service.dart';
@@ -117,7 +118,8 @@ class EvidenceService {
   Future<List<EvidenceModel>> getEvidencesByClass(int classId, {String? status}) async {
     final res = await _api.get(ApiConfig.evidencesByClass(classId, status: status));
     if (res['success'] == true) {
-      final items = (res['data'] as Map<String, dynamic>)['items'] as List<dynamic>;
+      final data = res['data'];
+      final items = data is Map ? data['items'] as List<dynamic> : data as List<dynamic>;
       return items.map((e) => EvidenceModel.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
@@ -224,8 +226,17 @@ class ProfileService {
   }) async {
     final res = await _api.put('/profile', data: {
       'fullName': fullName,
-      if (avatarUrl != null) 'avatarUrl': avatarUrl,
+      'avatarUrl': avatarUrl,
     });
+    if (res['success'] == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('fullName', fullName);
+      if (avatarUrl != null) {
+        await prefs.setString('avatarUrl', avatarUrl);
+      } else {
+        await prefs.remove('avatarUrl');
+      }
+    }
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 }

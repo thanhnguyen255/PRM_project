@@ -106,7 +106,7 @@ class FlippedClassroomApp extends StatelessWidget {
         title: 'Flipped Classroom',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        initialRoute: '/login',
+        initialRoute: '/splash',
         onGenerateRoute: _generateRoute,
       ),
     );
@@ -118,7 +118,7 @@ class FlippedClassroomApp extends StatelessWidget {
 
     // ── Auth ─────────────────────────────────────────────────────────────────
     if (name == '/splash') return _page(const SplashScreen(), settings);
-    if (name == '/login') return _page(const LoginScreen(), settings);
+    if (name == '/' || name == '/login') return _page(const LoginScreen(), settings);
     if (name == '/register') return _page(const RegisterScreen(), settings);
     if (name == '/forgot-password')
       return _page(const ForgotPasswordScreen(), settings);

@@ -19,6 +19,8 @@ public class ReviewService : IReviewService
     public async Task<IEnumerable<ReviewSessionDto>> GetSessionsByClassAsync(int classId)
     {
         var sessions = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Feedbacks)
             .Where(s => s.ClassId == classId)
             .ToListAsync();
 
@@ -28,13 +30,19 @@ public class ReviewService : IReviewService
             ClassId = s.ClassId,
             Title = s.Title,
             StartDate = s.StartDate,
-            EndDate = s.EndDate
+            EndDate = s.EndDate,
+            TotalPairs = s.Assignments.Count,
+            CompletedPairs = s.Assignments.Count(a => a.Feedbacks.Any())
         });
     }
 
     public async Task<ReviewSessionDto?> GetSessionByIdAsync(int id)
     {
-        var session = await _unitOfWork.Repository<ReviewSession>().GetByIdAsync(id);
+        var session = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Feedbacks)
+            .FirstOrDefaultAsync(s => s.Id == id);
+            
         if (session == null) return null;
 
         return new ReviewSessionDto
@@ -43,7 +51,9 @@ public class ReviewService : IReviewService
             ClassId = session.ClassId,
             Title = session.Title,
             StartDate = session.StartDate,
-            EndDate = session.EndDate
+            EndDate = session.EndDate,
+            TotalPairs = session.Assignments.Count,
+            CompletedPairs = session.Assignments.Count(a => a.Feedbacks.Any())
         };
     }
 

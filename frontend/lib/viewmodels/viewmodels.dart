@@ -67,11 +67,13 @@ class HomeViewModel extends ChangeNotifier {
   final _activityService = ActivityService();
   final _notifService = NotificationService();
   final _auth = AuthService();
+  final _profileService = ProfileService();
 
   List<CourseModel>   _courses    = [];
   List<ActivityModel> _upcoming   = [];
   int                 _unreadCount = 0;
   String              _greeting   = '';
+  UserModel?          _profile;
   bool                _isLoading  = true;
   String?             _error;
 
@@ -79,6 +81,7 @@ class HomeViewModel extends ChangeNotifier {
   List<ActivityModel> get upcoming    => _upcoming;
   int                 get unreadCount => _unreadCount;
   String              get greeting    => _greeting;
+  UserModel?          get profile     => _profile;
   bool                get isLoading   => _isLoading;
   String?             get error       => _error;
 
@@ -86,6 +89,14 @@ class HomeViewModel extends ChangeNotifier {
     _isLoading = true; notifyListeners();
     final name = await _auth.getFullName();
     _greeting = name ?? 'Học viên';
+
+    try {
+      final data = await _profileService.getProfile();
+      if (data != null) {
+        _profile = UserModel.fromJson(data);
+        _greeting = _profile!.fullName;
+      }
+    } catch (_) {}
 
     await Future.wait([
       _loadCourses(),

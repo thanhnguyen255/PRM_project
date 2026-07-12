@@ -325,6 +325,7 @@ class _ClassMembersManageScreenState extends State<ClassMembersManageScreen> {
               label: const Text('Thêm'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary, foregroundColor: Colors.white,
+                minimumSize: const Size(0, 44),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 elevation: 0,

@@ -281,21 +281,32 @@ class EvidenceModel {
     this.commentCount = 0,
   });
 
-  factory EvidenceModel.fromJson(Map<String, dynamic> json) => EvidenceModel(
-    id:            json['id'] as int,
-    activityId:    json['activityId'] as int? ?? 0,
-    activityTitle: json['activityTitle'] as String? ?? '',
-    activityType:  json['activityType'] as String? ?? 'PreClass',
-    learnerId:     json['learnerId'] as int? ?? 0,
-    learnerName:   json['learnerName'] as String? ?? '',
-    learnerAvatar: json['learnerAvatar'] as String?,
-    fileUrl:       json['fileUrl'] as String?,
-    note:          json['note'] as String?,
-    status:        json['status'] as String? ?? 'Pending',
-    submittedAt:   DateTime.parse(json['submittedAt'] as String),
-    reviewedAt:    json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt']) : null,
-    commentCount:  json['commentCount'] as int? ?? 0,
-  );
+  factory EvidenceModel.fromJson(Map<String, dynamic> json) {
+    final statusVal = json['status'];
+    String statusStr = 'Pending';
+    if (statusVal is int) {
+      if (statusVal == 1) statusStr = 'Approved';
+      if (statusVal == 2) statusStr = 'Rejected';
+    } else if (statusVal is String) {
+      statusStr = statusVal;
+    }
+
+    return EvidenceModel(
+      id:            json['id'] as int,
+      activityId:    json['activityId'] as int? ?? 0,
+      activityTitle: json['activityTitle'] as String? ?? '',
+      activityType:  json['activityType'] as String? ?? 'PreClass',
+      learnerId:     json['learnerId'] as int? ?? 0,
+      learnerName:   json['learnerName'] as String? ?? '',
+      learnerAvatar: json['learnerAvatar'] as String?,
+      fileUrl:       json['fileUrl'] as String?,
+      note:          json['note'] as String?,
+      status:        statusStr,
+      submittedAt:   DateTime.parse(json['submittedAt'] as String),
+      reviewedAt:    json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt']) : null,
+      commentCount:  json['commentCount'] as int? ?? 0,
+    );
+  }
 }
 
 // ─── EvidenceCommentModel ─────────────────────────────────────────────────────
@@ -318,15 +329,28 @@ class EvidenceCommentModel {
     required this.createdAt,
   });
 
-  factory EvidenceCommentModel.fromJson(Map<String, dynamic> json) => EvidenceCommentModel(
-    id:           json['id'] as int,
-    authorId:     json['authorId'] as int? ?? 0,
-    authorName:   json['authorName'] as String? ?? '',
-    authorAvatar: json['authorAvatar'] as String?,
-    isInstructor: json['isInstructor'] as bool? ?? false,
-    content:      json['content'] as String,
-    createdAt:    DateTime.parse(json['createdAt'] as String),
-  );
+  factory EvidenceCommentModel.fromJson(Map<String, dynamic> json) {
+    final isInstVal = json['isInstructor'];
+    final userRoleVal = json['userRole'];
+    bool isInst = false;
+    if (isInstVal is bool) {
+      isInst = isInstVal;
+    } else if (userRoleVal is int) {
+      isInst = userRoleVal == 1; // 1 = Instructor in backend UserRole enum
+    } else if (userRoleVal is String) {
+      isInst = userRoleVal == 'Instructor';
+    }
+
+    return EvidenceCommentModel(
+      id:           json['id'] as int,
+      authorId:     json['authorId'] as int? ?? 0,
+      authorName:   json['authorName'] as String? ?? '',
+      authorAvatar: json['authorAvatar'] as String?,
+      isInstructor: isInst,
+      content:      json['content'] as String,
+      createdAt:    DateTime.parse(json['createdAt'] as String),
+    );
+  }
 }
 
 // ─── NotificationModel ────────────────────────────────────────────────────────
@@ -437,6 +461,8 @@ class ReviewSessionModel {
   final bool isOpen;
   final int myAssignmentCount;
   final int myCompletedCount;
+  final int totalPairs;
+  final int completedPairs;
 
   const ReviewSessionModel({
     required this.id,
@@ -447,6 +473,8 @@ class ReviewSessionModel {
     this.isOpen = false,
     this.myAssignmentCount = 0,
     this.myCompletedCount = 0,
+    this.totalPairs = 0,
+    this.completedPairs = 0,
   });
 
   factory ReviewSessionModel.fromJson(Map<String, dynamic> json) => ReviewSessionModel(
@@ -458,6 +486,8 @@ class ReviewSessionModel {
     isOpen:             json['isOpen'] as bool? ?? false,
     myAssignmentCount:  json['myAssignmentCount'] as int? ?? 0,
     myCompletedCount:   json['myCompletedCount'] as int? ?? 0,
+    totalPairs:         json['totalPairs'] as int? ?? 0,
+    completedPairs:     json['completedPairs'] as int? ?? 0,
   );
 }
 
