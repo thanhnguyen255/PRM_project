@@ -109,7 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final homeVm = context.watch<HomeViewModel>();
     final authVm = context.watch<AuthViewModel>();
-    final name   = homeVm.greeting.isNotEmpty ? homeVm.greeting : 'Học viên';
+    final isInstructor = homeVm.profile?.role == 'Instructor';
+    final name   = homeVm.greeting.isNotEmpty ? homeVm.greeting : (isInstructor ? 'Giảng viên' : 'Học viên');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -119,7 +120,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
-            automaticallyImplyLeading: false,
+            leading: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
@@ -146,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
-                  const Text('Học viên', style: TextStyle(fontSize: 13, color: Colors.white60)),
+                  Text(isInstructor ? 'Giảng viên' : 'Học viên', style: const TextStyle(fontSize: 13, color: Colors.white60)),
                 ]),
               ),
             ),
@@ -159,11 +165,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(20)),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.school_rounded, size: 14, color: AppColors.primary),
-                    SizedBox(width: 6),
-                    Text('Learner', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                  decoration: BoxDecoration(
+                    color: isInstructor ? AppColors.secondary.withAlpha(30) : AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(
+                      isInstructor ? Icons.shield_rounded : Icons.school_rounded,
+                      size: 14,
+                      color: isInstructor ? AppColors.secondary : AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isInstructor ? 'Giảng viên' : 'Learner',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isInstructor ? AppColors.secondary : AppColors.primary,
+                      ),
+                    ),
                   ]),
                 ),
               ),

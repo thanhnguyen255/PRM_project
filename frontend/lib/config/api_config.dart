@@ -76,8 +76,8 @@ class ApiConfig {
 
   // ── Evidences ──────────────────────────────────────────────────────────────
   static const String evidences          = '/evidences';
-  static String evidencesByClass(int classId, {String? status}) =>
-      '/evidences?classId=$classId${status != null ? '&status=$status' : ''}';
+  static String evidencesByClass(int? classId, {String? status}) =>
+      '/evidences?${classId != null ? 'classId=$classId' : ''}${status != null ? '&status=$status' : ''}';
   static String evidencesByActivity(int activityId) =>
       '/evidences?activityId=$activityId&userId=me';
   static String evidenceDetail(int id)   => '/evidences/$id';

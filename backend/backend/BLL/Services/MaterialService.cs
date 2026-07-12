@@ -72,11 +72,31 @@ public class MaterialService : IMaterialService
             .FirstOrDefaultAsync(lp => lp.Id == dto.LearningPathId && lp.Class.Course.InstructorId == instructorId)
             ?? throw new UnauthorizedAccessException("Bạn không sở hữu tuần học này.");
 
+        string? fileUrl = dto.FileUrl;
+        if (dto.File != null && dto.File.Length > 0)
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(dto.File.FileName);
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await dto.File.CopyToAsync(stream);
+            }
+
+            fileUrl = "/uploads/" + uniqueFileName;
+        }
+
         var material = new LearningMaterial
         {
             Title = dto.Title,
             Type = dto.Type,
-            FileUrl = dto.FileUrl,
+            FileUrl = fileUrl,
             LinkUrl = dto.LinkUrl,
             LearningPathId = dto.LearningPathId
         };

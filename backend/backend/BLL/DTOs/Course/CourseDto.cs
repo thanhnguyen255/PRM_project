@@ -1,4 +1,4 @@
-﻿namespace backend.BLL.DTOs.Course;
+namespace backend.BLL.DTOs.Course;
 
 public class CourseDto
 {
@@ -8,4 +8,5 @@ public class CourseDto
     public string? CoverImageUrl { get; set; }
     public int InstructorId { get; set; }
     public string InstructorName { get; set; } = string.Empty;
+    public int ClassCount { get; set; }
 }

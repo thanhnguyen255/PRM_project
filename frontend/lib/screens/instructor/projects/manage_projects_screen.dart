@@ -23,6 +23,21 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     });
   }
 
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      final y = picked.year;
+      final m = picked.month.toString().padLeft(2, '0');
+      final d = picked.day.toString().padLeft(2, '0');
+      controller.text = '$y-$m-$d';
+    }
+  }
+
   void _showAddProjectDialog() {
     final titleCtrl = TextEditingController();
     final descCtrl  = TextEditingController();
@@ -86,7 +101,16 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: titleCtrl, decoration: InputDecoration(labelText: 'Tên milestone *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
           const SizedBox(height: 12),
-          TextField(controller: dueDateCtrl, decoration: InputDecoration(labelText: 'Hạn nộp (YYYY-MM-DD)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18))),
+          TextField(
+            controller: dueDateCtrl,
+            readOnly: true,
+            onTap: () => _selectDate(ctx, dueDateCtrl),
+            decoration: InputDecoration(
+              labelText: 'Hạn nộp (YYYY-MM-DD)',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
+            ),
+          ),
           const SizedBox(height: 12),
           TextField(controller: descCtrl, maxLines: 2, decoration: InputDecoration(labelText: 'Mô tả', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
         ]),
@@ -233,6 +257,52 @@ class _ProjectCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text('${(progress * 100).toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: progress >= 1.0 ? AppColors.success : AppColors.warning)),
             ]),
+            if (project.milestones.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Danh sách Milestone:',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...project.milestones.map<Widget>((m) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.flag_rounded, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              m.title,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                            if (m.description != null && m.description!.isNotEmpty)
+                              Text(
+                                m.description!,
+                                style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                              ),
+                            if (m.dueDate != null)
+                              Text(
+                                'Hạn nộp: ${m.dueDate!.year}-${m.dueDate!.month.toString().padLeft(2, '0')}-${m.dueDate!.day.toString().padLeft(2, '0')}',
+                                style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
             const SizedBox(height: 10),
             SizedBox(width: double.infinity, child: OutlinedButton.icon(
               onPressed: onAddMilestone,

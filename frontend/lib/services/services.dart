@@ -115,7 +115,7 @@ class ActivityService {
 class EvidenceService {
   final _api = ApiService.instance;
 
-  Future<List<EvidenceModel>> getEvidencesByClass(int classId, {String? status}) async {
+  Future<List<EvidenceModel>> getEvidencesByClass(int? classId, {String? status}) async {
     final res = await _api.get(ApiConfig.evidencesByClass(classId, status: status));
     if (res['success'] == true) {
       final data = res['data'];

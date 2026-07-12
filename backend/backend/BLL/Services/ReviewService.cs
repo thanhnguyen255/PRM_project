@@ -41,6 +41,10 @@ public class ReviewService : IReviewService
         var session = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
             .Include(s => s.Assignments)
                 .ThenInclude(a => a.Feedbacks)
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Reviewer)
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Reviewee)
             .FirstOrDefaultAsync(s => s.Id == id);
             
         if (session == null) return null;
@@ -53,7 +57,15 @@ public class ReviewService : IReviewService
             StartDate = session.StartDate,
             EndDate = session.EndDate,
             TotalPairs = session.Assignments.Count,
-            CompletedPairs = session.Assignments.Count(a => a.Feedbacks.Any())
+            CompletedPairs = session.Assignments.Count(a => a.Feedbacks.Any()),
+            Pairs = session.Assignments.Select(a => new ReviewMonitorDto
+            {
+                AssignmentId = a.Id,
+                ReviewerName = a.Reviewer?.FullName ?? string.Empty,
+                RevieweeName = a.Reviewee?.FullName ?? string.Empty,
+                IsCompleted = a.Feedbacks.Any(),
+                Rating = a.Feedbacks.FirstOrDefault()?.Rating
+            }).ToList()
         };
     }
 
@@ -63,8 +75,8 @@ public class ReviewService : IReviewService
         {
             ClassId = dto.ClassId,
             Title = dto.Title,
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate
+            StartDate = dto.StartDate ?? DateTime.UtcNow,
+            EndDate = dto.EndDate ?? DateTime.UtcNow.AddDays(14)
         };
 
         await _unitOfWork.Repository<ReviewSession>().AddAsync(session);

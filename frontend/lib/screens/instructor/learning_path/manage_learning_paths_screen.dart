@@ -103,6 +103,7 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
                   onAction: _showAddDialog,
                 )
               : ReorderableListView.builder(
+                  buildDefaultDragHandles: false,
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.paths.length,
                   itemBuilder: (_, i) {
@@ -110,6 +111,7 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
                     return _PathCard(
                       key: Key('path_${p.id}'),
                       path: p,
+                      index: i,
                       onManage: () => Navigator.pushNamed(context, '/instructor/paths/${p.id}/activities'),
                       onDelete: () async {
                         final confirmed = await ConfirmDialog.show(
@@ -143,9 +145,10 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
 
 class _PathCard extends StatelessWidget {
   final dynamic path;
+  final int index;
   final VoidCallback onManage;
   final VoidCallback onDelete;
-  const _PathCard({super.key, required this.path, required this.onManage, required this.onDelete});
+  const _PathCard({super.key, required this.path, required this.index, required this.onManage, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +206,13 @@ class _PathCard extends StatelessWidget {
             tooltip: 'Xoá lộ trình',
             onPressed: onDelete,
           ),
-          const Icon(Icons.drag_handle_rounded, color: AppColors.textHint),
+          ReorderableDragStartListener(
+            index: index,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Icon(Icons.drag_handle_rounded, color: AppColors.textHint),
+            ),
+          ),
         ]),
         onTap: onManage,
       ),

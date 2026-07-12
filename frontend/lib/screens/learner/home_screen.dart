@@ -4,6 +4,7 @@ import '../../config/app_colors.dart';
 import '../../viewmodels/viewmodels.dart';
 import '../../widgets/widgets.dart';
 import 'profile/profile_screen.dart';
+import 'progress/progress_screen.dart';
 
 /// SCR-L05 - Home Dashboard (Learner)
 class HomeScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _HomeTab(onViewAllCourses: () => setState(() => _currentIndex = 1)),
           const _CoursesTab(),
-          const _ProgressTab(),
+          const ProgressScreen(),
           const ProfileScreen(),
         ],
       ),
@@ -262,13 +263,6 @@ class _CoursesTabState extends State<_CoursesTab> {
   }
 }
 
-// ─── Progress Tab placeholder ─────────────────────────────────────────────────
-class _ProgressTab extends StatelessWidget {
-  const _ProgressTab();
-  @override
-  Widget build(BuildContext context) => const Scaffold(
-    body: Center(child: Text('Progress - Coming Soon', style: TextStyle(fontSize: 18, color: AppColors.textHint))),
-  );
-}
+
 
 

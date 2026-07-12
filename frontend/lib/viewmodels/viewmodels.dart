@@ -252,6 +252,7 @@ class EvidenceViewModel extends ChangeNotifier {
   bool                       _isSubmitting = false;
   String?                    _error;
   String                     _statusFilter = 'All';
+  int?                       _currentClassId;
 
   List<EvidenceModel>        get evidences    => _evidences;
   EvidenceModel?             get detail       => _detail;
@@ -260,10 +261,12 @@ class EvidenceViewModel extends ChangeNotifier {
   bool                       get isSubmitting => _isSubmitting;
   String?                    get error        => _error;
   String                     get statusFilter => _statusFilter;
+  int?                       get currentClassId => _currentClassId;
 
   void setStatusFilter(String v) { _statusFilter = v; notifyListeners(); }
 
-  Future<void> loadEvidencesByClass(int classId) async {
+  Future<void> loadEvidencesByClass(int? classId) async {
+    _currentClassId = classId;
     _isLoading = true; notifyListeners();
     _evidences = await _service.getEvidencesByClass(classId, status: _statusFilter == 'All' ? null : _statusFilter);
     _isLoading = false; notifyListeners();
@@ -289,13 +292,19 @@ class EvidenceViewModel extends ChangeNotifier {
 
   Future<String?> approve(int id, {String? comment}) async {
     final r = await _service.approveEvidence(id, comment: comment);
-    if (r.success) await loadDetail(id);
+    if (r.success) {
+      await loadDetail(id);
+      await loadEvidencesByClass(_currentClassId);
+    }
     return r.success ? null : r.error;
   }
 
   Future<String?> reject(int id, {String? comment}) async {
     final r = await _service.rejectEvidence(id, comment: comment);
-    if (r.success) await loadDetail(id);
+    if (r.success) {
+      await loadDetail(id);
+      await loadEvidencesByClass(_currentClassId);
+    }
     return r.success ? null : r.error;
   }
 

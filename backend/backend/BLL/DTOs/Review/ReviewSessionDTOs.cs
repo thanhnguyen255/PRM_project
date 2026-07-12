@@ -9,14 +9,15 @@ public class ReviewSessionDto
     public DateTime EndDate { get; set; }
     public int TotalPairs { get; set; }
     public int CompletedPairs { get; set; }
+    public List<ReviewMonitorDto> Pairs { get; set; } = [];
 }
 
 public class CreateReviewSessionDto
 {
     public int ClassId { get; set; }
     public string Title { get; set; } = string.Empty;
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
     public bool AutoAssign { get; set; }
 }
 

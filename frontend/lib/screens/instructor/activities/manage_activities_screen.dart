@@ -24,9 +24,32 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
     });
   }
 
+  Future<void> _selectDateTime(BuildContext context, TextEditingController controller, StateSetter setS) async {
+    final DateTime? date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (date != null) {
+      if (!context.mounted) return;
+      final TimeOfDay? time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+      if (time != null) {
+        final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+        setS(() {
+          controller.text = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+        });
+      }
+    }
+  }
+
   void _showAddDialog() {
     final titleCtrl = TextEditingController();
     final descCtrl  = TextEditingController();
+    final deadlineCtrl = TextEditingController();
     String type     = 'PreClass';
     showDialog(
       context: context,
@@ -49,15 +72,16 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
               ),
               const SizedBox(height: 12),
               // Type selector chips
-              Row(children: ['PreClass', 'InClass', 'PostClass'].map((t) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: ['PreClass', 'InClass', 'PostClass'].map((t) => ChoiceChip(
                   label: Text(t, style: TextStyle(fontSize: 12, color: type == t ? Colors.white : AppColors.textSecondary, fontWeight: FontWeight.w600)),
                   selected: type == t,
                   selectedColor: ActivityCard.typeColor(t),
                   onSelected: (_) => setS(() => type = t),
-                ),
-              )).toList()),
+                )).toList(),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: descCtrl,
@@ -67,6 +91,17 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: deadlineCtrl,
+                readOnly: true,
+                onTap: () => _selectDateTime(ctx, deadlineCtrl, setS),
+                decoration: InputDecoration(
+                  labelText: 'Hạn nộp (Deadline)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  suffixIcon: const Icon(Icons.alarm_rounded, size: 18),
+                ),
+              ),
             ]),
           ),
           actions: [
@@ -74,6 +109,26 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (titleCtrl.text.trim().isEmpty) return;
+                
+                String? deadlineIso;
+                if (deadlineCtrl.text.isNotEmpty) {
+                  try {
+                    final parts = deadlineCtrl.text.split(' ');
+                    final dateParts = parts[0].split('-');
+                    final timeParts = parts[1].split(':');
+                    final dt = DateTime(
+                      int.parse(dateParts[0]),
+                      int.parse(dateParts[1]),
+                      int.parse(dateParts[2]),
+                      int.parse(timeParts[0]),
+                      int.parse(timeParts[1]),
+                    );
+                    deadlineIso = dt.toUtc().toIso8601String();
+                  } catch (e) {
+                    // Fallback
+                  }
+                }
+
                 Navigator.pop(ctx);
                 final vm  = context.read<InstructorManageViewModel>();
                 final err = await vm.createActivity(
@@ -81,6 +136,7 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                   title: titleCtrl.text.trim(),
                   type: type,
                   description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                  deadline: deadlineIso,
                 );
                 if (!context.mounted) return;
                 if (err == null) {

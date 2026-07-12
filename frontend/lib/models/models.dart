@@ -388,6 +388,7 @@ class ProjectModel {
   final int completedMilestones;
   final String? nextMilestoneTitle;
   final DateTime? nextMilestoneDueDate;
+  final List<MilestoneModel> milestones;
 
   const ProjectModel({
     required this.id,
@@ -398,6 +399,7 @@ class ProjectModel {
     this.completedMilestones = 0,
     this.nextMilestoneTitle,
     this.nextMilestoneDueDate,
+    this.milestones = const [],
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) => ProjectModel(
@@ -411,6 +413,11 @@ class ProjectModel {
     nextMilestoneDueDate: json['nextMilestoneDueDate'] != null
         ? DateTime.parse(json['nextMilestoneDueDate'])
         : null,
+    milestones: json['milestones'] != null
+        ? (json['milestones'] as List<dynamic>)
+            .map((e) => MilestoneModel.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : const [],
   );
 }
 
