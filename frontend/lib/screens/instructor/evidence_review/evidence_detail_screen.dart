@@ -22,7 +22,7 @@ class _EvidenceListTabState extends State<EvidenceListTab> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EvidenceViewModel>().loadEvidencesByClass(1); // replaced by real classId
+      context.read<EvidenceViewModel>().loadEvidencesByClass(null); // replaced by real classId
     });
   }
 
@@ -39,7 +39,7 @@ class _EvidenceListTabState extends State<EvidenceListTab> {
           selected: vm.statusFilter,
           onSelected: (f) {
             vm.setStatusFilter(f);
-            vm.loadEvidencesByClass(1);
+            vm.loadEvidencesByClass(null);
           },
         ),
         const SizedBox(height: 12),
@@ -48,7 +48,7 @@ class _EvidenceListTabState extends State<EvidenceListTab> {
             : vm.evidences.isEmpty
                 ? const EmptyState(icon: Icons.task_outlined, title: 'Không có evidence', message: 'Không có evidence nào cần duyệt.')
                 : RefreshIndicator(
-                    onRefresh: () => vm.loadEvidencesByClass(1),
+                    onRefresh: () => vm.loadEvidencesByClass(null),
                     color: AppColors.primary,
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -73,7 +73,9 @@ class _EvidenceItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => Navigator.pushNamed(context, '/instructor/evidence/${evidence.id}'),
+      onTap: () => Navigator.pushNamed(context, '/instructor/evidence/${evidence.id}').then((_) {
+        context.read<EvidenceViewModel>().loadEvidencesByClass(null);
+      }),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(14),

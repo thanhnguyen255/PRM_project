@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../config/app_colors.dart';
 import '../../../viewmodels/extended_viewmodels.dart';
 import '../../../widgets/widgets.dart';
@@ -105,54 +107,156 @@ class _ManageMaterialsState extends State<ManageMaterialsScreen> {
     final titleCtrl = TextEditingController();
     final linkCtrl  = TextEditingController();
     String type = 'Video';
+    String? filePath;
+    String? fileName;
+    bool isSaving = false;
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
+          scrollable: true,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(children: [
             Icon(Icons.add_circle_rounded, color: AppColors.primary),
             SizedBox(width: 8),
             Text('Thêm tài liệu'),
           ]),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            // Type selector
-            Row(children: ['Video', 'Document'].map((t) => Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(t, style: TextStyle(fontSize: 12, color: type == t ? Colors.white : AppColors.textSecondary, fontWeight: FontWeight.w600)),
-                selected: type == t,
-                selectedColor: type == 'Video' ? AppColors.secondary : AppColors.primary,
-                onSelected: (_) => setS(() => type = t),
-              ),
-            )).toList()),
-            const SizedBox(height: 12),
-            TextField(controller: titleCtrl, decoration: InputDecoration(labelText: 'Tiêu đề *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
-            const SizedBox(height: 12),
-            TextField(controller: linkCtrl, decoration: InputDecoration(labelText: 'URL *', hintText: 'https://...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
-          ]),
+          content: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Type selector
+                Row(
+                  children: ['Video', 'Document'].map((t) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(t, style: TextStyle(fontSize: 12, color: type == t ? Colors.white : AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                      selected: type == t,
+                      selectedColor: t == 'Video' ? AppColors.secondary : AppColors.primary,
+                      onSelected: isSaving ? null : (_) => setS(() => type = t),
+                    ),
+                  )).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: titleCtrl,
+                  enabled: !isSaving,
+                  decoration: InputDecoration(labelText: 'Tiêu đề *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: linkCtrl,
+                  enabled: !isSaving,
+                  decoration: InputDecoration(labelText: 'URL (Liên kết)', hintText: 'https://...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+                ),
+                const SizedBox(height: 16),
+                const Center(
+                  child: Text('— HOẶC —', style: TextStyle(fontSize: 11, color: AppColors.textHint, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: isSaving ? null : () async {
+                    try {
+                      final result = await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'mp3', 'wav', 'mp4', 'm4a', 'aac'],
+                      );
+                      if (result != null && result.files.single.path != null) {
+                        setS(() {
+                          filePath = result.files.single.path;
+                          fileName = result.files.single.name;
+                          if (titleCtrl.text.trim().isEmpty) {
+                            final name = result.files.single.name;
+                            final lastDot = name.lastIndexOf('.');
+                            titleCtrl.text = lastDot > 0 ? name.substring(0, lastDot) : name;
+                          }
+                        });
+                      }
+                    } catch (e) {
+                      debugPrint('File picker error: $e');
+                    }
+                  },
+                  icon: const Icon(Icons.attach_file_rounded, size: 16),
+                  label: const Text('Chọn tệp từ thiết bị', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryLight,
+                    foregroundColor: AppColors.primary,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+                if (fileName != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Đã chọn: $fileName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ],
+            ),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-            ElevatedButton(
-              onPressed: () async {
-                if (titleCtrl.text.trim().isEmpty || linkCtrl.text.trim().isEmpty) return;
-                Navigator.pop(ctx);
-                final vm  = context.read<MaterialViewModel>();
-                final err = await vm.createMaterial(
-                  learningPathId: widget.pathId,
-                  title: titleCtrl.text.trim(),
-                  type: type,
-                  linkUrl: linkCtrl.text.trim(),
-                );
-                if (!context.mounted) return;
-                if (err == null) {
-                  AppSnackBar.show(context, 'Thêm tài liệu thành công!', type: SnackType.success);
-                } else {
-                  AppSnackBar.show(context, err, type: SnackType.error);
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0),
-              child: const Text('Thêm'),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isSaving ? null : () => Navigator.pop(ctx), 
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Hủy'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isSaving 
+                      ? null 
+                      : () async {
+                          if (titleCtrl.text.trim().isEmpty) return;
+                          if (linkCtrl.text.trim().isEmpty && filePath == null) {
+                            AppSnackBar.show(context, 'Vui lòng điền URL hoặc chọn một tệp.', type: SnackType.error);
+                            return;
+                          }
+                          setS(() => isSaving = true);
+                          final vm  = context.read<MaterialViewModel>();
+                          final err = await vm.createMaterial(
+                            learningPathId: widget.pathId,
+                            title: titleCtrl.text.trim(),
+                            type: type,
+                            linkUrl: linkCtrl.text.trim().isEmpty ? null : linkCtrl.text.trim(),
+                            filePath: filePath,
+                          );
+                          if (!context.mounted) return;
+                          setS(() => isSaving = false);
+                          if (err == null) {
+                            Navigator.pop(ctx);
+                            AppSnackBar.show(context, 'Thêm tài liệu thành công!', type: SnackType.success);
+                          } else {
+                            AppSnackBar.show(context, err, type: SnackType.error);
+                          }
+                        },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary, 
+                      foregroundColor: Colors.white, 
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: isSaving 
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                      : const Text('Thêm'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

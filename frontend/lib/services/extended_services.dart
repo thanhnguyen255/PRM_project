@@ -230,13 +230,25 @@ class MaterialService {
     required String title,
     required String type,
     String? linkUrl,
+    String? filePath,
   }) async {
-    final res = await _api.post(ApiConfig.createMaterial, data: {
-      'learningPathId': learningPathId,
-      'title': title,
-      'type': type,
-      'linkUrl': linkUrl,
-    });
+    final Map<String, dynamic> map = {
+      'LearningPathId': learningPathId,
+      'Title': title,
+      'Type': type == 'Video' ? 0 : 1,
+    };
+
+    if (linkUrl != null && linkUrl.isNotEmpty) {
+      map['LinkUrl'] = linkUrl;
+    }
+
+    if (filePath != null && filePath.isNotEmpty) {
+      map['File'] = await MultipartFile.fromFile(filePath);
+    }
+
+    final data = FormData.fromMap(map);
+
+    final res = await _api.post(ApiConfig.createMaterial, data: data);
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 

@@ -10,14 +10,17 @@ public class ReviewSessionDto
     public bool IsOpen { get; set; }
     public int MyAssignmentCount { get; set; }
     public int MyCompletedCount { get; set; }
+    public int TotalPairs { get; set; }
+    public int CompletedPairs { get; set; }
+    public List<ReviewMonitorDto> Pairs { get; set; } = [];
 }
 
 public class CreateReviewSessionDto
 {
     public int ClassId { get; set; }
     public string Title { get; set; } = string.Empty;
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
     public bool AutoAssign { get; set; }
 }
 

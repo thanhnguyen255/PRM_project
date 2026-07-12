@@ -189,7 +189,7 @@ public class EvidenceService : IEvidenceService
                 Directory.CreateDirectory(uploadsFolder);
             }
 
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.File.FileName;
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(dto.File.FileName);
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))

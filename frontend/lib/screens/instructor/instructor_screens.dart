@@ -59,7 +59,7 @@ class _DashboardTabState extends State<_DashboardTab> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().init();
-      context.read<EvidenceViewModel>().loadEvidencesByClass(1);
+      context.read<EvidenceViewModel>().loadEvidencesByClass(null);
     });
   }
 
@@ -91,11 +91,34 @@ class _DashboardTabState extends State<_DashboardTab> {
                 const Text('Tổng quan hoạt động giảng dạy', style: TextStyle(fontSize: 13, color: Color(0xCCFFFFFF))),
               ])),
               GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/notifications'),
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(color: Colors.white.withAlpha(51), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
+                onTap: () => Navigator.pushNamed(context, '/notifications').then((_) {
+                  if (mounted) {
+                    context.read<HomeViewModel>().init();
+                  }
+                }),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(color: Colors.white.withAlpha(51), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
+                    ),
+                    if (homeVm.unreadCount > 0)
+                      Positioned(
+                        top: -4, right: -4,
+                        child: Container(
+                          width: 18, height: 18,
+                          decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
+                          child: Center(
+                            child: Text(
+                              '${homeVm.unreadCount}',
+                              style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
@@ -118,7 +141,12 @@ class _DashboardTabState extends State<_DashboardTab> {
             child: Row(children: [
               Expanded(child: StatCard(value: '${homeVm.courses.length}', label: 'Lớp\nđang dạy', icon: Icons.groups_rounded)),
               const SizedBox(width: 10),
-              Expanded(child: StatCard(value: '${evidenceVm.evidences.length}', label: 'Evidence\nchờ duyệt', color: AppColors.warning, icon: Icons.pending_actions_rounded)),
+              Expanded(child: StatCard(
+                value: '${evidenceVm.evidences.where((e) => e.status.toLowerCase() == 'pending').length}',
+                label: 'Evidence\nchờ duyệt',
+                color: AppColors.warning,
+                icon: Icons.pending_actions_rounded,
+              )),
               const SizedBox(width: 10),
               Expanded(child: StatCard(value: '0', label: 'Review\nchờ duyệt', color: AppColors.secondary, icon: Icons.rate_review_rounded)),
             ]),
@@ -133,13 +161,13 @@ class _DashboardTabState extends State<_DashboardTab> {
               const SectionHeader(title: 'Truy cập nhanh'),
               const SizedBox(height: 8),
               Row(children: [
-                _QuickLink('Quản lý\nKhóa học', Icons.book_rounded, AppColors.primary, () => Navigator.pushNamed(context, '/instructor/courses/create')),
+                _QuickLink('Quản lý\nKhóa học', Icons.book_rounded, AppColors.primary, () => widget.onTabSelected(1)),
                 const SizedBox(width: 10),
                 _QuickLink('Duyệt\nEvidence', Icons.task_alt_rounded, AppColors.warning, () => widget.onTabSelected(2)),
                 const SizedBox(width: 10),
-                _QuickLink('Peer\nReview', Icons.rate_review_rounded, AppColors.secondary, () => Navigator.pushNamed(context, '/instructor/review/1')),
+                _QuickLink('Tạo\nKhóa học', Icons.add_box_rounded, AppColors.secondary, () => Navigator.pushNamed(context, '/instructor/courses/create')),
                 const SizedBox(width: 10),
-                _QuickLink('Analytics', Icons.bar_chart_rounded, AppColors.info, () => widget.onTabSelected(3)),
+                _QuickLink('Thống kê\nLớp học', Icons.bar_chart_rounded, AppColors.info, () => widget.onTabSelected(3)),
               ]),
             ]),
           ),
@@ -177,7 +205,7 @@ class _DashboardTabState extends State<_DashboardTab> {
             child: SectionHeader(
               title: 'Evidence cần duyệt',
               actionLabel: 'Xem tất cả',
-              onAction: () {},
+              onAction: () => widget.onTabSelected(2),
             ),
           ),
           SliverPadding(
@@ -197,7 +225,11 @@ class _DashboardTabState extends State<_DashboardTab> {
                     title: Text(e.learnerName, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(e.activityTitle, style: const TextStyle(fontSize: 12)),
                     trailing: StatusBadge(status: StatusBadge.fromString(e.status)),
-                    onTap: () => Navigator.pushNamed(context, '/instructor/evidence/${e.id}'),
+                    onTap: () => Navigator.pushNamed(context, '/instructor/evidence/${e.id}').then((_) {
+                      if (mounted) {
+                        context.read<EvidenceViewModel>().loadEvidencesByClass(null);
+                      }
+                    }),
                   ),
                 );
               },
@@ -214,17 +246,21 @@ class _DashboardTabState extends State<_DashboardTab> {
     child: GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        height: 80,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         decoration: BoxDecoration(
           color: color.withAlpha(15),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withAlpha(40)),
         ),
-        child: Column(children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(height: 6),
-          Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
-        ]),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 24, color: color),
+            const SizedBox(height: 6),
+            Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+          ],
+        ),
       ),
     ),
   );

@@ -19,6 +19,7 @@ public class CourseService : ICourseService
     {
         var courses = await _unitOfWork.Repository<Course>().GetQueryable()
             .Include(c => c.Instructor)
+            .Include(c => c.Classes)
             .Where(c => c.InstructorId == instructorId)
             .ToListAsync();
 
@@ -29,7 +30,8 @@ public class CourseService : ICourseService
             Description = c.Description,
             CoverImageUrl = c.CoverImageUrl,
             InstructorId = c.InstructorId,
-            InstructorName = c.Instructor.FullName
+            InstructorName = c.Instructor.FullName,
+            ClassCount = c.Classes.Count
         });
     }
 

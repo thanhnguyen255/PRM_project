@@ -20,6 +20,8 @@ public class ReviewService : IReviewService
     {
         var now = DateTime.UtcNow;
         var sessions = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Feedbacks)
             .Where(s => s.ClassId == classId)
             .ToListAsync();
 
@@ -32,14 +34,23 @@ public class ReviewService : IReviewService
             EndDate = s.EndDate,
             IsOpen = now >= s.StartDate && now <= s.EndDate,
             MyAssignmentCount = 0,
-            MyCompletedCount = 0
+            MyCompletedCount = 0,
+            TotalPairs = s.Assignments.Count,
+            CompletedPairs = s.Assignments.Count(a => a.Feedbacks.Any())
         });
     }
 
     public async Task<ReviewSessionDto?> GetSessionByIdAsync(int id)
     {
         var now = DateTime.UtcNow;
-        var session = await _unitOfWork.Repository<ReviewSession>().GetByIdAsync(id);
+        var session = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Feedbacks)
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Reviewer)
+            .Include(s => s.Assignments)
+                .ThenInclude(a => a.Reviewee)
+            .FirstOrDefaultAsync(s => s.Id == id);
         if (session == null) return null;
 
         return new ReviewSessionDto
@@ -49,7 +60,17 @@ public class ReviewService : IReviewService
             Title = session.Title,
             StartDate = session.StartDate,
             EndDate = session.EndDate,
-            IsOpen = now >= session.StartDate && now <= session.EndDate
+            IsOpen = now >= session.StartDate && now <= session.EndDate,
+            TotalPairs = session.Assignments.Count,
+            CompletedPairs = session.Assignments.Count(a => a.Feedbacks.Any()),
+            Pairs = session.Assignments.Select(a => new ReviewMonitorDto
+            {
+                AssignmentId = a.Id,
+                ReviewerName = a.Reviewer?.FullName ?? string.Empty,
+                RevieweeName = a.Reviewee?.FullName ?? string.Empty,
+                IsCompleted = a.Feedbacks.Any(),
+                Rating = a.Feedbacks.FirstOrDefault()?.Rating
+            }).ToList()
         };
     }
 
@@ -59,8 +80,8 @@ public class ReviewService : IReviewService
         {
             ClassId = dto.ClassId,
             Title = dto.Title,
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate
+            StartDate = dto.StartDate ?? DateTime.UtcNow,
+            EndDate = dto.EndDate ?? DateTime.UtcNow.AddDays(14)
         };
 
         await _unitOfWork.Repository<ReviewSession>().AddAsync(session);

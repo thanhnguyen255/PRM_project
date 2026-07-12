@@ -5,9 +5,23 @@ class ApiConfig {
   ApiConfig._();
 
   // ── Base URL ───────────────────────────────────────────────────────────────
+  static const String _pcIpAddress = '192.168.1.15';
+
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5111/api';
-    if (Platform.isAndroid) return 'http://10.0.2.2:5111/api';
+
+    if (Platform.isAndroid) {
+      // 1. Chạy trên thiết bị Android thật bằng cáp USB (đã chạy adb reverse tcp:5111 tcp:5111):
+      return 'http://localhost:5111/api';
+
+      // 2. Chạy trên máy ảo Android (Emulator) thông thường:
+      // return 'http://10.0.2.2:5111/api';
+
+      // 3. Chạy qua mạng Wi-Fi cục bộ không dùng cáp:
+      // return 'http://$_pcIpAddress:5111/api';
+    }
+
+    // Mặc định cho iOS Simulator, Desktop, Web và các nền tảng khác
     return 'http://localhost:5111/api';
   }
 
@@ -61,8 +75,8 @@ class ApiConfig {
 
   // ── Evidences ──────────────────────────────────────────────────────────────
   static const String evidences          = '/evidences';
-  static String evidencesByClass(int classId, {String? status}) =>
-      '/evidences?classId=$classId${status != null ? '&status=$status' : ''}';
+  static String evidencesByClass(int? classId, {String? status}) =>
+      '/evidences?${classId != null ? 'classId=$classId' : ''}${status != null ? '&status=$status' : ''}';
   static String evidencesByActivity(int activityId) =>
       '/evidences?activityId=$activityId&userId=me';
   static String evidenceDetail(int id)   => '/evidences/$id';

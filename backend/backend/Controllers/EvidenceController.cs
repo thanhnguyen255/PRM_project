@@ -1,88 +1,138 @@
 using backend.BLL.DTOs.Evidence;
 using backend.BLL.Interfaces;
+using backend.DAL.Enums;
+using backend.DAL.Interfaces;
+using backend.DAL.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/evidences")]
+[Authorize]
 public class EvidenceController : BaseController
 {
     private readonly IEvidenceService _evidenceService;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public EvidenceController(IEvidenceService evidenceService)
+    public EvidenceController(IEvidenceService evidenceService, IUnitOfWork unitOfWork)
     {
         _evidenceService = evidenceService;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<EvidenceDto>>> GetEvidences([FromQuery] int? classId)
-    {
-        if (GetCurrentUserRole() != "Instructor") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới có thể xem danh sách bài nộp."));
-        var evidences = await _evidenceService.GetEvidencesAsync(classId, GetCurrentUserId());
-        return Ok(evidences);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<EvidenceDto>> GetEvidence(int id)
-    {
-        if (GetCurrentUserRole() != "Instructor") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới có quyền xem chi tiết bài nộp này."));
-        var evidence = await _evidenceService.GetEvidenceByIdAsync(id, GetCurrentUserId());
-        if (evidence == null) return NotFound("Không tìm thấy bài nộp hoặc bạn không có quyền xem.");
-        return Ok(evidence);
+        _unitOfWork = unitOfWork;
     }
 
     [HttpPost]
-    public async Task<ActionResult<EvidenceDto>> SubmitEvidence([FromForm] CreateEvidenceDto dto)
+    public async Task<IActionResult> SubmitEvidence([FromForm] CreateEvidenceDto dto)
     {
-        if (GetCurrentUserRole() != "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ học viên mới có thể nộp bài."));
-        var evidence = await _evidenceService.SubmitEvidenceAsync(dto, GetCurrentUserId());
-        if (evidence == null) return BadRequest(ApiResponse.Fail("Không thể nộp bài (có thể đã quá hạn hoặc dữ liệu không hợp lệ)."));
+        if (string.IsNullOrEmpty(dto.Note) && (dto.File == null || dto.File.Length == 0))
+        {
+            return BadRequest(ApiResponse.Fail("Vui lòng nhập ghi chú hoặc đính kèm file."));
+        }
+
+        var result = await _evidenceService.SubmitEvidenceAsync(dto, GetCurrentUserId());
+        if (result == null) return BadRequest(ApiResponse.Fail("Không tìm thấy hoạt động hoặc người dùng."));
+
+        return Created("", ApiResponse.Success(result, "Nộp bằng chứng thành công."));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetEvidences([FromQuery] int? classId, [FromQuery] string? status)
+    {
+        int instructorId = GetCurrentUserId();
+
+        var query = _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
+            .Include(s => s.User)
+            .Include(s => s.Activity)
+            .ThenInclude(a => a.LearningPath)
+            .ThenInclude(lp => lp.Class)
+            .ThenInclude(c => c.Course)
+            .Where(s => s.Activity.LearningPath.Class.Course.InstructorId == instructorId);
+
+        if (classId.HasValue && classId.Value > 0)
+        {
+            query = query.Where(s => s.Activity.LearningPath.ClassId == classId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (Enum.TryParse<EvidenceStatus>(status, true, out var evStatus))
+            {
+                query = query.Where(s => s.Status == evStatus);
+            }
+        }
+
+        var submissions = await query.ToListAsync();
+
+        var result = submissions.Select(s => new EvidenceDto
+        {
+            Id = s.Id,
+            ActivityId = s.ActivityId,
+            ActivityTitle = s.Activity.Title,
+            UserId = s.UserId,
+            UserFullName = s.User.FullName,
+            FileUrl = s.FileUrl,
+            Note = s.Note,
+            Status = s.Status,
+            SubmittedAt = s.SubmittedAt
+        });
+
+        return Ok(ApiResponse.Success(result));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetEvidence(int id)
+    {
+        int instructorId = GetCurrentUserId();
+        var evidence = await _evidenceService.GetEvidenceByIdAsync(id, instructorId);
+        if (evidence == null) return NotFound(ApiResponse.Fail("Không tìm thấy bài nộp hoặc bạn không có quyền xem."));
         return Ok(ApiResponse.Success(evidence));
     }
 
     [HttpPut("{id}/status")]
-    public async Task<ActionResult<EvidenceDto>> UpdateStatus(int id, UpdateEvidenceStatusDto dto)
+    public async Task<IActionResult> UpdateStatus(int id, UpdateEvidenceStatusDto dto)
     {
-        if (GetCurrentUserRole() != "Instructor") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới có quyền phê duyệt."));
-        var evidence = await _evidenceService.UpdateEvidenceStatusAsync(id, dto, GetCurrentUserId());
-        if (evidence == null) return NotFound("Không tìm thấy bài nộp hoặc bạn không có quyền phê duyệt.");
-        return Ok(evidence);
+        int instructorId = GetCurrentUserId();
+        var evidence = await _evidenceService.UpdateEvidenceStatusAsync(id, dto, instructorId);
+        if (evidence == null) return NotFound(ApiResponse.Fail("Không tìm thấy bài nộp hoặc bạn không có quyền phê duyệt."));
+        return Ok(ApiResponse.Success(evidence));
     }
 
     [HttpPut("{id}/approve")]
-    public async Task<ActionResult<EvidenceDto>> Approve(int id)
+    public async Task<IActionResult> Approve(int id)
     {
-        if (GetCurrentUserRole() != "Instructor") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới có quyền phê duyệt."));
-        var dto = new UpdateEvidenceStatusDto { Status = backend.DAL.Enums.EvidenceStatus.Approved };
-        var evidence = await _evidenceService.UpdateEvidenceStatusAsync(id, dto, GetCurrentUserId());
-        if (evidence == null) return NotFound("Không tìm thấy bài nộp hoặc bạn không có quyền phê duyệt.");
-        return Ok(evidence);
+        int instructorId = GetCurrentUserId();
+        var dto = new UpdateEvidenceStatusDto { Status = EvidenceStatus.Approved };
+        var evidence = await _evidenceService.UpdateEvidenceStatusAsync(id, dto, instructorId);
+        if (evidence == null) return NotFound(ApiResponse.Fail("Không tìm thấy bài nộp hoặc bạn không có quyền phê duyệt."));
+        return Ok(ApiResponse.Success(evidence));
     }
 
     [HttpPut("{id}/reject")]
-    public async Task<ActionResult<EvidenceDto>> Reject(int id)
+    public async Task<IActionResult> Reject(int id)
     {
-        if (GetCurrentUserRole() != "Instructor") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới có quyền từ chối."));
-        var dto = new UpdateEvidenceStatusDto { Status = backend.DAL.Enums.EvidenceStatus.Rejected };
-        var evidence = await _evidenceService.UpdateEvidenceStatusAsync(id, dto, GetCurrentUserId());
-        if (evidence == null) return NotFound("Không tìm thấy bài nộp hoặc bạn không có quyền từ chối.");
-        return Ok(evidence);
+        int instructorId = GetCurrentUserId();
+        var dto = new UpdateEvidenceStatusDto { Status = EvidenceStatus.Rejected };
+        var evidence = await _evidenceService.UpdateEvidenceStatusAsync(id, dto, instructorId);
+        if (evidence == null) return NotFound(ApiResponse.Fail("Không tìm thấy bài nộp hoặc bạn không có quyền từ chối."));
+        return Ok(ApiResponse.Success(evidence));
     }
 
     [HttpGet("{id}/comments")]
-    public async Task<ActionResult<IEnumerable<EvidenceCommentDto>>> GetComments(int id)
+    public async Task<IActionResult> GetComments(int id)
     {
-        // Both instructors and learners might need this, but for now we only support instructor fetching
-        var comments = await _evidenceService.GetCommentsByEvidenceIdAsync(id, GetCurrentUserId());
-        return Ok(comments);
+        int instructorId = GetCurrentUserId();
+        var comments = await _evidenceService.GetCommentsByEvidenceIdAsync(id, instructorId);
+        return Ok(ApiResponse.Success(comments));
     }
 
     [HttpPost("{id}/comments")]
-    public async Task<ActionResult<EvidenceCommentDto>> AddComment(int id, CreateEvidenceCommentDto dto)
+    public async Task<IActionResult> AddComment(int id, CreateEvidenceCommentDto dto)
     {
-        var comment = await _evidenceService.AddCommentToEvidenceAsync(id, dto, GetCurrentUserId());
-        if (comment == null) return BadRequest("Không thể gửi bình luận (bài nộp không tồn tại hoặc người dùng không tồn tại).");
-        return Ok(comment);
+        int userId = GetCurrentUserId();
+        var comment = await _evidenceService.AddCommentToEvidenceAsync(id, dto, userId);
+        if (comment == null) return BadRequest(ApiResponse.Fail("Không thể gửi bình luận (bài nộp không tồn tại hoặc người dùng không tồn tại)."));
+        return Ok(ApiResponse.Success(comment));
     }
 }

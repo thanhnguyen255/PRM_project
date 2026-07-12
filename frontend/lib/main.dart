@@ -64,13 +64,14 @@ import 'screens/learner/activities/post_class/post_class_detail_screen.dart';
 import 'screens/instructor/instructor_screens.dart';
 import 'screens/instructor/courses/manage_courses_screen.dart';
 import 'screens/instructor/classes/manage_classes_screen.dart';
+import 'screens/instructor/classes/instructor_class_detail_screen.dart';
 import 'screens/instructor/learning_path/manage_learning_paths_screen.dart';
 import 'screens/instructor/activities/manage_activities_screen.dart';
 import 'screens/instructor/projects/manage_projects_screen.dart';
 import 'screens/instructor/review/instructor_review_screen.dart';
 import 'screens/instructor/analytics/class_analytics_screen.dart';
+import 'screens/instructor/analytics/student_progress_screen.dart';
 import 'screens/instructor/evidence_review/evidence_detail_screen.dart';
-import 'screens/instructor/materials/materials_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -105,7 +106,7 @@ class FlippedClassroomApp extends StatelessWidget {
         title: 'Flipped Classroom',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        initialRoute: '/login',
+        initialRoute: '/splash',
         onGenerateRoute: _generateRoute,
       ),
     );
@@ -117,7 +118,7 @@ class FlippedClassroomApp extends StatelessWidget {
 
     // ── Auth ─────────────────────────────────────────────────────────────────
     if (name == '/splash') return _page(const SplashScreen(), settings);
-    if (name == '/login') return _page(const LoginScreen(), settings);
+    if (name == '/' || name == '/login') return _page(const LoginScreen(), settings);
     if (name == '/register') return _page(const RegisterScreen(), settings);
     if (name == '/forgot-password')
       return _page(const ForgotPasswordScreen(), settings);
@@ -406,9 +407,10 @@ class FlippedClassroomApp extends StatelessWidget {
     // /instructor/classes/:id
     if (_matches(name, '/instructor/classes/') &&
         !name.contains('/members') &&
-        !name.contains('/paths')) {
+        !name.contains('/paths') &&
+        !name.contains('/projects')) {
       final id = _parseId(name, '/instructor/classes/');
-      if (id != null) return _page(ClassDetailScreen(classId: id), settings);
+      if (id != null) return _page(InstructorClassDetailScreen(classId: id), settings);
     }
 
     // /instructor/classes/:id/members
@@ -463,6 +465,21 @@ class FlippedClassroomApp extends StatelessWidget {
     if (_matches(name, '/instructor/analytics/')) {
       final id = _parseId(name, '/instructor/analytics/');
       if (id != null) return _page(ClassAnalyticsScreen(classId: id), settings);
+    }
+
+    // /instructor/students/:userId/progress
+    if (_matches(name, '/instructor/students/') && name.contains('/progress')) {
+      final userId = _parseSegment(name, 2);
+      if (userId != null && args != null) {
+        return _page(
+          StudentProgressAnalyticsScreen(
+            userId: userId,
+            classId: args['classId'] as int,
+            studentName: args['studentName'] as String? ?? 'Học viên',
+          ),
+          settings,
+        );
+      }
     }
 
     // 404

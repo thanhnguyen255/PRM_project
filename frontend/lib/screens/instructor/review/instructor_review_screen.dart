@@ -23,6 +23,21 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
     });
   }
 
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      final y = picked.year;
+      final m = picked.month.toString().padLeft(2, '0');
+      final d = picked.day.toString().padLeft(2, '0');
+      controller.text = '$y-$m-$d';
+    }
+  }
+
   void _showCreateDialog() {
     final titleCtrl = TextEditingController();
     final startCtrl = TextEditingController();
@@ -30,6 +45,7 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(children: [
           Icon(Icons.rate_review_rounded, color: AppColors.secondary),
@@ -44,6 +60,8 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: startCtrl,
+            readOnly: true,
+            onTap: () => _selectDate(ctx, startCtrl),
             decoration: InputDecoration(
               labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -53,6 +71,8 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: endCtrl,
+            readOnly: true,
+            onTap: () => _selectDate(ctx, endCtrl),
             decoration: InputDecoration(
               labelText: 'Ngày kết thúc (YYYY-MM-DD)',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -61,27 +81,50 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<ReviewViewModel>();
-              final err = await vm.createSession(
-                classId:   widget.classId,
-                title:     titleCtrl.text.trim(),
-                startDate: startCtrl.text.trim(),
-                endDate:   endCtrl.text.trim(),
-              );
-              if (!context.mounted) return;
-              if (err == null) {
-                AppSnackBar.show(context, 'Tạo phiên review thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Tạo phiên'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<ReviewViewModel>();
+                    final err = await vm.createSession(
+                      classId:   widget.classId,
+                      title:     titleCtrl.text.trim(),
+                      startDate: startCtrl.text.trim(),
+                      endDate:   endCtrl.text.trim(),
+                    );
+                    if (!context.mounted) return;
+                    if (err == null) {
+                      AppSnackBar.show(context, 'Tạo phiên review thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tạo phiên'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -199,6 +242,7 @@ class _ReviewSessionCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
                   foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 36),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

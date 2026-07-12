@@ -238,10 +238,11 @@ class MaterialViewModel extends ChangeNotifier {
     required String title,
     required String type,
     String? linkUrl,
+    String? filePath,
   }) async {
     _isSaving = true; notifyListeners();
     final r = await _svc.createMaterial(
-      learningPathId: learningPathId, title: title, type: type, linkUrl: linkUrl,
+      learningPathId: learningPathId, title: title, type: type, linkUrl: linkUrl, filePath: filePath,
     );
     _isSaving = false;
     if (r.success) await loadMaterials(learningPathId);
