@@ -45,6 +45,7 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(children: [
           Icon(Icons.rate_review_rounded, color: AppColors.secondary),
@@ -80,27 +81,50 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<ReviewViewModel>();
-              final err = await vm.createSession(
-                classId:   widget.classId,
-                title:     titleCtrl.text.trim(),
-                startDate: startCtrl.text.trim(),
-                endDate:   endCtrl.text.trim(),
-              );
-              if (!context.mounted) return;
-              if (err == null) {
-                AppSnackBar.show(context, 'Tạo phiên review thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Tạo phiên'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<ReviewViewModel>();
+                    final err = await vm.createSession(
+                      classId:   widget.classId,
+                      title:     titleCtrl.text.trim(),
+                      startDate: startCtrl.text.trim(),
+                      endDate:   endCtrl.text.trim(),
+                    );
+                    if (!context.mounted) return;
+                    if (err == null) {
+                      AppSnackBar.show(context, 'Tạo phiên review thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tạo phiên'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

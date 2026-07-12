@@ -47,65 +47,87 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(children: [
           Icon(Icons.add_circle_rounded, color: AppColors.primary),
           SizedBox(width: 8),
           Text('Tạo lớp học kỳ mới'),
         ]),
-        content: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: nameCtrl, decoration: InputDecoration(
-              labelText: 'Tên lớp *',
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: nameCtrl, decoration: InputDecoration(
+            labelText: 'Tên lớp *',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          )),
+          const SizedBox(height: 12),
+          TextField(
+            controller: startCtrl,
+            readOnly: true,
+            onTap: () => _selectDate(ctx, startCtrl),
+            decoration: InputDecoration(
+              labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            )),
-            const SizedBox(height: 12),
-            TextField(
-              controller: startCtrl,
-              readOnly: true,
-              onTap: () => _selectDate(ctx, startCtrl),
-              decoration: InputDecoration(
-                labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
-              ),
+              suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: endCtrl,
-              readOnly: true,
-              onTap: () => _selectDate(ctx, endCtrl),
-              decoration: InputDecoration(
-                labelText: 'Ngày kết thúc (YYYY-MM-DD)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                suffixIcon: const Icon(Icons.event_rounded, size: 18),
-              ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: endCtrl,
+            readOnly: true,
+            onTap: () => _selectDate(ctx, endCtrl),
+            decoration: InputDecoration(
+              labelText: 'Ngày kết thúc (YYYY-MM-DD)',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              suffixIcon: const Icon(Icons.event_rounded, size: 18),
             ),
-          ]),
-        ),
+          ),
+        ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<InstructorManageViewModel>();
-              final err = await vm.createClass(
-                courseId:  widget.courseId,
-                name:      nameCtrl.text.trim(),
-                startDate: startCtrl.text.trim().isEmpty ? null : startCtrl.text.trim(),
-                endDate:   endCtrl.text.trim().isEmpty   ? null : endCtrl.text.trim(),
-              );
-              if (!mounted) return;
-              if (err == null) {
-                context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                AppSnackBar.show(context, 'Tạo lớp thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Tạo lớp'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (nameCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<InstructorManageViewModel>();
+                    final err = await vm.createClass(
+                      courseId:  widget.courseId,
+                      name:      nameCtrl.text.trim(),
+                      startDate: startCtrl.text.trim().isEmpty ? null : startCtrl.text.trim(),
+                      endDate:   endCtrl.text.trim().isEmpty   ? null : endCtrl.text.trim(),
+                    );
+                    if (!mounted) return;
+                    if (err == null) {
+                      context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                      AppSnackBar.show(context, 'Tạo lớp thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tạo lớp'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

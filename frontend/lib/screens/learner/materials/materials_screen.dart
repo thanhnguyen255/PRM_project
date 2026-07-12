@@ -132,6 +132,7 @@ class _ManageMaterialsState extends State<ManageMaterialsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
+          scrollable: true,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(children: [
             Icon(Icons.add_circle_rounded, color: AppColors.primary),
@@ -218,45 +219,61 @@ class _ManageMaterialsState extends State<ManageMaterialsScreen> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: isSaving ? null : () => Navigator.pop(ctx), 
-              child: const Text('Hủy'),
-            ),
-            ElevatedButton(
-              onPressed: isSaving 
-                ? null 
-                : () async {
-                    if (titleCtrl.text.trim().isEmpty) return;
-                    if (linkCtrl.text.trim().isEmpty && filePath == null) {
-                      AppSnackBar.show(context, 'Vui lòng điền URL hoặc chọn một tệp.', type: SnackType.error);
-                      return;
-                    }
-                    setS(() => isSaving = true);
-                    final vm  = context.read<MaterialViewModel>();
-                    final err = await vm.createMaterial(
-                      learningPathId: widget.pathId,
-                      title: titleCtrl.text.trim(),
-                      type: type,
-                      linkUrl: linkCtrl.text.trim().isEmpty ? null : linkCtrl.text.trim(),
-                      filePath: filePath,
-                    );
-                    if (!context.mounted) return;
-                    setS(() => isSaving = false);
-                    if (err == null) {
-                      Navigator.pop(ctx);
-                      AppSnackBar.show(context, 'Thêm tài liệu thành công!', type: SnackType.success);
-                    } else {
-                      AppSnackBar.show(context, err, type: SnackType.error);
-                    }
-                  },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary, 
-                foregroundColor: Colors.white, 
-                elevation: 0,
-              ),
-              child: isSaving 
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                : const Text('Thêm'),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isSaving ? null : () => Navigator.pop(ctx), 
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Hủy'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isSaving 
+                      ? null 
+                      : () async {
+                          if (titleCtrl.text.trim().isEmpty) return;
+                          if (linkCtrl.text.trim().isEmpty && filePath == null) {
+                            AppSnackBar.show(context, 'Vui lòng điền URL hoặc chọn một tệp.', type: SnackType.error);
+                            return;
+                          }
+                          setS(() => isSaving = true);
+                          final vm  = context.read<MaterialViewModel>();
+                          final err = await vm.createMaterial(
+                            learningPathId: widget.pathId,
+                            title: titleCtrl.text.trim(),
+                            type: type,
+                            linkUrl: linkCtrl.text.trim().isEmpty ? null : linkCtrl.text.trim(),
+                            filePath: filePath,
+                          );
+                          if (!context.mounted) return;
+                          setS(() => isSaving = false);
+                          if (err == null) {
+                            Navigator.pop(ctx);
+                            AppSnackBar.show(context, 'Thêm tài liệu thành công!', type: SnackType.success);
+                          } else {
+                            AppSnackBar.show(context, err, type: SnackType.error);
+                          }
+                        },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary, 
+                      foregroundColor: Colors.white, 
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: isSaving 
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                      : const Text('Thêm'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

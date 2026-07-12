@@ -30,6 +30,7 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(children: [
           Icon(Icons.add_circle_rounded, color: AppColors.primary),
@@ -49,28 +50,51 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              final week = int.tryParse(weekCtrl.text.trim());
-              if (week == null || titleCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<InstructorManageViewModel>();
-              final err = await vm.createLearningPath(
-                classId: widget.classId,
-                title: titleCtrl.text.trim(),
-                weekNumber: week,
-              );
-              if (!mounted) return;
-              if (err == null) {
-                context.read<LearningPathViewModel>().loadPaths(widget.classId);
-                AppSnackBar.show(context, 'Tạo lộ trình thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Tạo'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final week = int.tryParse(weekCtrl.text.trim());
+                    if (week == null || titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<InstructorManageViewModel>();
+                    final err = await vm.createLearningPath(
+                      classId: widget.classId,
+                      title: titleCtrl.text.trim(),
+                      weekNumber: week,
+                    );
+                    if (!mounted) return;
+                    if (err == null) {
+                      context.read<LearningPathViewModel>().loadPaths(widget.classId);
+                      AppSnackBar.show(context, 'Tạo lộ trình thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tạo'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

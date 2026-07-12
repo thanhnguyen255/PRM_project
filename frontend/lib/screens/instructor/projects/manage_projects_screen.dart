@@ -44,6 +44,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(children: [
           Icon(Icons.folder_special_rounded, color: AppColors.warning),
@@ -63,26 +64,49 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<ProjectViewModel>();
-              final err = await vm.createProject(
-                classId: widget.classId,
-                title: titleCtrl.text.trim(),
-                description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-              );
-              if (!context.mounted) return;
-              if (err == null) {
-                AppSnackBar.show(context, 'Tạo dự án thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Tạo dự án'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<ProjectViewModel>();
+                    final err = await vm.createProject(
+                      classId: widget.classId,
+                      title: titleCtrl.text.trim(),
+                      description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                    );
+                    if (!context.mounted) return;
+                    if (err == null) {
+                      AppSnackBar.show(context, 'Tạo dự án thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tạo dự án'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -96,6 +120,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Thêm Milestone — $projectTitle', style: const TextStyle(fontSize: 15)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -115,28 +140,51 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
           TextField(controller: descCtrl, maxLines: 2, decoration: InputDecoration(labelText: 'Mô tả', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<ProjectViewModel>();
-              final err = await vm.createMilestone(
-                projectId: projectId,
-                title: titleCtrl.text.trim(),
-                dueDate: dueDateCtrl.text.trim().isEmpty ? null : dueDateCtrl.text.trim(),
-                description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-              );
-              if (!context.mounted) return;
-              if (err == null) {
-                vm.loadProjects(widget.classId);
-                AppSnackBar.show(context, 'Thêm milestone thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Thêm'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<ProjectViewModel>();
+                    final err = await vm.createMilestone(
+                      projectId: projectId,
+                      title: titleCtrl.text.trim(),
+                      dueDate: dueDateCtrl.text.trim().isEmpty ? null : dueDateCtrl.text.trim(),
+                      description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                    );
+                    if (!context.mounted) return;
+                    if (err == null) {
+                      vm.loadProjects(widget.classId);
+                      AppSnackBar.show(context, 'Thêm milestone thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Thêm'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

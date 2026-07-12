@@ -55,99 +55,121 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
+          scrollable: true,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(children: [
             Icon(Icons.add_circle_rounded, color: AppColors.primary),
             SizedBox(width: 8),
             Text('Tạo hoạt động mới'),
           ]),
-          content: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(
-                controller: titleCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Tiêu đề *',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(
+              controller: titleCtrl,
+              decoration: InputDecoration(
+                labelText: 'Tiêu đề *',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              const SizedBox(height: 12),
-              // Type selector chips
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: ['PreClass', 'InClass', 'PostClass'].map((t) => ChoiceChip(
-                  label: Text(t, style: TextStyle(fontSize: 12, color: type == t ? Colors.white : AppColors.textSecondary, fontWeight: FontWeight.w600)),
-                  selected: type == t,
-                  selectedColor: ActivityCard.typeColor(t),
-                  onSelected: (_) => setS(() => type = t),
-                )).toList(),
+            ),
+            const SizedBox(height: 12),
+            // Type selector chips
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: ['PreClass', 'InClass', 'PostClass'].map((t) => ChoiceChip(
+                label: Text(t, style: TextStyle(fontSize: 12, color: type == t ? Colors.white : AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                selected: type == t,
+                selectedColor: ActivityCard.typeColor(t),
+                onSelected: (_) => setS(() => type = t),
+              )).toList(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descCtrl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: 'Mô tả hoạt động',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descCtrl,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Mô tả hoạt động',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: deadlineCtrl,
+              readOnly: true,
+              onTap: () => _selectDateTime(ctx, deadlineCtrl, setS),
+              decoration: InputDecoration(
+                labelText: 'Hạn nộp (Deadline)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                suffixIcon: const Icon(Icons.alarm_rounded, size: 18),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: deadlineCtrl,
-                readOnly: true,
-                onTap: () => _selectDateTime(ctx, deadlineCtrl, setS),
-                decoration: InputDecoration(
-                  labelText: 'Hạn nộp (Deadline)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  suffixIcon: const Icon(Icons.alarm_rounded, size: 18),
-                ),
-              ),
-            ]),
-          ),
+            ),
+          ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-            ElevatedButton(
-              onPressed: () async {
-                if (titleCtrl.text.trim().isEmpty) return;
-                
-                String? deadlineIso;
-                if (deadlineCtrl.text.isNotEmpty) {
-                  try {
-                    final parts = deadlineCtrl.text.split(' ');
-                    final dateParts = parts[0].split('-');
-                    final timeParts = parts[1].split(':');
-                    final dt = DateTime(
-                      int.parse(dateParts[0]),
-                      int.parse(dateParts[1]),
-                      int.parse(dateParts[2]),
-                      int.parse(timeParts[0]),
-                      int.parse(timeParts[1]),
-                    );
-                    deadlineIso = dt.toUtc().toIso8601String();
-                  } catch (e) {
-                    // Fallback
-                  }
-                }
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Hủy'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (titleCtrl.text.trim().isEmpty) return;
+                      
+                      String? deadlineIso;
+                      if (deadlineCtrl.text.isNotEmpty) {
+                        try {
+                          final parts = deadlineCtrl.text.split(' ');
+                          final dateParts = parts[0].split('-');
+                          final timeParts = parts[1].split(':');
+                          final dt = DateTime(
+                            int.parse(dateParts[0]),
+                            int.parse(dateParts[1]),
+                            int.parse(dateParts[2]),
+                            int.parse(timeParts[0]),
+                            int.parse(timeParts[1]),
+                          );
+                          deadlineIso = dt.toUtc().toIso8601String();
+                        } catch (e) {
+                          // Fallback
+                        }
+                      }
 
-                Navigator.pop(ctx);
-                final vm  = context.read<InstructorManageViewModel>();
-                final err = await vm.createActivity(
-                  learningPathId: widget.pathId,
-                  title: titleCtrl.text.trim(),
-                  type: type,
-                  description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-                  deadline: deadlineIso,
-                );
-                if (!context.mounted) return;
-                if (err == null) {
-                  context.read<ActivityViewModel>().loadActivities(widget.pathId);
-                  AppSnackBar.show(context, 'Tạo hoạt động thành công!', type: SnackType.success);
-                } else {
-                  AppSnackBar.show(context, err, type: SnackType.error);
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0),
-              child: const Text('Tạo'),
+                      Navigator.pop(ctx);
+                      final vm  = context.read<InstructorManageViewModel>();
+                      final err = await vm.createActivity(
+                        learningPathId: widget.pathId,
+                        title: titleCtrl.text.trim(),
+                        type: type,
+                        description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                        deadline: deadlineIso,
+                      );
+                      if (!context.mounted) return;
+                      if (err == null) {
+                        context.read<ActivityViewModel>().loadActivities(widget.pathId);
+                        AppSnackBar.show(context, 'Tạo hoạt động thành công!', type: SnackType.success);
+                      } else {
+                        AppSnackBar.show(context, err, type: SnackType.error);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary, 
+                      foregroundColor: Colors.white, 
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Tạo'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
