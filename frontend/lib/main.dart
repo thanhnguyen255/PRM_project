@@ -279,12 +279,12 @@ class FlippedClassroomApp extends StatelessWidget {
 
     // /post-class-list
     if (name == '/post-class-list' && args != null) {
-      return _page(PostClassListScreen(pathId: args as int), settings);
+      return _page(PostClassListScreen(pathId: args['id'] as int), settings);
     }
 
     // /post-class-detail
     if (name == '/post-class-detail' && args != null) {
-      return _page(PostClassDetailScreen(activityId: args as int), settings);
+      return _page(PostClassDetailScreen(activityId: args['id'] as int), settings);
     }
 
     // /evidences/:id

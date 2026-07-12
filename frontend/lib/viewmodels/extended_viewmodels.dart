@@ -29,8 +29,29 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   Future<void> loadProjectDetail(int id) async {
+    _projectDetail = null;
+    _milestones    = [];
     _isLoading     = true; notifyListeners();
-    _projectDetail = await _projectSvc.getProjectDetail(id);
+    try {
+      _projectDetail = await _projectSvc.getProjectDetail(id);
+      if (_projectDetail != null && _projectDetail!.containsKey('error')) {
+        _projectDetail = {'title': 'API Error', 'description': _projectDetail!['error'] + '\n\n' + (_projectDetail!['raw'] ?? '')};
+        _milestones = [];
+      } else if (_projectDetail != null && _projectDetail!['milestones'] != null) {
+        final raw = _projectDetail!['milestones'];
+        if (raw is List) {
+          _milestones = raw.map((m) => MilestoneModel.fromJson(Map<String, dynamic>.from(m as Map))).toList();
+        } else {
+          _milestones = [];
+        }
+      } else {
+        _milestones = [];
+      }
+    } catch (e) {
+      print('Error parsing project detail: $e');
+      _projectDetail = {'title': 'Error', 'description': e.toString()};
+      _milestones = [];
+    }
     _isLoading     = false; notifyListeners();
   }
 

@@ -122,8 +122,8 @@ public class EvidenceController : BaseController
     [HttpGet("{id}/comments")]
     public async Task<IActionResult> GetComments(int id)
     {
-        int instructorId = GetCurrentUserId();
-        var comments = await _evidenceService.GetCommentsByEvidenceIdAsync(id, instructorId);
+        var userId = GetCurrentUserId();
+        var comments = await _evidenceService.GetCommentsByEvidenceIdAsync(id, userId);
         return Ok(ApiResponse.Success(comments));
     }
 

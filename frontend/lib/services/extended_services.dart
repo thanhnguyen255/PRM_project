@@ -19,8 +19,11 @@ class ProjectService {
 
   Future<Map<String, dynamic>?> getProjectDetail(int id) async {
     final res = await _api.get(ApiConfig.projectDetail(id));
-    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
-    return null;
+    if (res['success'] == true) {
+      final data = res['data'];
+      if (data is Map) return Map<String, dynamic>.from(data);
+    }
+    return {'error': res['message']?.toString() ?? 'API Failed', 'raw': res.toString()};
   }
 
   Future<({bool success, String? error})> createProject({
