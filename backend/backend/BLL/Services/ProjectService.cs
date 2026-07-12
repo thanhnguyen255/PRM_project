@@ -31,6 +31,8 @@ public class ProjectService : IProjectService
             Description = p.Description,
             MilestoneCount = p.Milestones.Count,
             CompletedMilestones = p.Milestones.Count(m => m.Submissions.Any()),
+            NextMilestoneTitle = p.Milestones.Where(m => !m.Submissions.Any()).OrderBy(m => m.DueDate).FirstOrDefault()?.Title,
+            NextMilestoneDueDate = p.Milestones.Where(m => !m.Submissions.Any()).OrderBy(m => m.DueDate).FirstOrDefault()?.DueDate,
             Milestones = p.Milestones.Select(m => new MilestoneDto
             {
                 Id = m.Id,
@@ -59,14 +61,21 @@ public class ProjectService : IProjectService
             Description = project.Description,
             MilestoneCount = project.Milestones.Count,
             CompletedMilestones = project.Milestones.Count(m => m.Submissions.Any()),
-            Milestones = project.Milestones.Select(m => new MilestoneDto
-            {
-                Id = m.Id,
-                ProjectId = m.ProjectId,
-                Title = m.Title,
-                Description = m.Description,
-                DueDate = m.DueDate
-            }).ToList()
+            NextMilestoneTitle = project.Milestones.Where(m => !m.Submissions.Any()).OrderBy(m => m.DueDate).FirstOrDefault()?.Title,
+            NextMilestoneDueDate = project.Milestones.Where(m => !m.Submissions.Any()).OrderBy(m => m.DueDate).FirstOrDefault()?.DueDate,
+            Milestones = project.Milestones
+                .OrderBy(m => m.DueDate)
+                .Select((m, index) => new MilestoneDto
+                {
+                    Id = m.Id,
+                    ProjectId = m.ProjectId,
+                    Title = m.Title,
+                    Description = m.Description,
+                    DueDate = m.DueDate,
+                    StepNumber = index + 1,
+                    IsSubmitted = m.Submissions.Any(),
+                    SubmittedAt = m.Submissions.OrderByDescending(s => s.SubmittedAt).FirstOrDefault()?.SubmittedAt
+                }).ToList()
         };
     }
 
@@ -104,16 +113,21 @@ public class ProjectService : IProjectService
     public async Task<IEnumerable<MilestoneDto>> GetMilestonesByProjectAsync(int projectId)
     {
         var milestones = await _unitOfWork.Repository<Milestone>().GetQueryable()
+            .Include(m => m.Submissions)
             .Where(m => m.ProjectId == projectId)
+            .OrderBy(m => m.DueDate)
             .ToListAsync();
 
-        return milestones.Select(m => new MilestoneDto
+        return milestones.Select((m, index) => new MilestoneDto
         {
             Id = m.Id,
             ProjectId = m.ProjectId,
             Title = m.Title,
             Description = m.Description,
-            DueDate = m.DueDate
+            DueDate = m.DueDate,
+            StepNumber = index + 1,
+            IsSubmitted = m.Submissions.Any(),
+            SubmittedAt = m.Submissions.OrderByDescending(s => s.SubmittedAt).FirstOrDefault()?.SubmittedAt
         });
     }
 

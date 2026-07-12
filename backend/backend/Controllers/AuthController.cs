@@ -44,6 +44,28 @@ public class AuthController : BaseController
             return BadRequest(ApiResponse.Fail("Dữ liệu không hợp lệ."));
 
         await _auth.ForgotPasswordAsync(dto.Email);
-        return Ok(ApiResponse.Success<object?>(null, "Nếu email tồn tại, link reset đã được gửi."));
+        return Ok(ApiResponse.Success<object?>(null, "Nếu email tồn tại, mã OTP đã được gửi."));
+    }
+
+    /// <summary>POST /api/auth/verify-otp</summary>
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ApiResponse.Fail("Dữ liệu không hợp lệ."));
+
+        var resetToken = await _auth.VerifyOtpAsync(dto);
+        return Ok(ApiResponse.Success(new { token = resetToken }, "Xác thực OTP thành công."));
+    }
+
+    /// <summary>POST /api/auth/reset-password</summary>
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ApiResponse.Fail("Dữ liệu không hợp lệ."));
+
+        await _auth.ResetPasswordAsync(dto);
+        return Ok(ApiResponse.Success<object?>(null, "Đổi mật khẩu thành công."));
     }
 }

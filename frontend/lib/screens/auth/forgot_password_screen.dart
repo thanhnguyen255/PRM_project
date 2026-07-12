@@ -101,7 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
     if (res['success'] == true) {
-      _resetToken = res['data']?['resetToken'] as String? ?? _otpCode;
+      _resetToken = res['data']?['token'] as String? ?? _otpCode;
       setState(() => _step = 2);
     } else {
       AppSnackBar.show(context, res['message'] as String? ?? 'OTP không đúng hoặc đã hết hạn.', type: SnackType.error);

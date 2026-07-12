@@ -11,7 +11,8 @@ class _A {
   String  get title             => _m['title'] as String? ?? '';
   String? get description       => _m['description'] as String?;
   String? get type              => _m['type'] as String?;
-  String? get submissionStatus  => _m['submissionStatus'] as String?;
+  int     get learningPathId    => _m['learningPathId'] as int? ?? 0;
+  String? get submissionStatus  => _m['submissionStatus'] as String? ?? (_m['submission'] != null ? _m['submission']['status'] as String? : null);
   DateTime? get deadline {
     final v = _m['deadline'];
     if (v == null) return null;
@@ -83,14 +84,27 @@ class _PreClassActivityState extends State<PreClassActivityScreen> {
                       ],
                       const Text('Tài liệu học tập', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
-                      _MaterialsBlock(activityId: widget.activityId),
+                      _MaterialsBlock(learningPathId: a.learningPathId),
                       const SizedBox(height: 16),
                       const Text('Trạng thái nộp bài', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       _SubmissionStatusCard(status: a.submissionStatus),
                     ]),
                   )),
-                  _SubmitBar(activityId: widget.activityId, status: a.submissionStatus),
+                  _SubmitBar(
+                    activityId: widget.activityId,
+                    status: a.submissionStatus,
+                    onTap: () async {
+                      await Navigator.pushNamed(context, '/submit-evidence', arguments: {
+                        'activityId': widget.activityId,
+                        'activityTitle': a.title,
+                        'label': a.type == 'PostClass' ? 'Reflection' : 'Bằng chứng',
+                      });
+                      if (context.mounted) {
+                        context.read<ActivityViewModel>().loadDetail(widget.activityId);
+                      }
+                    },
+                  ),
                 ]),
     );
   }
@@ -170,7 +184,7 @@ class _InClassActivityState extends State<InClassActivityScreen> {
                     ],
                     const Text('Tài liệu buổi học', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
-                    _MaterialsBlock(activityId: widget.activityId),
+                    _MaterialsBlock(learningPathId: a.learningPathId),
                     const SizedBox(height: 16),
                     const Text('Trạng thái điểm danh', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
@@ -269,7 +283,7 @@ class _PostClassActivityState extends State<PostClassActivityScreen> {
                       ],
                       const Text('Tài liệu tham khảo', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
-                      _MaterialsBlock(activityId: widget.activityId),
+                      _MaterialsBlock(learningPathId: a.learningPathId),
                       const SizedBox(height: 16),
                       _SubmissionStatusCard(status: a.submissionStatus),
                       const SizedBox(height: 16),
@@ -330,24 +344,28 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _MaterialsBlock extends StatelessWidget {
-  final int activityId;
-  const _MaterialsBlock({required this.activityId});
+  final int learningPathId;
+  const _MaterialsBlock({required this.learningPathId});
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-    child: ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-        child: const Icon(Icons.folder_open_rounded, color: AppColors.primary, size: 20),
+    child: Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
+          child: const Icon(Icons.folder_open_rounded, color: AppColors.primary, size: 20),
+        ),
+        title: const Text('Tài liệu đính kèm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        subtitle: const Text('Xem tài liệu, video bài học', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+        onTap: () => Navigator.pushNamed(context, '/paths/$learningPathId/materials'),
       ),
-      title: const Text('Tài liệu đính kèm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-      subtitle: const Text('Xem tài liệu, video bài học', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
-      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
-      onTap: () => Navigator.pushNamed(context, '/activities/$activityId/materials'),
     ),
   );
 }

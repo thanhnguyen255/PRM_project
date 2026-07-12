@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -11,8 +13,9 @@ import '../../../widgets/widgets.dart';
 class SubmitEvidenceScreen extends StatefulWidget {
   final int activityId;
   final String activityTitle;
+  final String label;
 
-  const SubmitEvidenceScreen({super.key, required this.activityId, required this.activityTitle});
+  const SubmitEvidenceScreen({super.key, required this.activityId, required this.activityTitle, this.label = 'Bằng chứng'});
   @override
   State<SubmitEvidenceScreen> createState() => _SubmitEvidenceScreenState();
 }
@@ -28,35 +31,39 @@ class _SubmitEvidenceScreenState extends State<SubmitEvidenceScreen> {
   }
 
   Future<void> _pickFile() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'mp4'],
-      );
-      if (result != null && result.files.isNotEmpty) {
-        setState(() {
-          _selectedFile = result.files.first;
-        });
-      }
-    } catch (e) {
-      AppSnackBar.show(context, 'Lỗi chọn file: $e', type: SnackType.error);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'png', 'zip', 'mp4'],
+      withData: true,
+    );
+    if (result != null) {
+      setState(() {
+        _selectedFile = result.files.first;
+      });
     }
   }
 
   Future<void> _submit() async {
-    final note = _noteCtrl.text.trim();
-    if (note.isEmpty && _selectedFile == null) {
-      AppSnackBar.show(context, 'Vui lòng nhập ghi chú hoặc chọn file.', type: SnackType.warning);
+    if (_noteCtrl.text.trim().isEmpty && _selectedFile == null) {
+      AppSnackBar.show(context, 'Vui lòng nhập ghi chú hoặc chọn file đính kèm.', type: SnackType.warning);
       return;
     }
-    final vm = context.read<EvidenceViewModel>();
+    String? safePath;
+    if (!kIsWeb && _selectedFile != null) {
+      safePath = _selectedFile!.path;
+    }
+
+    final vm  = context.read<EvidenceViewModel>();
     final err = await vm.submitEvidence(
-      activityId: widget.activityId,
-      note: note.isNotEmpty ? note : null,
-      filePath: _selectedFile?.path,
+      activityId: widget.activityId, 
+      note: _noteCtrl.text.trim().isNotEmpty ? _noteCtrl.text.trim() : null,
+      fileBytes: _selectedFile?.bytes,
+      filePath: safePath,
       fileName: _selectedFile?.name,
     );
+    
     if (!mounted) return;
+    
     if (err == null) {
       AppSnackBar.show(context, 'Nộp evidence thành công!', type: SnackType.success);
       Navigator.pop(context);
@@ -71,7 +78,7 @@ class _SubmitEvidenceScreenState extends State<SubmitEvidenceScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Nộp bằng chứng')),
+      appBar: AppBar(title: Text('Nộp ${widget.label.toLowerCase()}')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

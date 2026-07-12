@@ -175,6 +175,11 @@ public class EvidenceService : IEvidenceService
         var activity = await _unitOfWork.Repository<Activity>().GetByIdAsync(dto.ActivityId);
         if (activity == null) return null;
 
+        if (activity.Deadline.HasValue && DateTime.UtcNow > activity.Deadline.Value)
+        {
+            throw new ArgumentException("Đã quá thời hạn nộp bài, hệ thống đã khóa chức năng này.");
+        }
+
         string? fileUrl = null;
         if (dto.File != null && dto.File.Length > 0)
         {
@@ -195,30 +200,53 @@ public class EvidenceService : IEvidenceService
             fileUrl = "/uploads/" + uniqueFileName;
         }
 
-        var submission = new ActivitySubmission
-        {
-            ActivityId = dto.ActivityId,
-            UserId = learnerId,
-            FileUrl = fileUrl,
-            Note = dto.Note,
-            Status = backend.DAL.Enums.EvidenceStatus.Pending,
-            SubmittedAt = DateTime.UtcNow
-        };
+        var existingSubmission = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
+            .FirstOrDefaultAsync(s => s.ActivityId == dto.ActivityId && s.UserId == learnerId);
 
-        await _unitOfWork.Repository<ActivitySubmission>().AddAsync(submission);
+        ActivitySubmission finalSubmission;
+
+        if (existingSubmission != null)
+        {
+            if (existingSubmission.Status == backend.DAL.Enums.EvidenceStatus.Approved)
+            {
+                throw new ArgumentException("Bài nộp đã được duyệt, không thể nộp lại.");
+            }
+
+            existingSubmission.FileUrl = fileUrl ?? existingSubmission.FileUrl;
+            existingSubmission.Note = dto.Note;
+            existingSubmission.Status = backend.DAL.Enums.EvidenceStatus.Pending;
+            existingSubmission.SubmittedAt = DateTime.UtcNow;
+
+            _unitOfWork.Repository<ActivitySubmission>().Update(existingSubmission);
+            finalSubmission = existingSubmission;
+        }
+        else
+        {
+            var submission = new ActivitySubmission
+            {
+                ActivityId = dto.ActivityId,
+                UserId = learnerId,
+                FileUrl = fileUrl,
+                Note = dto.Note,
+                Status = backend.DAL.Enums.EvidenceStatus.Pending,
+                SubmittedAt = DateTime.UtcNow
+            };
+            await _unitOfWork.Repository<ActivitySubmission>().AddAsync(submission);
+            finalSubmission = submission;
+        }
         await _unitOfWork.SaveChangesAsync();
 
         return new EvidenceDto
         {
-            Id = submission.Id,
-            ActivityId = submission.ActivityId,
+            Id = finalSubmission.Id,
+            ActivityId = finalSubmission.ActivityId,
             ActivityTitle = activity.Title,
             UserId = learnerId,
             UserFullName = user.FullName,
-            FileUrl = submission.FileUrl,
-            Note = submission.Note,
-            Status = submission.Status,
-            SubmittedAt = submission.SubmittedAt
+            FileUrl = finalSubmission.FileUrl,
+            Note = finalSubmission.Note,
+            Status = finalSubmission.Status,
+            SubmittedAt = finalSubmission.SubmittedAt
         };
     }
 }

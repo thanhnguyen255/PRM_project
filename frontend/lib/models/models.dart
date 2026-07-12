@@ -185,6 +185,7 @@ class LearningPathModel {
   final int totalActivities;
   final int completedActivities;
   final String state; // "completed" | "inProgress" | "locked"
+  final bool isUnlocked;
 
   const LearningPathModel({
     required this.id,
@@ -194,6 +195,7 @@ class LearningPathModel {
     this.totalActivities = 0,
     this.completedActivities = 0,
     this.state = 'locked',
+    this.isUnlocked = false,
   });
 
   double get progress => totalActivities == 0 ? 0 : completedActivities / totalActivities;
@@ -206,6 +208,7 @@ class LearningPathModel {
     totalActivities:     json['totalActivities'] as int? ?? 0,
     completedActivities: json['completedActivities'] as int? ?? 0,
     state:               json['state'] as String? ?? 'locked',
+    isUnlocked:          json['isUnlocked'] as bool? ?? false,
   );
 }
 
@@ -244,7 +247,7 @@ class ActivityModel {
     description:      json['description'] as String?,
     deadline:         json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
     submissionId:     json['submissionId'] as int?,
-    submissionStatus: json['submissionStatus'] as String?,
+    submissionStatus: json['submissionStatus'] as String? ?? (json['submission'] != null ? json['submission']['status'] as String? : null),
     submittedAt:      json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
   );
 }
@@ -395,8 +398,8 @@ class ProjectModel {
     required this.classId,
     required this.title,
     this.description,
-    this.milestoneCount = 0,
-    this.completedMilestones = 0,
+    required this.milestoneCount,
+    required this.completedMilestones,
     this.nextMilestoneTitle,
     this.nextMilestoneDueDate,
     this.milestones = const [],
@@ -405,7 +408,7 @@ class ProjectModel {
   factory ProjectModel.fromJson(Map<String, dynamic> json) => ProjectModel(
     id:                   json['id'] as int,
     classId:              json['classId'] as int? ?? 0,
-    title:                json['title'] as String,
+    title:                json['title'] as String? ?? '',
     description:          json['description'] as String?,
     milestoneCount:       json['milestoneCount'] as int? ?? 0,
     completedMilestones:  json['completedMilestones'] as int? ?? 0,

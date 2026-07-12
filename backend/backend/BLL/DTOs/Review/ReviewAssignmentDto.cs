@@ -8,4 +8,5 @@ public class ReviewAssignmentDto
     public string ReviewerName { get; set; } = string.Empty;
     public int RevieweeId { get; set; }
     public string RevieweeName { get; set; } = string.Empty;
+    public bool IsCompleted { get; set; }
 }

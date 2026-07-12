@@ -29,8 +29,29 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   Future<void> loadProjectDetail(int id) async {
+    _projectDetail = null;
+    _milestones    = [];
     _isLoading     = true; notifyListeners();
-    _projectDetail = await _projectSvc.getProjectDetail(id);
+    try {
+      _projectDetail = await _projectSvc.getProjectDetail(id);
+      if (_projectDetail != null && _projectDetail!.containsKey('error')) {
+        _projectDetail = {'title': 'API Error', 'description': _projectDetail!['error'] + '\n\n' + (_projectDetail!['raw'] ?? '')};
+        _milestones = [];
+      } else if (_projectDetail != null && _projectDetail!['milestones'] != null) {
+        final raw = _projectDetail!['milestones'];
+        if (raw is List) {
+          _milestones = raw.map((m) => MilestoneModel.fromJson(Map<String, dynamic>.from(m as Map))).toList();
+        } else {
+          _milestones = [];
+        }
+      } else {
+        _milestones = [];
+      }
+    } catch (e) {
+      print('Error parsing project detail: $e');
+      _projectDetail = {'title': 'Error', 'description': e.toString()};
+      _milestones = [];
+    }
     _isLoading     = false; notifyListeners();
   }
 
@@ -115,21 +136,37 @@ class ReviewViewModel extends ChangeNotifier {
     _isLoading = false; notifyListeners();
   }
 
+  Future<void> loadReviewDetail(int sessionId) async {
+    _isLoading     = true;
+    _sessionDetail = null;
+    _assignments   = [];
+    notifyListeners();
+    final results = await Future.wait([
+      _svc.getSessionDetail(sessionId),
+      _svc.getAssignments(sessionId),
+    ]);
+    _sessionDetail = results[0] as Map<String, dynamic>?;
+    _assignments   = results[1] as List<Map<String, dynamic>>;
+    _isLoading     = false;
+    notifyListeners();
+  }
+
+  // Keep individual methods for backward compat
   Future<void> loadSessionDetail(int id) async {
     _isLoading     = true; notifyListeners();
     _sessionDetail = await _svc.getSessionDetail(id);
     _isLoading     = false; notifyListeners();
   }
 
-  Future<void> loadReceivedFeedback(int sessionId) async {
-    _receivedFeedback = await _svc.getReceivedFeedback(sessionId);
-    notifyListeners();
-  }
-
   Future<void> loadAssignments(int sessionId) async {
     _isLoading   = true; notifyListeners();
     _assignments = await _svc.getAssignments(sessionId);
     _isLoading   = false; notifyListeners();
+  }
+
+  Future<void> loadReceivedFeedback(int sessionId) async {
+    _receivedFeedback = await _svc.getReceivedFeedback(sessionId);
+    notifyListeners();
   }
 
   Future<String?> submitFeedback({
@@ -333,6 +370,11 @@ class InstructorManageViewModel extends ChangeNotifier {
 
   Future<String?> deleteLearningPath(int id) async {
     final res = await ApiService.instance.delete('/learning-paths/$id');
+    return res['success'] == true ? null : res['message'] as String?;
+  }
+
+  Future<String?> toggleLearningPathLock(int id) async {
+    final res = await ApiService.instance.patch('/learning-paths/$id/toggle-lock');
     return res['success'] == true ? null : res['message'] as String?;
   }
 

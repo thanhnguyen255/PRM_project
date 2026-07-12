@@ -21,7 +21,7 @@
 | ------- | ---------------------- | ------------------------------------------------ |
 | SCR-L01 | Splash Screen          | Check authentication status and load application |
 | SCR-L02 | Login Screen           | User login                                       |
-| SCR-L03 | Register Screen        | Create learner account                           |
+| SCR-L03 | Register Screen        | Create learner account                           |X
 | SCR-L04 | Forgot Password Screen | Recover account password                         |
 
 ---

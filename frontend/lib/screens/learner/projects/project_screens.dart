@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../config/app_colors.dart';
 import '../../../viewmodels/extended_viewmodels.dart';
 import '../../../widgets/widgets.dart';
+import '../../../models/models.dart';
 
 // ════════════════════════════════════════════════════════════════════════════════
 // SCR-L21/L22 — My Projects & Project Detail (Learner)
@@ -54,7 +55,7 @@ class _LearnerProjectsState extends State<LearnerProjectsScreen> {
 }
 
 class _ProjectCard extends StatelessWidget {
-  final dynamic project;
+  final ProjectModel project;
   final VoidCallback onTap;
   const _ProjectCard({required this.project, required this.onTap});
 
@@ -111,11 +112,39 @@ class _ProjectCard extends StatelessWidget {
                 Text('${(pct * 100).toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isComplete ? AppColors.success : AppColors.warning)),
               ]),
               const SizedBox(height: 8),
-              const Row(children: [
-                Icon(Icons.flag_rounded, size: 14, color: AppColors.textHint),
-                SizedBox(width: 4),
-                Text('Xem milestones →', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
-              ]),
+              if (project.nextMilestoneTitle != null) ...[
+                const Divider(height: 16),
+                Row(children: [
+                  const Icon(Icons.flag_circle_rounded, size: 16, color: AppColors.warning),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text('Mục tiêu: ${project.nextMilestoneTitle}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                ]),
+                if (project.nextMilestoneDueDate != null) ...[
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    const Icon(Icons.event_rounded, size: 16, color: AppColors.textHint),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Hạn nộp: ${project.nextMilestoneDueDate!.day.toString().padLeft(2, '0')}/${project.nextMilestoneDueDate!.month.toString().padLeft(2, '0')}/${project.nextMilestoneDueDate!.year} ${project.nextMilestoneDueDate!.hour.toString().padLeft(2, '0')}:${project.nextMilestoneDueDate!.minute.toString().padLeft(2, '0')}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: project.nextMilestoneDueDate!.isBefore(DateTime.now()) ? AppColors.error : AppColors.textHint,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ]),
+                ],
+              ] else ...[
+                const Row(children: [
+                  Icon(Icons.flag_rounded, size: 14, color: AppColors.textHint),
+                  SizedBox(width: 4),
+                  Text('Xem milestones →', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                ]),
+              ],
             ]),
           ),
         ]),
@@ -125,7 +154,7 @@ class _ProjectCard extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
-// SCR-L22 — Project Detail & Milestones (Learner)
+// SCR-L27 — Project Detail (Learner)
 // ════════════════════════════════════════════════════════════════════════════════
 class LearnerProjectDetailScreen extends StatefulWidget {
   final int projectId;
@@ -140,159 +169,400 @@ class _LearnerProjectDetailState extends State<LearnerProjectDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectViewModel>().loadProjectDetail(widget.projectId);
-      context.read<ProjectViewModel>().loadMilestones(widget.projectId);
     });
   }
+
+  Future<void> _refresh() =>
+      context.read<ProjectViewModel>().loadProjectDetail(widget.projectId);
 
   @override
   Widget build(BuildContext context) {
     final vm     = context.watch<ProjectViewModel>();
     final detail = vm.projectDetail;
+    final title  = detail?['title'] as String? ?? 'Dự án';
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(detail?['title'] as String? ?? 'Dự án')),
-      body: vm.isLoading
+      appBar: AppBar(
+        title: Text(title, overflow: TextOverflow.ellipsis),
+        elevation: 0,
+        backgroundColor: const Color(0xFFD97706),
+        foregroundColor: Colors.white,
+      ),
+      body: (vm.isLoading || detail == null)
           ? const LoadingWidget()
-          : CustomScrollView(
-              slivers: [
-                // Overview card
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFFD97706), AppColors.warning]),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Row(children: [
-                          const Icon(Icons.folder_special_rounded, color: Colors.white, size: 28),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text(detail?['title'] as String? ?? '', style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700))),
-                        ]),
-                        if ((detail?['description'] as String? ?? '').isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(detail!['description'] as String, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5)),
-                        ],
-                        const SizedBox(height: 14),
-                        Row(children: [
-                          _InfoBadge(Icons.flag_rounded, '${vm.milestones.where((m) => m.isSubmitted).length}/${vm.milestones.length} milestone'),
-                        ]),
-                      ]),
-                    ),
+          : RefreshIndicator(
+              onRefresh: _refresh,
+              color: AppColors.primary,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                children: [
+                  _ProjectHeader(detail: detail, milestones: vm.milestones),
+                  const SizedBox(height: 24),
+                  _MilestoneTimeline(
+                    milestones: vm.milestones,
+                    projectId: widget.projectId,
                   ),
-                ),
-
-                // Milestones header
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    child: Text('Danh sách Milestone', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                  ),
-                ),
-
-                // Milestones list
-                if (vm.milestones.isEmpty)
-                  const SliverFillRemaining(child: EmptyState(icon: Icons.flag_outlined, title: 'Chưa có milestone', message: 'Giảng viên chưa tạo milestone cho dự án này.'))
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                    sliver: SliverList.separated(
-                      itemCount: vm.milestones.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) {
-                        final m = vm.milestones[i];
-                        return _MilestoneCard(
-                          milestone: m,
-                          index: i + 1,
-                          onSubmit: () async {
-                            await Navigator.pushNamed(context, '/milestones/${m.id}');
-                            if (context.mounted) {
-                              context.read<ProjectViewModel>().loadMilestones(widget.projectId);
-                              context.read<ProjectViewModel>().loadProjectDetail(widget.projectId);
-                            }
-                          },
-                        );
-                      },
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
     );
   }
 }
 
-class _MilestoneCard extends StatelessWidget {
-  final dynamic milestone;
-  final int index;
-  final VoidCallback onSubmit;
-  const _MilestoneCard({required this.milestone, required this.index, required this.onSubmit});
+// ── Project Header Card ────────────────────────────────────────────────────────
+class _ProjectHeader extends StatelessWidget {
+  final Map<String, dynamic> detail;
+  final List<MilestoneModel> milestones;
+
+  const _ProjectHeader({required this.detail, required this.milestones});
 
   @override
   Widget build(BuildContext context) {
-    final bool done = milestone.isSubmitted as bool;
+    final title       = detail['title'] as String? ?? '';
+    final description = detail['description'] as String?;
+    final total       = milestones.length;
+    final done        = milestones.where((m) => m.isSubmitted).length;
+    final pct         = total == 0 ? 0.0 : done / total;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: done ? AppColors.success.withAlpha(80) : AppColors.border),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
-        leading: Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-            color: done ? AppColors.successLight : AppColors.warning.withAlpha(20),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: done
-              ? const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22)
-              : Center(child: Text('#$index', style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.warning, fontSize: 14))),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFD97706), Color(0xFFF59E0B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        title: Text(milestone.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        subtitle: milestone.dueDate != null
-            ? Text('Hạn: ${_fmt(milestone.dueDate!)}', style: const TextStyle(fontSize: 12, color: AppColors.textHint))
-            : const Text('Chưa có hạn', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
-        trailing: done
-            ? const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22)
-            : ElevatedButton(
-                onPressed: onSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  elevation: 0,
-                ),
-                child: const Text('Nộp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD97706).withAlpha(60),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Icon + Title
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(40),
+                borderRadius: BorderRadius.circular(12),
               ),
-        onTap: onSubmit,
+              child: const Icon(Icons.folder_special_rounded, color: Colors.white, size: 26),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700, height: 1.3,
+                ),
+              ),
+            ),
+          ]),
+
+          // Description
+          if (description != null && description.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              description,
+              style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+
+          const SizedBox(height: 16),
+
+          // Progress bar
+          Row(children: [
+            const Icon(Icons.flag_rounded, size: 15, color: Colors.white70),
+            const SizedBox(width: 6),
+            Text(
+              '$done/$total milestone hoàn thành',
+              style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: pct,
+              minHeight: 8,
+              backgroundColor: Colors.white.withAlpha(50),
+              valueColor: const AlwaysStoppedAnimation(Colors.white),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${(pct * 100).toInt()}%',
+              style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ]),
       ),
     );
   }
+}
 
-  String _fmt(DateTime dt) =>
+// ── Milestone Timeline ─────────────────────────────────────────────────────────
+class _MilestoneTimeline extends StatelessWidget {
+  final List<MilestoneModel> milestones;
+  final int projectId;
+
+  const _MilestoneTimeline({required this.milestones, required this.projectId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Danh sách Milestone',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        ),
+        const SizedBox(height: 14),
+        if (milestones.isEmpty)
+          const EmptyState(
+            icon: Icons.flag_outlined,
+            title: 'Chưa có milestone',
+            message: 'Giảng viên chưa tạo milestone cho dự án này.',
+          )
+        else
+          ...List.generate(milestones.length, (i) {
+            final m    = milestones[i];
+            final isLast = i == milestones.length - 1;
+            return _MilestoneStepRow(
+              milestone: m,
+              index: i + 1,
+              isLast: isLast,
+              onTap: () async {
+                await Navigator.pushNamed(context, '/milestones/${m.id}');
+                if (context.mounted) {
+                  context.read<ProjectViewModel>().loadProjectDetail(projectId);
+                }
+              },
+            );
+          }),
+      ],
+    );
+  }
+}
+
+// ── Milestone Step Row (stepper style) ────────────────────────────────────────
+class _MilestoneStepRow extends StatelessWidget {
+  final MilestoneModel milestone;
+  final int index;
+  final bool isLast;
+  final VoidCallback onTap;
+
+  const _MilestoneStepRow({
+    required this.milestone,
+    required this.index,
+    required this.isLast,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final done       = milestone.isSubmitted;
+    final stepColor  = done ? AppColors.success : AppColors.warning;
+    final stepBg     = done ? AppColors.successLight : AppColors.warningLight;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Left column: circle + vertical line
+        SizedBox(
+          width: 48,
+          child: Column(
+            children: [
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: stepBg,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: done ? AppColors.success : AppColors.warning,
+                    width: 2,
+                  ),
+                ),
+                child: Center(
+                  child: done
+                      ? const Icon(Icons.check_rounded, color: AppColors.success, size: 20)
+                      : Text(
+                          '$index',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: stepColor,
+                            fontSize: 15,
+                          ),
+                        ),
+                ),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 40,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: done ? AppColors.success.withAlpha(60) : AppColors.border,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // ── Right column: card content
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+            child: GestureDetector(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: done ? AppColors.success.withAlpha(80) : AppColors.border,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(6),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title + status badge
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            milestone.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _StatusChip(isSubmitted: done),
+                      ],
+                    ),
+
+                    // Due date
+                    if (milestone.dueDate != null) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.event_rounded, size: 13, color: AppColors.textHint),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Hạn: ${_fmt(milestone.dueDate!)}',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                          ),
+                          if (milestone.submittedAt != null) ...[
+                            const SizedBox(width: 10),
+                            const Icon(Icons.upload_rounded, size: 13, color: AppColors.success),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Nộp: ${_fmt(milestone.submittedAt!)}',
+                              style: const TextStyle(fontSize: 12, color: AppColors.success),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+
+                    // Action hint
+                    if (!done) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningLight,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.upload_file_rounded, size: 13, color: AppColors.warning),
+                            SizedBox(width: 4),
+                            Text(
+                              'Nhấn để xem & nộp',
+                              style: TextStyle(fontSize: 12, color: AppColors.warning, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _fmt(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
 }
 
-class _InfoBadge extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InfoBadge(this.icon, this.label);
+// ── Status Chip ───────────────────────────────────────────────────────────────
+class _StatusChip extends StatelessWidget {
+  final bool isSubmitted;
+  const _StatusChip({required this.isSubmitted});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(color: Colors.white.withAlpha(30), borderRadius: BorderRadius.circular(20)),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, size: 13, color: Colors.white),
-      const SizedBox(width: 5),
-      Text(label, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isSubmitted ? AppColors.successLight : AppColors.warningLight,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSubmitted ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            size: 11,
+            color: isSubmitted ? AppColors.success : AppColors.warning,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            isSubmitted ? 'Đã nộp' : 'Chưa nộp',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isSubmitted ? AppColors.success : AppColors.warning,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
 // ════════════════════════════════════════════════════════════════════════════════
 // SCR-L29 — Milestone Detail + SCR-L30 — Submit Milestone

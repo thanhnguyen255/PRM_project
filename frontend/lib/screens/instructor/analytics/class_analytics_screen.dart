@@ -192,40 +192,44 @@ class _StudentListTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.border),
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
-            leading: CircleAvatar(
-              radius: 22,
-              backgroundColor: AppColors.primaryLight,
-              child: Text(
-                (s['name'] as String? ?? '').isNotEmpty ? (s['name'] as String)[0] : '?',
-                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 16),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+              leading: CircleAvatar(
+                radius: 22,
+                backgroundColor: AppColors.primaryLight,
+                child: Text(
+                  (s['name'] as String? ?? '').isNotEmpty ? (s['name'] as String)[0] : '?',
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 16),
+                ),
               ),
-            ),
-            title: Text(s['name'] as String? ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-            subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const SizedBox(height: 6),
-              Row(children: [
-                Expanded(child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: pct / 100,
-                    backgroundColor: AppColors.border,
-                    valueColor: AlwaysStoppedAnimation(color),
-                    minHeight: 7,
-                  ),
-                )),
-                const SizedBox(width: 8),
-                Text('${pct.toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+              title: Text(s['name'] as String? ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const SizedBox(height: 6),
+                Row(children: [
+                  Expanded(child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: pct / 100,
+                      backgroundColor: AppColors.border,
+                      valueColor: AlwaysStoppedAnimation(color),
+                      minHeight: 7,
+                    ),
+                  )),
+                  const SizedBox(width: 8),
+                  Text('${pct.toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+                ]),
+                const SizedBox(height: 4),
+                Text(
+                  '✓ ${s['completedActivities'] ?? 0} hoạt động  •  ${s['pendingEvidence'] ?? 0} evidence chờ',
+                  style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                ),
               ]),
-              const SizedBox(height: 4),
-              Text(
-                '✓ ${s['completedActivities'] ?? 0} hoạt động  •  ${s['pendingEvidence'] ?? 0} evidence chờ',
-                style: const TextStyle(fontSize: 11, color: AppColors.textHint),
-              ),
-            ]),
-            onTap: () => Navigator.pushNamed(context, '/instructor/students/${s['userId']}/progress',
-                arguments: {'classId': classId, 'studentName': s['name']}),
+              onTap: () => Navigator.pushNamed(context, '/instructor/students/${s['userId']}/progress',
+                  arguments: {'classId': classId, 'studentName': s['name']}),
+            ),
           ),
         );
       },

@@ -18,6 +18,7 @@ public class ReviewService : IReviewService
 
     public async Task<IEnumerable<ReviewSessionDto>> GetSessionsByClassAsync(int classId)
     {
+        var now = DateTime.UtcNow;
         var sessions = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
             .Include(s => s.Assignments)
                 .ThenInclude(a => a.Feedbacks)
@@ -31,6 +32,9 @@ public class ReviewService : IReviewService
             Title = s.Title,
             StartDate = s.StartDate,
             EndDate = s.EndDate,
+            IsOpen = now >= s.StartDate && now <= s.EndDate,
+            MyAssignmentCount = 0,
+            MyCompletedCount = 0,
             TotalPairs = s.Assignments.Count,
             CompletedPairs = s.Assignments.Count(a => a.Feedbacks.Any())
         });
@@ -38,6 +42,7 @@ public class ReviewService : IReviewService
 
     public async Task<ReviewSessionDto?> GetSessionByIdAsync(int id)
     {
+        var now = DateTime.UtcNow;
         var session = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
             .Include(s => s.Assignments)
                 .ThenInclude(a => a.Feedbacks)
@@ -46,7 +51,6 @@ public class ReviewService : IReviewService
             .Include(s => s.Assignments)
                 .ThenInclude(a => a.Reviewee)
             .FirstOrDefaultAsync(s => s.Id == id);
-            
         if (session == null) return null;
 
         return new ReviewSessionDto
@@ -56,6 +60,7 @@ public class ReviewService : IReviewService
             Title = session.Title,
             StartDate = session.StartDate,
             EndDate = session.EndDate,
+            IsOpen = now >= session.StartDate && now <= session.EndDate,
             TotalPairs = session.Assignments.Count,
             CompletedPairs = session.Assignments.Count(a => a.Feedbacks.Any()),
             Pairs = session.Assignments.Select(a => new ReviewMonitorDto
@@ -131,6 +136,7 @@ public class ReviewService : IReviewService
         var query = _unitOfWork.Repository<ReviewAssignment>().GetQueryable()
             .Include(ra => ra.Reviewer)
             .Include(ra => ra.Reviewee)
+            .Include(ra => ra.Feedbacks)
             .Where(ra => ra.SessionId == sessionId);
 
         if (reviewerId.HasValue)
@@ -147,7 +153,8 @@ public class ReviewService : IReviewService
             ReviewerId = ra.ReviewerId,
             ReviewerName = ra.Reviewer?.FullName ?? "Unknown Reviewer",
             RevieweeId = ra.RevieweeId,
-            RevieweeName = ra.Reviewee?.FullName ?? "Unknown Reviewee"
+            RevieweeName = ra.Reviewee?.FullName ?? "Unknown Reviewee",
+            IsCompleted = ra.Feedbacks != null && ra.Feedbacks.Any()
         });
     }
 
@@ -155,6 +162,7 @@ public class ReviewService : IReviewService
     {
         var feedbacks = await _unitOfWork.Repository<Feedback>().GetQueryable()
             .Include(f => f.Assignment)
+                .ThenInclude(a => a.Reviewer)
             .Where(f => f.Assignment.SessionId == sessionId && f.Assignment.RevieweeId == userId)
             .ToListAsync();
 
@@ -162,6 +170,7 @@ public class ReviewService : IReviewService
         {
             Id = f.Id,
             AssignmentId = f.AssignmentId,
+            ReviewerName = f.Assignment?.Reviewer?.FullName ?? "Anonymous",
             Content = f.Content,
             Rating = f.Rating,
             CreatedAt = f.CreatedAt

@@ -96,8 +96,8 @@ class ActivityService {
     return [];
   }
 
-  Future<List<ActivityModel>> getUpcoming(int classId) async {
-    final res = await _api.get(ApiConfig.upcomingActivities(classId));
+  Future<List<ActivityModel>> getUpcoming({int? classId}) async {
+    final res = await _api.get(ApiConfig.upcomingActivities(classId: classId));
     if (res['success'] == true) {
       final list = res['data'] as List<dynamic>;
       return list.map((e) => ActivityModel.fromJson(e as Map<String, dynamic>)).toList();
@@ -137,13 +137,19 @@ class EvidenceService {
     required int activityId,
     String? note,
     String? filePath,
+    List<int>? fileBytes,
     String? fileName,
   }) async {
     try {
       final Map<String, dynamic> data = {'ActivityId': activityId};
       if (note != null && note.isNotEmpty) data['Note'] = note;
 
-      if (filePath != null && filePath.isNotEmpty) {
+      if (fileBytes != null && fileBytes.isNotEmpty) {
+        data['File'] = MultipartFile.fromBytes(
+          fileBytes,
+          filename: fileName ?? 'upload.file',
+        );
+      } else if (filePath != null && filePath.isNotEmpty) {
         data['File'] = await MultipartFile.fromFile(
           filePath,
           filename: fileName ?? filePath.split('/').last,
