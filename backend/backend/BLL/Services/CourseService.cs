@@ -56,13 +56,20 @@ public class CourseService : ICourseService
 
     public async Task<CourseDetailDto?> GetCourseByIdAsync(int id, int userId)
     {
-        // For now, allow both Instructor and Learner to view course details
+        var user = await _unitOfWork.Repository<User>().GetQueryable().FirstOrDefaultAsync(u => u.Id == userId);
+        bool isLearner = user?.Role == backend.DAL.Enums.UserRole.Learner;
+
         var course = await _unitOfWork.Repository<Course>().GetQueryable()
             .Include(c => c.Instructor)
             .Include(c => c.Classes)
+                .ThenInclude(cls => cls.Members)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (course == null) return null;
+
+        var visibleClasses = isLearner 
+            ? course.Classes.Where(c => c.Members.Any(m => m.UserId == userId))
+            : course.Classes;
 
         return new CourseDetailDto
         {
@@ -73,15 +80,13 @@ public class CourseService : ICourseService
             InstructorName = course.Instructor?.FullName ?? string.Empty,
             InstructorAvatar = course.Instructor?.AvatarUrl,
             CreatedAt = course.CreatedAt,
-            Classes = course.Classes.Select(c => new CourseClassDto
+            Classes = visibleClasses.Select(c => new CourseClassDto
             {
                 Id = c.Id,
                 Name = c.Name,
                 StartDate = c.StartDate,
                 EndDate = c.EndDate,
-                // Assuming we don't have MemberCount loaded easily here without a projection or another include.
-                // We'll leave it as 0 for now or compute if needed.
-                MemberCount = 0
+                MemberCount = c.Members.Count
             }).ToList()
         };
     }

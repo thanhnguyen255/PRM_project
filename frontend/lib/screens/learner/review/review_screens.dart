@@ -113,8 +113,7 @@ class _ReviewDetailState extends State<ReviewDetailScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ReviewViewModel>().loadSessionDetail(widget.sessionId);
-      context.read<ReviewViewModel>().loadAssignments(widget.sessionId);
+      context.read<ReviewViewModel>().loadReviewDetail(widget.sessionId);
     });
   }
 
@@ -217,6 +216,7 @@ class _AssignmentCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary, foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              minimumSize: const Size(0, 36),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               elevation: 0,
             ),
@@ -269,10 +269,12 @@ class _ReceivedFeedbackSectionState extends State<_ReceivedFeedbackSection> {
                   style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
             ),
             const SizedBox(width: 10),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(f.reviewerName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              Row(children: List.generate(5, (i) => Icon(i < f.rating ? Icons.star_rounded : Icons.star_outline_rounded, size: 14, color: AppColors.warning))),
-            ]),
+            Flexible(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(f.reviewerName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis),
+                Row(children: List.generate(5, (i) => Icon(i < f.rating ? Icons.star_rounded : Icons.star_outline_rounded, size: 14, color: AppColors.warning))),
+              ]),
+            ),
           ]),
           const SizedBox(height: 8),
           Text(f.content, style: const TextStyle(fontSize: 13, height: 1.6, color: AppColors.textSecondary)),

@@ -115,21 +115,37 @@ class ReviewViewModel extends ChangeNotifier {
     _isLoading = false; notifyListeners();
   }
 
+  Future<void> loadReviewDetail(int sessionId) async {
+    _isLoading     = true;
+    _sessionDetail = null;
+    _assignments   = [];
+    notifyListeners();
+    final results = await Future.wait([
+      _svc.getSessionDetail(sessionId),
+      _svc.getAssignments(sessionId),
+    ]);
+    _sessionDetail = results[0] as Map<String, dynamic>?;
+    _assignments   = results[1] as List<Map<String, dynamic>>;
+    _isLoading     = false;
+    notifyListeners();
+  }
+
+  // Keep individual methods for backward compat
   Future<void> loadSessionDetail(int id) async {
     _isLoading     = true; notifyListeners();
     _sessionDetail = await _svc.getSessionDetail(id);
     _isLoading     = false; notifyListeners();
   }
 
-  Future<void> loadReceivedFeedback(int sessionId) async {
-    _receivedFeedback = await _svc.getReceivedFeedback(sessionId);
-    notifyListeners();
-  }
-
   Future<void> loadAssignments(int sessionId) async {
     _isLoading   = true; notifyListeners();
     _assignments = await _svc.getAssignments(sessionId);
     _isLoading   = false; notifyListeners();
+  }
+
+  Future<void> loadReceivedFeedback(int sessionId) async {
+    _receivedFeedback = await _svc.getReceivedFeedback(sessionId);
+    notifyListeners();
   }
 
   Future<String?> submitFeedback({
@@ -332,6 +348,11 @@ class InstructorManageViewModel extends ChangeNotifier {
 
   Future<String?> deleteLearningPath(int id) async {
     final res = await ApiService.instance.delete('/learning-paths/$id');
+    return res['success'] == true ? null : res['message'] as String?;
+  }
+
+  Future<String?> toggleLearningPathLock(int id) async {
+    final res = await ApiService.instance.patch('/learning-paths/$id/toggle-lock');
     return res['success'] == true ? null : res['message'] as String?;
   }
 

@@ -9,6 +9,7 @@ public class LearningPathDto
     public int CompletedActivities { get; set; }
     public string State { get; set; } = string.Empty; // completed | inProgress | locked
     public int ClassId { get; set; }
+    public bool IsUnlocked { get; set; }
 }
 
 public class LearningPathDetailDto
@@ -17,6 +18,7 @@ public class LearningPathDetailDto
     public int ClassId { get; set; }
     public string Title { get; set; } = string.Empty;
     public int WeekNumber { get; set; }
+    public bool IsUnlocked { get; set; }
     public List<MaterialDto> Materials { get; set; } = new();
     public List<ActivitySummaryDto> PreClassActivities { get; set; } = new();
     public List<ActivitySummaryDto> InClassActivities { get; set; } = new();

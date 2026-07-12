@@ -185,6 +185,7 @@ class LearningPathModel {
   final int totalActivities;
   final int completedActivities;
   final String state; // "completed" | "inProgress" | "locked"
+  final bool isUnlocked;
 
   const LearningPathModel({
     required this.id,
@@ -194,6 +195,7 @@ class LearningPathModel {
     this.totalActivities = 0,
     this.completedActivities = 0,
     this.state = 'locked',
+    this.isUnlocked = false,
   });
 
   double get progress => totalActivities == 0 ? 0 : completedActivities / totalActivities;
@@ -206,6 +208,7 @@ class LearningPathModel {
     totalActivities:     json['totalActivities'] as int? ?? 0,
     completedActivities: json['completedActivities'] as int? ?? 0,
     state:               json['state'] as String? ?? 'locked',
+    isUnlocked:          json['isUnlocked'] as bool? ?? false,
   );
 }
 
@@ -244,7 +247,7 @@ class ActivityModel {
     description:      json['description'] as String?,
     deadline:         json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
     submissionId:     json['submissionId'] as int?,
-    submissionStatus: json['submissionStatus'] as String?,
+    submissionStatus: json['submissionStatus'] as String? ?? (json['submission'] != null ? json['submission']['status'] as String? : null),
     submittedAt:      json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
   );
 }

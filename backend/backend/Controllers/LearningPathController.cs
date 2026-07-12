@@ -36,7 +36,7 @@ public class LearningPathController : BaseController
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
     }
 
@@ -60,13 +60,13 @@ public class LearningPathController : BaseController
         try
         {
             var role = GetCurrentUserRole();
-            if (role == "Learner") return Forbid("Chỉ giảng viên mới tạo được lộ trình học.");
+            if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới tạo được lộ trình học."));
             var newPath = await _learningPathService.CreateLearningPathAsync(dto, GetCurrentUserId());
             return Ok(ApiResponse.Success(newPath));
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
     }
 
@@ -74,9 +74,19 @@ public class LearningPathController : BaseController
     public async Task<IActionResult> DeletePath(int id)
     {
         var role = GetCurrentUserRole();
-        if (role == "Learner") return Forbid("Chỉ giảng viên mới xóa được lộ trình học.");
+        if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới xóa được lộ trình học."));
         var result = await _learningPathService.DeleteLearningPathAsync(id, GetCurrentUserId());
         if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy tuần học hoặc bạn không có quyền xóa."));
         return Ok(ApiResponse.Success(new { success = true }, "Xóa thành công."));
+    }
+
+    [HttpPatch("{id}/toggle-lock")]
+    public async Task<IActionResult> ToggleLock(int id)
+    {
+        var role = GetCurrentUserRole();
+        if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới thực hiện chức năng này."));
+        var result = await _learningPathService.ToggleLockAsync(id, GetCurrentUserId());
+        if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy tuần học hoặc bạn không có quyền chỉnh sửa."));
+        return Ok(ApiResponse.Success(new { success = true }, "Cập nhật trạng thái thành công."));
     }
 }

@@ -124,6 +124,17 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
                           if (context.mounted) context.read<LearningPathViewModel>().loadPaths(widget.classId);
                         }
                       },
+                      onToggleLock: () async {
+                        final m = context.read<InstructorManageViewModel>();
+                        final err = await m.toggleLearningPathLock(p.id);
+                        if (context.mounted) {
+                          if (err == null) {
+                            context.read<LearningPathViewModel>().loadPaths(widget.classId);
+                          } else {
+                            AppSnackBar.show(context, err, type: SnackType.error);
+                          }
+                        }
+                      },
                     );
                   },
                   onReorder: (oldIndex, newIndex) {
@@ -145,7 +156,8 @@ class _PathCard extends StatelessWidget {
   final dynamic path;
   final VoidCallback onManage;
   final VoidCallback onDelete;
-  const _PathCard({super.key, required this.path, required this.onManage, required this.onDelete});
+  final VoidCallback onToggleLock;
+  const _PathCard({super.key, required this.path, required this.onManage, required this.onDelete, required this.onToggleLock});
 
   @override
   Widget build(BuildContext context) {
@@ -158,54 +170,67 @@ class _PathCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 2))],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-        leading: Container(
-          width: 48, height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(child: Text(
-            'W${path.weekNumber}',
-            style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w800),
-          )),
-        ),
-        title: Text(path.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(height: 4),
-          Text('${path.totalActivities} hoạt động • ${path.completedActivities} hoàn thành',
-              style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.border,
-              valueColor: AlwaysStoppedAnimation(progress >= 1.0 ? AppColors.success : AppColors.primary),
-              minHeight: 4,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: ListTile(
+          contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          leading: Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Center(child: Text(
+              'W${path.weekNumber}',
+              style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w800),
+            )),
           ),
-        ]),
-        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          IconButton(
-            icon: const Icon(Icons.folder_shared_rounded, color: AppColors.secondary, size: 22),
-            tooltip: 'Quản lý tài liệu',
-            onPressed: () => Navigator.pushNamed(context, '/instructor/paths/${path.id}/materials'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 22),
-            tooltip: 'Quản lý hoạt động',
-            onPressed: onManage,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_rounded, color: AppColors.error, size: 20),
-            tooltip: 'Xoá lộ trình',
-            onPressed: onDelete,
-          ),
-          const Icon(Icons.drag_handle_rounded, color: AppColors.textHint),
-        ]),
-        onTap: onManage,
+          title: Text(path.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const SizedBox(height: 4),
+            Text('${path.totalActivities} hoạt động • ${path.completedActivities} hoàn thành',
+                style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: AppColors.border,
+                valueColor: AlwaysStoppedAnimation(progress >= 1.0 ? AppColors.success : AppColors.primary),
+                minHeight: 4,
+              ),
+            ),
+          ]),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            IconButton(
+              icon: const Icon(Icons.folder_shared_rounded, color: AppColors.secondary, size: 22),
+              tooltip: 'Quản lý tài liệu',
+              onPressed: () => Navigator.pushNamed(context, '/instructor/paths/${path.id}/materials'),
+            ),
+            IconButton(
+              icon: Icon(
+                path.isUnlocked ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
+                color: path.isUnlocked ? AppColors.success : AppColors.textHint,
+                size: 22,
+              ),
+              tooltip: path.isUnlocked ? 'Đang mở (Bấm để Khóa)' : 'Đang khóa (Bấm để Mở)',
+              onPressed: onToggleLock,
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 22),
+              tooltip: 'Quản lý hoạt động',
+              onPressed: onManage,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
+              tooltip: 'Xoá',
+              onPressed: onDelete,
+            ),
+            const Icon(Icons.drag_handle_rounded, color: AppColors.textHint),
+          ]),
+          onTap: onManage,
+        ),
       ),
     );
   }

@@ -17,19 +17,26 @@ public class ClassController : BaseController
         _classService = classService;
     }
 
+    [HttpGet("my")]
+    public async Task<IActionResult> GetMyClasses()
+    {
+        var result = await _classService.GetMyClassesAsync(GetCurrentUserId());
+        return Ok(ApiResponse.Success(result));
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetClasses([FromQuery] int courseId)
     {
         try
         {
             var role = GetCurrentUserRole();
-            if (role == "Learner") return Forbid("Chỉ giảng viên mới xem được danh sách lớp học của khóa học.");
+            if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới xem được danh sách lớp học của khóa học."));
             var classes = await _classService.GetClassesByCourseAsync(courseId, GetCurrentUserId());
             return Ok(ApiResponse.Success(classes));
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
     }
 
@@ -43,7 +50,7 @@ public class ClassController : BaseController
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
         catch (KeyNotFoundException ex)
         {
@@ -64,13 +71,13 @@ public class ClassController : BaseController
         try
         {
             var role = GetCurrentUserRole();
-            if (role == "Learner") return Forbid("Chỉ giảng viên mới tạo được lớp học.");
+            if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới tạo được lớp học."));
             var newClass = await _classService.CreateClassAsync(dto, GetCurrentUserId());
             return Ok(ApiResponse.Success(newClass));
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
     }
 
@@ -80,14 +87,14 @@ public class ClassController : BaseController
         try
         {
             var role = GetCurrentUserRole();
-            if (role == "Learner") return Forbid("Chỉ giảng viên mới thêm được thành viên.");
+            if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới thêm được thành viên."));
             var result = await _classService.AddMemberToClassAsync(id, dto, GetCurrentUserId());
             if (!result) return BadRequest(ApiResponse.Fail("Không thể thêm thành viên (người dùng không tồn tại hoặc đã tồn tại)."));
             return Ok(ApiResponse.Success(new { success = true }, "Đã thêm thành viên vào lớp thành công."));
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
     }
 
@@ -97,14 +104,14 @@ public class ClassController : BaseController
         try
         {
             var role = GetCurrentUserRole();
-            if (role == "Learner") return Forbid("Chỉ giảng viên mới xóa được thành viên.");
+            if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới xóa được thành viên."));
             var result = await _classService.RemoveMemberFromClassAsync(id, uid, GetCurrentUserId());
             if (!result) return NotFound(ApiResponse.Fail("Thành viên không tồn tại trong lớp."));
             return Ok(ApiResponse.Success(new { success = true }, "Đã xóa thành viên khỏi lớp thành công."));
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
     }
 }

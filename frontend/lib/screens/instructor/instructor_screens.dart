@@ -263,28 +263,32 @@ class InstructorAnalyticsTab extends StatelessWidget {
                         border: Border.all(color: AppColors.border),
                         boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 2))],
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
-                        leading: Container(
-                          width: 48, height: 48,
-                          decoration: BoxDecoration(color: AppColors.info.withAlpha(20), borderRadius: BorderRadius.circular(12)),
-                          child: const Icon(Icons.analytics_rounded, color: AppColors.info, size: 24),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          leading: Container(
+                            width: 48, height: 48,
+                            decoration: BoxDecoration(color: AppColors.info.withAlpha(20), borderRadius: BorderRadius.circular(12)),
+                            child: const Icon(Icons.analytics_rounded, color: AppColors.info, size: 24),
+                          ),
+                          title: Text(c.activeClassName ?? 'Lớp học', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text('Khóa học: ${c.title}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                            ],
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/instructor/analytics/${c.activeClassId}',
+                            );
+                          },
                         ),
-                        title: Text(c.activeClassName ?? 'Lớp học', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text('Khóa học: ${c.title}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                          ],
-                        ),
-                        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/instructor/analytics/${c.activeClassId}',
-                          );
-                        },
                       ),
                     );
                   },

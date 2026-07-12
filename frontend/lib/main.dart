@@ -25,6 +25,7 @@ import 'screens/learner/classes/members_screen.dart';
 
 // Learner — Courses
 import 'screens/learner/course/course_screen.dart';
+import 'screens/learner/course/course_detail_screen.dart';
 
 // Learner — Learning Paths
 import 'screens/learner/learning_path/learning_path_overview_screen.dart';
@@ -54,13 +55,11 @@ import 'screens/learner/materials/video_player_screen.dart';
 import 'screens/learner/materials/document_viewer_screen.dart';
 import 'screens/learner/activities/pre_class_list_screen.dart';
 import 'screens/learner/activities/pre_class_detail_screen.dart';
-import 'screens/learner/activities/submit_pre_evidence_screen.dart';
+
 import 'screens/learner/activities/in_class/in_class_list_screen.dart';
 import 'screens/learner/activities/in_class/in_class_detail_screen.dart';
-import 'screens/learner/activities/in_class/submit_in_class_evidence_screen.dart';
 import 'screens/learner/activities/post_class/post_class_list_screen.dart';
 import 'screens/learner/activities/post_class/post_class_detail_screen.dart';
-import 'screens/learner/activities/post_class/submit_reflection_screen.dart';
 // Screens — Instructor
 import 'screens/instructor/instructor_screens.dart';
 import 'screens/instructor/courses/manage_courses_screen.dart';
@@ -246,7 +245,7 @@ class FlippedClassroomApp extends StatelessWidget {
     // /material-detail
     if (name == '/material-detail' && args != null) {
       return _page(
-        MaterialDetailScreen(materialId: args as int),
+        MaterialDetailScreen(materialId: args['id'] as int),
         settings,
       );
     }
@@ -254,7 +253,7 @@ class FlippedClassroomApp extends StatelessWidget {
     // /pre-class-list
     if (name == '/pre-class-list' && args != null) {
       return _page(
-        PreClassListScreen(pathId: args as int),
+        PreClassListScreen(pathId: args['id'] as int),
         settings,
       );
     }
@@ -262,32 +261,19 @@ class FlippedClassroomApp extends StatelessWidget {
     // /pre-class-detail
     if (name == '/pre-class-detail' && args != null) {
       return _page(
-        PreClassDetailScreen(activityId: args as int),
-        settings,
-      );
-    }
-
-    // /submit-pre-evidence
-    if (name == '/submit-pre-evidence' && args != null) {
-      return _page(
-        SubmitPreEvidenceScreen(activityId: args as int),
+        PreClassDetailScreen(activityId: args['id'] as int),
         settings,
       );
     }
 
     // /in-class-list
     if (name == '/in-class-list' && args != null) {
-      return _page(InClassListScreen(pathId: args as int), settings);
+      return _page(InClassListScreen(pathId: args['id'] as int), settings);
     }
 
     // /in-class-detail
     if (name == '/in-class-detail' && args != null) {
-      return _page(InClassDetailScreen(activityId: args as int), settings);
-    }
-
-    // /submit-in-class-evidence
-    if (name == '/submit-in-class-evidence' && args != null) {
-      return _page(SubmitInClassEvidenceScreen(activityId: args as int), settings);
+      return _page(InClassDetailScreen(activityId: args['id'] as int), settings);
     }
 
     // /post-class-list
@@ -298,11 +284,6 @@ class FlippedClassroomApp extends StatelessWidget {
     // /post-class-detail
     if (name == '/post-class-detail' && args != null) {
       return _page(PostClassDetailScreen(activityId: args as int), settings);
-    }
-
-    // /submit-post-class-reflection
-    if (name == '/submit-post-class-reflection' && args != null) {
-      return _page(SubmitReflectionScreen(activityId: args as int), settings);
     }
 
     // /evidences/:id

@@ -60,9 +60,30 @@ class _ActivityCard extends StatelessWidget {
     final type = activity['type'] as String? ?? '';
     final id = activity['id'] as int;
 
+    final deadline = activity['deadline'] as String?;
+    final submissionStatus = activity['submissionStatus'] as String? ?? 'Pending';
+
+    Color badgeColor;
+    Color badgeTextColor;
+    String badgeText;
+
+    if (submissionStatus == 'Approved') {
+      badgeColor = const Color(0xFFD1FAE5);
+      badgeTextColor = const Color(0xFF065F46);
+      badgeText = 'Approved ✓';
+    } else if (submissionStatus == 'Rejected') {
+      badgeColor = const Color(0xFFFEE2E2);
+      badgeTextColor = const Color(0xFF991B1B);
+      badgeText = 'Rejected ✗';
+    } else {
+      badgeColor = const Color(0xFFFEF3C7);
+      badgeTextColor = const Color(0xFF92400E);
+      badgeText = 'Pending';
+    }
+
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, '/pre-class-detail', arguments: id);
+        Navigator.pushNamed(context, '/pre-class-detail', arguments: {'id': id});
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -101,21 +122,45 @@ class _ActivityCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary.withAlpha(20),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      type,
-                      style: const TextStyle(fontSize: 12, color: AppColors.secondary, fontWeight: FontWeight.w600),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          type,
+                          style: const TextStyle(fontSize: 12, color: AppColors.secondary, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      if (deadline != null) ...[
+                        const SizedBox(width: 8),
+                        Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Hạn: ${DateTime.parse(deadline).toLocal().toString().substring(0, 16)}',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                badgeText,
+                style: TextStyle(color: badgeTextColor, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
           ],
         ),
       ),

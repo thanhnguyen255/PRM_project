@@ -281,3 +281,4 @@ D:\Ky8\PRM393\Code\PRM_project\backend\backend\obj\Debug\net8.0\swae.build.ex.ca
 D:\Ky8\PRM393\Code\PRM_project\backend\backend\obj\Debug\net8.0\backend.csproj.Up2Date
 D:\Ky8\PRM393\Code\PRM_project\backend\backend\obj\Debug\net8.0\backend.genruntimeconfig.cache
 D:\Ky8\PRM393\Code\PRM_project\backend\backend\obj\Debug\net8.0\ref\backend.dll
+D:\Ky8\PRM393\Code\PRM_project\backend\backend\bin\Debug\net8.0\backend.staticwebassets.runtime.json

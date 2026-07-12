@@ -30,9 +30,13 @@ public class ActivityService : IActivityService
         var activityIds = activities.Select(a => a.Id).ToList();
 
         // Lấy submissions của user cho các activities này
-        var submissions = await _db.ActivitySubmissions
+        var submissionsList = await _db.ActivitySubmissions
             .Where(s => s.UserId == userId && activityIds.Contains(s.ActivityId))
-            .ToDictionaryAsync(s => s.ActivityId);
+            .ToListAsync();
+
+        var submissions = submissionsList
+            .GroupBy(s => s.ActivityId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(s => s.SubmittedAt).First());
 
         return activities.Select(a =>
         {
@@ -80,9 +84,13 @@ public class ActivityService : IActivityService
 
         var activityIds = activities.Select(a => a.Id).ToList();
 
-        var submissions = await _db.ActivitySubmissions
+        var submissionsList = await _db.ActivitySubmissions
             .Where(s => s.UserId == learnerId && activityIds.Contains(s.ActivityId))
-            .ToDictionaryAsync(s => s.ActivityId);
+            .ToListAsync();
+            
+        var submissions = submissionsList
+            .GroupBy(s => s.ActivityId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(s => s.Id).First());
 
         return activities.Select(a =>
         {
@@ -107,7 +115,9 @@ public class ActivityService : IActivityService
             ?? throw new KeyNotFoundException("Không tìm thấy hoạt động.");
 
         var sub = await _db.ActivitySubmissions
-            .FirstOrDefaultAsync(s => s.ActivityId == activityId && s.UserId == userId);
+            .Where(s => s.ActivityId == activityId && s.UserId == userId)
+            .OrderByDescending(s => s.Id)
+            .FirstOrDefaultAsync();
 
         int commentCount = 0;
         if (sub != null)

@@ -239,8 +239,10 @@ class _MilestoneCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: done ? AppColors.success.withAlpha(80) : AppColors.border),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          contentPadding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
         leading: Container(
           width: 44, height: 44,
           decoration: BoxDecoration(
@@ -257,18 +259,24 @@ class _MilestoneCard extends StatelessWidget {
             : const Text('Chưa có hạn', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
         trailing: done
             ? const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22)
-            : ElevatedButton(
-                onPressed: onSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  elevation: 0,
-                ),
-                child: const Text('Nộp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    onPressed: onSubmit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.warning,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Nộp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  ),
+                ],
               ),
         onTap: onSubmit,
+        ),
       ),
     );
   }

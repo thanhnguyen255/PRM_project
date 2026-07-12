@@ -157,29 +157,32 @@ class _ReviewSessionCard extends StatelessWidget {
           boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(children: [
-          ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            leading: Container(
-              width: 48, height: 48,
-              decoration: BoxDecoration(
-                color: isOpen ? AppColors.successLight : AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
+          Material(
+            color: Colors.transparent,
+            child: ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              leading: Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: isOpen ? AppColors.successLight : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.rate_review_rounded,
+                  color: isOpen ? AppColors.success : AppColors.textHint,
+                  size: 24,
+                ),
               ),
-              child: Icon(
-                Icons.rate_review_rounded,
-                color: isOpen ? AppColors.success : AppColors.textHint,
-                size: 24,
-              ),
+              title: Text(session.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const SizedBox(height: 4),
+                Text(
+                  '${_fmtD(session.startDate)} → ${_fmtD(session.endDate)}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                ),
+              ]),
+              trailing: StatusBadge(status: isOpen ? BadgeStatus.open : BadgeStatus.closed),
             ),
-            title: Text(session.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const SizedBox(height: 4),
-              Text(
-                '${_fmtD(session.startDate)} → ${_fmtD(session.endDate)}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textHint),
-              ),
-            ]),
-            trailing: StatusBadge(status: isOpen ? BadgeStatus.open : BadgeStatus.closed),
           ),
           // Stats + action
           Padding(

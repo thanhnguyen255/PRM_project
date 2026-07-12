@@ -44,6 +44,9 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
+// ── Built-in Services ─────────────────────────────────────────────────────
+builder.Services.AddMemoryCache();
+
 // ── DI — Helpers ──────────────────────────────────────────────────────────
 builder.Services.AddScoped<JwtHelper>();
 
@@ -51,6 +54,7 @@ builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // ── DI — Services (BLL) ───────────────────────────────────────────────────
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<ILearningPathService, LearningPathService>();

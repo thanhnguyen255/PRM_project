@@ -22,7 +22,7 @@ public class CourseController : BaseController
     {
         // Default to instructor logic for generic list (or we can block learners here)
         var role = GetCurrentUserRole();
-        if (role == "Learner") return Forbid("Chỉ giảng viên mới xem được danh sách tất cả khóa học.");
+        if (role == "Learner") return StatusCode(403, ApiResponse.Fail("Chỉ giảng viên mới xem được danh sách tất cả khóa học."));
         var courses = await _courseService.GetCoursesByInstructorAsync(GetCurrentUserId());
         return Ok(ApiResponse.Success(courses));
     }

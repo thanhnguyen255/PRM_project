@@ -53,8 +53,8 @@ class ApiConfig {
   static String activities(int pathId, {String? type}) =>
       '/activities?pathId=$pathId${type != null ? '&type=$type' : ''}';
   static String activityDetail(int id)   => '/activities/$id';
-  static String upcomingActivities(int classId, {int limit = 5}) =>
-      '/activities/upcoming?classId=$classId&limit=$limit';
+  static String upcomingActivities({int? classId, int limit = 5}) =>
+      '/activities/upcoming?limit=$limit${classId != null ? '&classId=$classId' : ''}';
   static const String createActivity     = '/activities';
   static String updateActivity(int id)   => '/activities/$id';
   static String deleteActivity(int id)   => '/activities/$id';

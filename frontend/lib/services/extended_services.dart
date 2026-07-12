@@ -151,7 +151,7 @@ class ReviewService {
   }
 
   Future<List<Map<String, dynamic>>> getAssignments(int sessionId) async {
-    final res = await _api.get(ApiConfig.allAssignments(sessionId));
+    final res = await _api.get('/review-assignments?sessionId=$sessionId');
     if (res['success'] == true) {
       return (res['data'] as List<dynamic>).cast<Map<String, dynamic>>();
     }

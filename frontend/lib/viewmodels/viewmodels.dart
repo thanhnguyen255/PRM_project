@@ -96,10 +96,8 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> _loadCourses() async {
     _courses = await _courseService.getMyCourses();
-    // Load upcoming từ active class của course đầu tiên
-    if (_courses.isNotEmpty && _courses.first.activeClassId != null) {
-      _upcoming = await _activityService.getUpcoming(_courses.first.activeClassId!);
-    }
+    // Load toàn bộ upcoming activities của học viên
+    _upcoming = await _activityService.getUpcoming();
   }
 
   Future<void> _loadUnreadCount() async {
@@ -269,9 +267,9 @@ class EvidenceViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> submitEvidence({required int activityId, String? note, String? filePath, String? fileName}) async {
+  Future<String?> submitEvidence({required int activityId, String? note, String? filePath, List<int>? fileBytes, String? fileName}) async {
     _isSubmitting = true; notifyListeners();
-    final result = await _service.submitEvidence(activityId: activityId, note: note, filePath: filePath, fileName: fileName);
+    final result = await _service.submitEvidence(activityId: activityId, note: note, filePath: filePath, fileBytes: fileBytes, fileName: fileName);
     _isSubmitting = false; notifyListeners();
     return result.success ? null : result.error;
   }

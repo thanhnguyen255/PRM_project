@@ -6,7 +6,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/review-assignments")]
-public class ReviewAssignmentController : ControllerBase
+public class ReviewAssignmentController : BaseController
 {
     private readonly IReviewService _reviewService;
 
@@ -16,7 +16,7 @@ public class ReviewAssignmentController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ReviewAssignmentDto>>> GetAssignments([FromQuery] int sessionId, [FromQuery] int? reviewerId)
+    public async Task<IActionResult> GetAssignments([FromQuery] int sessionId, [FromQuery] int? reviewerId)
     {
         if (!reviewerId.HasValue && Request.Headers.TryGetValue("X-User-Id", out var val) && int.TryParse(val, out var id))
         {
@@ -24,6 +24,6 @@ public class ReviewAssignmentController : ControllerBase
         }
 
         var assignments = await _reviewService.GetAssignmentsAsync(sessionId, reviewerId);
-        return Ok(assignments);
+        return Ok(ApiResponse.Success(assignments));
     }
 }

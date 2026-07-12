@@ -15,6 +15,8 @@ class MaterialsScreen extends StatefulWidget {
 }
 
 class _MaterialsScreenState extends State<MaterialsScreen> {
+  String _selectedType = 'Tất cả';
+
   @override
   void initState() {
     super.initState();
@@ -26,78 +28,59 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<MaterialViewModel>();
+    
+    final filteredMaterials = vm.materials.where((m) {
+      if (_selectedType == 'Tất cả') return true;
+      final type = m['type'] as String? ?? '';
+      return type == _selectedType;
+    }).toList();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Tài liệu học tập')),
       body: vm.isLoading
           ? const LoadingWidget()
-          : vm.materials.isEmpty
-              ? const EmptyState(icon: Icons.folder_open_outlined, title: 'Chưa có tài liệu', message: 'Giảng viên chưa thêm tài liệu cho hoạt động này.')
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: vm.materials.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) {
-                    final m = vm.materials[i];
-                    return _MaterialCard(material: m);
-                  },
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (vm.materials.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  FilterChipGroup(
+                    options: const ['Tất cả', 'Video', 'Document', 'Link'],
+                    selected: _selectedType,
+                    onSelected: (val) => setState(() => _selectedType = val),
+                  ),
+                ],
+                Expanded(
+                  child: filteredMaterials.isEmpty && vm.materials.isNotEmpty
+                      ? const EmptyState(
+                          icon: Icons.filter_alt_off_outlined,
+                          title: 'Không có kết quả',
+                          message: 'Không tìm thấy tài liệu phù hợp với bộ lọc.',
+                        )
+                      : filteredMaterials.isEmpty
+                          ? const EmptyState(
+                              icon: Icons.folder_open_outlined,
+                              title: 'Chưa có tài liệu',
+                              message: 'Giảng viên chưa thêm tài liệu cho hoạt động này.',
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: filteredMaterials.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: 10),
+                              itemBuilder: (_, i) {
+                                final m = filteredMaterials[i];
+                                return MaterialListTile(material: m);
+                              },
+                            ),
                 ),
+              ],
+            ),
     );
   }
 }
 
-class _MaterialCard extends StatelessWidget {
-  final Map<String, dynamic> material;
-  const _MaterialCard({required this.material});
 
-  bool get _isVideo => (material['type'] as String? ?? '').toLowerCase().contains('video');
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _isVideo ? AppColors.secondary : AppColors.primary;
-    final icon  = _isVideo ? Icons.play_circle_rounded : Icons.description_rounded;
-
-    return InkWell(
-      onTap: () {
-        Navigator.pushNamed(context, '/material-detail', arguments: material['id']);
-      },
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withAlpha(60)),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 6)],
-        ),
-        child: Row(children: [
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: _isVideo ? [const Color(0xFF7C3AED), AppColors.secondary] : [AppColors.primary, const Color(0xFF4F46E5)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: Colors.white, size: 26),
-          ),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(material['title'] as String? ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: color.withAlpha(20), borderRadius: BorderRadius.circular(10)),
-              child: Text(_isVideo ? '▶ Video' : '📄 Tài liệu', style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
-            ),
-          ])),
-          const SizedBox(width: 8),
-          Icon(_isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded, color: color, size: 22),
-        ]),
-      ),
-    );
-  }
-}
 
 // ════════════════════════════════════════════════════════════════════════════════
 // Instructor — Manage Materials (add video/doc links)
@@ -220,7 +203,7 @@ class _ManageMaterialsState extends State<ManageMaterialsScreen> {
                       onDismissed: (_) async {
                         await context.read<MaterialViewModel>().deleteMaterial(m['id'] as int, widget.pathId);
                       },
-                      child: _MaterialCard(material: m),
+                      child: MaterialListTile(material: m),
                     );
                   },
                 ),

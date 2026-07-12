@@ -34,7 +34,6 @@ public class LearningPathService : ILearningPathService
             .ToListAsync();
 
         var result = new List<LearningPathDto>();
-        bool previousCompleted = true; // tuần đầu không locked
 
         foreach (var path in paths)
         {
@@ -42,7 +41,7 @@ public class LearningPathService : ILearningPathService
             var completed = path.Activities.Count(a => approvedActivityIds.Contains(a.Id));
 
             string state;
-            if (!previousCompleted)
+            if (!path.IsUnlocked)
                 state = "locked";
             else if (total > 0 && completed == total)
                 state = "completed";
@@ -51,8 +50,6 @@ public class LearningPathService : ILearningPathService
             else
                 state = "notStarted";
 
-            previousCompleted = state == "completed";
-
             result.Add(new LearningPathDto
             {
                 Id = path.Id,
@@ -60,7 +57,9 @@ public class LearningPathService : ILearningPathService
                 WeekNumber = path.WeekNumber,
                 TotalActivities = total,
                 CompletedActivities = completed,
-                State = state
+                State = state,
+                ClassId = path.ClassId,
+                IsUnlocked = path.IsUnlocked
             });
         }
 
@@ -77,10 +76,14 @@ public class LearningPathService : ILearningPathService
 
         // Lấy submission của user cho các activities trong path này
         var activityIds = path.Activities.Select(a => a.Id).ToList();
-        var submissions = await _db.ActivitySubmissions
+        
+        var submissionsList = await _db.ActivitySubmissions
             .Where(s => s.UserId == userId && activityIds.Contains(s.ActivityId))
-            .ToDictionaryAsync(s => s.ActivityId);
-
+            .ToListAsync();
+            
+        var submissions = submissionsList
+            .GroupBy(s => s.ActivityId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(s => s.Id).First());
         ActivitySummaryDto MapActivity(DAL.Models.Activity a) => new()
         {
             Id = a.Id,
@@ -176,6 +179,21 @@ public class LearningPathService : ILearningPathService
         if (learningPath == null) return false;
 
         _unitOfWork.Repository<LearningPath>().Delete(learningPath);
+        await _unitOfWork.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ToggleLockAsync(int pathId, int instructorId)
+    {
+        var learningPath = await _unitOfWork.Repository<LearningPath>().GetQueryable()
+            .Include(lp => lp.Class)
+            .ThenInclude(c => c.Course)
+            .FirstOrDefaultAsync(lp => lp.Id == pathId && lp.Class.Course.InstructorId == instructorId);
+
+        if (learningPath == null) return false;
+
+        learningPath.IsUnlocked = !learningPath.IsUnlocked;
+        _unitOfWork.Repository<LearningPath>().Update(learningPath);
         await _unitOfWork.SaveChangesAsync();
         return true;
     }

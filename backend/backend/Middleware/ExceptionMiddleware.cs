@@ -13,7 +13,8 @@ public class ExceptionMiddleware(RequestDelegate next)
         }
         catch (UnauthorizedAccessException ex)
         {
-            await WriteResponse(context, 401, ex.Message);
+            int statusCode = ex.Message.Contains("Token không hợp lệ") ? 401 : 403;
+            await WriteResponse(context, statusCode, ex.Message);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("đã được sử dụng"))
         {

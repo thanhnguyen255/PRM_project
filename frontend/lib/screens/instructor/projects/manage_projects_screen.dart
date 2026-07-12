@@ -195,25 +195,28 @@ class _ProjectCard extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(children: [
-        ListTile(
-          contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
-          leading: Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(color: AppColors.warning.withAlpha(20), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.folder_special_rounded, color: AppColors.warning, size: 24),
-          ),
-          title: Text(project.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          subtitle: Text('${project.milestoneCount} milestones • ${project.completedMilestones} hoàn thành',
-              style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
-          trailing: PopupMenuButton<String>(
-            onSelected: (v) {
-              if (v == 'add') onAddMilestone();
-              if (v == 'delete') onDelete();
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: 'add', child: Row(children: [Icon(Icons.flag_rounded, size: 16, color: AppColors.primary), SizedBox(width: 8), Text('Thêm Milestone')])),
-              const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 16, color: AppColors.error), SizedBox(width: 8), Text('Xoá dự án', style: TextStyle(color: AppColors.error))])),
-            ],
+        Material(
+          color: Colors.transparent,
+          child: ListTile(
+            contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+            leading: Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(color: AppColors.warning.withAlpha(20), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.folder_special_rounded, color: AppColors.warning, size: 24),
+            ),
+            title: Text(project.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            subtitle: Text('${project.milestoneCount} milestones • ${project.completedMilestones} hoàn thành',
+                style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+            trailing: PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'add') onAddMilestone();
+                if (v == 'delete') onDelete();
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'add', child: Row(children: [Icon(Icons.flag_rounded, size: 16, color: AppColors.primary), SizedBox(width: 8), Text('Thêm Milestone')])),
+                const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 16, color: AppColors.error), SizedBox(width: 8), Text('Xoá dự án', style: TextStyle(color: AppColors.error))])),
+              ],
+            ),
           ),
         ),
         Padding(

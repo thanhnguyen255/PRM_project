@@ -32,9 +32,15 @@ class ApiService {
       },
       onError: (e, handler) async {
         if (e.response?.statusCode == 401) {
-          // Token hết hạn — xóa local data
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
+          final data = e.response?.data;
+          final msg = (data is Map && data['message'] != null) ? data['message'].toString() : '';
+          
+          // Tránh xóa token nếu lỗi 401 thực chất là lỗi phân quyền từ backend (Backend trả nhầm 401 thay vì 403)
+          if (!msg.contains('không có quyền')) {
+            // Token hết hạn — xóa local data
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.clear();
+          }
         }
         handler.next(e);
       },
