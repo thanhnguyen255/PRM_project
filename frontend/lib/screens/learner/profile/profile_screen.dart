@@ -25,11 +25,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  String _formatDate(DateTime? dt) {
+    if (dt == null) return 'N/A';
+    final localDt = dt.toLocal();
+    final d = localDt.day.toString().padLeft(2, '0');
+    final m = localDt.month.toString().padLeft(2, '0');
+    final y = localDt.year;
+    return '$d/$m/$y';
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.help_outline_rounded, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 8),
+            const Text('Trợ giúp & Hỗ trợ'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hệ thống Flipped Classroom',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text('Mọi thắc mắc hoặc yêu cầu hỗ trợ kỹ thuật, vui lòng liên hệ:'),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.email_outlined, size: 16, color: AppColors.textSecondary),
+                SizedBox(width: 8),
+                Expanded(child: Text('support@flippedclassroom.edu.vn')),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.phone_outlined, size: 16, color: AppColors.textSecondary),
+                SizedBox(width: 8),
+                Text('1900 1234 (8:00 - 17:00)'),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+            SizedBox(width: 8),
+            Text('Đổi mật khẩu'),
+          ],
+        ),
+        content: const Text('Tính năng đổi mật khẩu đang được phát triển và sẽ sẵn sàng trong bản cập nhật tiếp theo.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final homeVm = context.watch<HomeViewModel>();
     final authVm = context.watch<AuthViewModel>();
-    final name   = homeVm.greeting.isNotEmpty ? homeVm.greeting : 'Học viên';
+    final isInstructor = homeVm.profile?.role == 'Instructor';
+    final name   = homeVm.greeting.isNotEmpty ? homeVm.greeting : (isInstructor ? 'Giảng viên' : 'Học viên');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -39,7 +120,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SliverAppBar(
             expandedHeight: 220,
             pinned: true,
-            automaticallyImplyLeading: false,
+            leading: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
@@ -54,14 +140,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 46,
                     backgroundColor: Colors.white.withAlpha(30),
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: Colors.white),
-                    ),
+                    backgroundImage: (homeVm.profile?.avatarUrl != null && homeVm.profile!.avatarUrl!.isNotEmpty)
+                        ? NetworkImage(homeVm.profile!.avatarUrl!)
+                        : null,
+                    child: (homeVm.profile?.avatarUrl == null || homeVm.profile!.avatarUrl!.isEmpty)
+                        ? Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                            style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: Colors.white),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
-                  const Text('Học viên', style: TextStyle(fontSize: 13, color: Colors.white60)),
+                  Text(isInstructor ? 'Giảng viên' : 'Học viên', style: const TextStyle(fontSize: 13, color: Colors.white60)),
                 ]),
               ),
             ),
@@ -74,11 +165,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(20)),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.school_rounded, size: 14, color: AppColors.primary),
-                    SizedBox(width: 6),
-                    Text('Learner', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                  decoration: BoxDecoration(
+                    color: isInstructor ? AppColors.secondary.withAlpha(30) : AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(
+                      isInstructor ? Icons.shield_rounded : Icons.school_rounded,
+                      size: 14,
+                      color: isInstructor ? AppColors.secondary : AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isInstructor ? 'Giảng viên' : 'Learner',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isInstructor ? AppColors.secondary : AppColors.primary,
+                      ),
+                    ),
                   ]),
                 ),
               ),
@@ -87,6 +192,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Info section
               _Section('Thông tin cá nhân', [
                 _InfoTile(Icons.person_rounded, 'Họ tên', name),
+                if (homeVm.profile != null) ...[
+                  _InfoTile(Icons.email_rounded, 'Email', homeVm.profile!.email),
+                  _InfoTile(Icons.calendar_today_rounded, 'Ngày tham gia', _formatDate(homeVm.profile!.createdAt)),
+                ],
               ]),
               const SizedBox(height: 12),
 
@@ -102,7 +211,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Settings section
               _Section('Cài đặt', [
                 _ActionTile(Icons.notifications_rounded, 'Thông báo', () => Navigator.pushNamed(context, '/notifications')),
-                _ActionTile(Icons.help_rounded, 'Trợ giúp', () {}),
+                _ActionTile(Icons.lock_rounded, 'Đổi mật khẩu', () => _showChangePasswordDialog(context)),
+                _ActionTile(Icons.help_rounded, 'Trợ giúp', () => _showHelpDialog(context)),
               ]),
               const SizedBox(height: 12),
 
@@ -139,24 +249,35 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey   = GlobalKey<FormState>();
   final _nameCtrl  = TextEditingController();
+  final _avatarCtrl = TextEditingController();
   bool _saving     = false;
 
   @override
   void initState() {
     super.initState();
+    final profile = context.read<HomeViewModel>().profile;
     final greeting = context.read<HomeViewModel>().greeting;
-    _nameCtrl.text = greeting.isNotEmpty ? greeting : '';
+    _nameCtrl.text = profile?.fullName ?? greeting;
+    _avatarCtrl.text = profile?.avatarUrl ?? '';
   }
 
   @override
-  void dispose() { _nameCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _nameCtrl.dispose();
+    _avatarCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     
     final name = _nameCtrl.text.trim();
-    final res = await ProfileService().updateProfile(fullName: name);
+    final avatar = _avatarCtrl.text.trim();
+    final res = await ProfileService().updateProfile(
+      fullName: name,
+      avatarUrl: avatar.isNotEmpty ? avatar : null,
+    );
     
     if (!mounted) return;
     setState(() => _saving = false);
@@ -182,13 +303,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Avatar preview
             Center(
-              child: CircleAvatar(
-                radius: 44,
-                backgroundColor: AppColors.primaryLight,
-                child: Text(
-                  _nameCtrl.text.isNotEmpty ? _nameCtrl.text[0].toUpperCase() : 'U',
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary),
-                ),
+              child: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _avatarCtrl,
+                builder: (context, value, _) {
+                  final url = value.text.trim();
+                  return CircleAvatar(
+                    radius: 44,
+                    backgroundColor: AppColors.primaryLight,
+                    backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
+                    child: url.isEmpty
+                        ? Text(
+                            _nameCtrl.text.isNotEmpty ? _nameCtrl.text[0].toUpperCase() : 'U',
+                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary),
+                          )
+                        : null,
+                  );
+                },
               ),
             ),
             const SizedBox(height: 28),
@@ -198,6 +328,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               hint: 'Nhập họ và tên của bạn',
               controller: _nameCtrl,
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập họ và tên' : null,
+            ),
+            const SizedBox(height: 20),
+
+            AppTextField(
+              label: 'Đường dẫn ảnh đại diện (Avatar URL)',
+              hint: 'Nhập URL ảnh đại diện của bạn',
+              controller: _avatarCtrl,
             ),
             const SizedBox(height: 32),
 

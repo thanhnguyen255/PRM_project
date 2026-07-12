@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../config/app_colors.dart';
+import '../../../../config/api_config.dart';
+import '../../../../services/api_service.dart';
 import '../../../../viewmodels/extended_viewmodels.dart';
 import '../../../../widgets/widgets.dart';
 
@@ -54,7 +57,49 @@ class _MaterialDetailScreenState extends State<MaterialDetailScreen> {
                           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      Card(
+                        margin: const EdgeInsets.symmetric(vertical: 12),
+                        color: AppColors.surface,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Đường dẫn gốc (URL):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                              const SizedBox(height: 6),
+                              Builder(builder: (ctx) {
+                                var rawUrl = m['linkUrl'] ?? m['fileUrl'] ?? 'Chưa có đường dẫn';
+                                if (rawUrl.startsWith('/')) {
+                                  var base = ApiConfig.baseUrl;
+                                  if (base.endsWith('/api')) {
+                                    base = base.substring(0, base.length - 4);
+                                  } else if (base.endsWith('/api/')) {
+                                    base = base.substring(0, base.length - 5);
+                                  }
+                                  final normalizedBase = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+                                  rawUrl = '$normalizedBase$rawUrl';
+                                }
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SelectableText(rawUrl, style: const TextStyle(fontSize: 13, color: AppColors.primary, decoration: TextDecoration.underline)),
+                                    const SizedBox(height: 12),
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        final uri = Uri.parse(rawUrl);
+                                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                      },
+                                      icon: const Icon(Icons.download_rounded, size: 18),
+                                      label: const Text('Tải file / Mở trình duyệt'),
+                                    ),
+                                  ],
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      ),
                       const Spacer(),
                       SizedBox(
                         width: double.infinity,

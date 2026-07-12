@@ -17,6 +17,13 @@ public class ClassController : BaseController
         _classService = classService;
     }
 
+    [HttpGet("my")]
+    public async Task<IActionResult> GetMyClasses()
+    {
+        var result = await _classService.GetMyClassesAsync(GetCurrentUserId());
+        return Ok(ApiResponse.Success(result));
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetClasses([FromQuery] int courseId)
     {

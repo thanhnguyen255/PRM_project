@@ -1,12 +1,14 @@
 using backend.BLL.DTOs.Material;
 using backend.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/materials")]
-public class MaterialController : ControllerBase
+[Authorize]
+public class MaterialController : BaseController
 {
     private readonly IMaterialService _materialService;
 
@@ -15,51 +17,38 @@ public class MaterialController : ControllerBase
         _materialService = materialService;
     }
 
-    private int CurrentInstructorId
-    {
-        get
-        {
-            if (Request.Headers.TryGetValue("X-Instructor-Id", out var value) && int.TryParse(value, out var id))
-            {
-                return id;
-            }
-            return 1; // Default to instructor 1 for easy testing
-        }
-    }
-
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MaterialDto>>> GetMaterials([FromQuery] int pathId)
+    public async Task<IActionResult> GetMaterials([FromQuery] int pathId)
     {
-        try
+        var role = GetCurrentUserRole();
+        if (role == "Learner")
         {
-            var materials = await _materialService.GetMaterialsByPathAsync(pathId, CurrentInstructorId);
-            return Ok(materials);
+            var result = await _materialService.GetByPathAsync(pathId, null);
+            return Ok(ApiResponse.Success(result));
         }
-        catch (UnauthorizedAccessException ex)
+        else
         {
-            return Forbid(ex.Message);
+            var materials = await _materialService.GetMaterialsByPathAsync(pathId, GetCurrentUserId());
+            return Ok(ApiResponse.Success(materials));
         }
     }
 
     [HttpPost]
-    public async Task<ActionResult<MaterialDto>> CreateMaterial(CreateMaterialDto dto)
+    public async Task<IActionResult> CreateMaterial([FromForm] CreateMaterialDto dto)
     {
-        try
-        {
-            var newMaterial = await _materialService.CreateMaterialAsync(dto, CurrentInstructorId);
-            return Ok(newMaterial);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
+        var role = GetCurrentUserRole();
+        if (role == "Learner") return Forbid("Chỉ giảng viên mới tạo được tài liệu.");
+        var newMaterial = await _materialService.CreateMaterialAsync(dto, GetCurrentUserId());
+        return Ok(ApiResponse.Success(newMaterial));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMaterial(int id)
     {
-        var result = await _materialService.DeleteMaterialAsync(id, CurrentInstructorId);
-        if (!result) return NotFound("Không tìm thấy tài liệu học tập hoặc bạn không có quyền xóa.");
-        return NoContent();
+        var role = GetCurrentUserRole();
+        if (role == "Learner") return Forbid("Chỉ giảng viên mới xóa được tài liệu.");
+        var result = await _materialService.DeleteMaterialAsync(id, GetCurrentUserId());
+        if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy tài liệu học tập hoặc bạn không có quyền xóa."));
+        return Ok(ApiResponse.Success(new { success = true }, "Xóa thành công."));
     }
 }

@@ -18,6 +18,8 @@ public class ProjectService : IProjectService
     public async Task<IEnumerable<ProjectDto>> GetProjectsByClassAsync(int classId)
     {
         var projects = await _unitOfWork.Repository<Project>().GetQueryable()
+            .Include(p => p.Milestones)
+                .ThenInclude(m => m.Submissions)
             .Where(p => p.ClassId == classId)
             .ToListAsync();
 
@@ -26,13 +28,27 @@ public class ProjectService : IProjectService
             Id = p.Id,
             ClassId = p.ClassId,
             Title = p.Title,
-            Description = p.Description
+            Description = p.Description,
+            MilestoneCount = p.Milestones.Count,
+            CompletedMilestones = p.Milestones.Count(m => m.Submissions.Any()),
+            Milestones = p.Milestones.Select(m => new MilestoneDto
+            {
+                Id = m.Id,
+                ProjectId = m.ProjectId,
+                Title = m.Title,
+                Description = m.Description,
+                DueDate = m.DueDate
+            }).ToList()
         });
     }
 
     public async Task<ProjectDto?> GetProjectByIdAsync(int id)
     {
-        var project = await _unitOfWork.Repository<Project>().GetByIdAsync(id);
+        var project = await _unitOfWork.Repository<Project>().GetQueryable()
+            .Include(p => p.Milestones)
+                .ThenInclude(m => m.Submissions)
+            .FirstOrDefaultAsync(p => p.Id == id);
+            
         if (project == null) return null;
 
         return new ProjectDto
@@ -40,7 +56,17 @@ public class ProjectService : IProjectService
             Id = project.Id,
             ClassId = project.ClassId,
             Title = project.Title,
-            Description = project.Description
+            Description = project.Description,
+            MilestoneCount = project.Milestones.Count,
+            CompletedMilestones = project.Milestones.Count(m => m.Submissions.Any()),
+            Milestones = project.Milestones.Select(m => new MilestoneDto
+            {
+                Id = m.Id,
+                ProjectId = m.ProjectId,
+                Title = m.Title,
+                Description = m.Description,
+                DueDate = m.DueDate
+            }).ToList()
         };
     }
 
@@ -113,7 +139,7 @@ public class ProjectService : IProjectService
             ProjectId = dto.ProjectId,
             Title = dto.Title,
             Description = dto.Description,
-            DueDate = dto.DueDate
+            DueDate = dto.DueDate ?? DateTime.UtcNow.AddDays(7)
         };
 
         await _unitOfWork.Repository<Milestone>().AddAsync(milestone);

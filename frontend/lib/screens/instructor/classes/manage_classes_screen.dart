@@ -25,6 +25,21 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
     });
   }
 
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      final y = picked.year;
+      final m = picked.month.toString().padLeft(2, '0');
+      final d = picked.day.toString().padLeft(2, '0');
+      controller.text = '$y-$m-$d';
+    }
+  }
+
   void _showCreateDialog() {
     final nameCtrl  = TextEditingController();
     final startCtrl = TextEditingController();
@@ -45,17 +60,27 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             )),
             const SizedBox(height: 12),
-            TextField(controller: startCtrl, decoration: InputDecoration(
-              labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
-            )),
+            TextField(
+              controller: startCtrl,
+              readOnly: true,
+              onTap: () => _selectDate(ctx, startCtrl),
+              decoration: InputDecoration(
+                labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
+              ),
+            ),
             const SizedBox(height: 12),
-            TextField(controller: endCtrl, decoration: InputDecoration(
-              labelText: 'Ngày kết thúc (YYYY-MM-DD)',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              suffixIcon: const Icon(Icons.event_rounded, size: 18),
-            )),
+            TextField(
+              controller: endCtrl,
+              readOnly: true,
+              onTap: () => _selectDate(ctx, endCtrl),
+              decoration: InputDecoration(
+                labelText: 'Ngày kết thúc (YYYY-MM-DD)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                suffixIcon: const Icon(Icons.event_rounded, size: 18),
+              ),
+            ),
           ]),
         ),
         actions: [
@@ -123,6 +148,7 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
                     onManagePaths: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/paths'),
                     onManageProjects: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/projects'),
                     onViewAnalytics: () => Navigator.pushNamed(context, '/instructor/analytics/${vm.classes[i].id}'),
+                    onManageReviews: () => Navigator.pushNamed(context, '/instructor/review/${vm.classes[i].id}'),
                   ),
                 ),
       floatingActionButton: FloatingActionButton(
@@ -141,6 +167,7 @@ class _ClassCard extends StatelessWidget {
   final VoidCallback onManagePaths;
   final VoidCallback onManageProjects;
   final VoidCallback onViewAnalytics;
+  final VoidCallback onManageReviews;
 
   const _ClassCard({
     required this.cls,
@@ -149,6 +176,7 @@ class _ClassCard extends StatelessWidget {
     required this.onManagePaths,
     required this.onManageProjects,
     required this.onViewAnalytics,
+    required this.onManageReviews,
   });
 
   @override
@@ -177,10 +205,11 @@ class _ClassCard extends StatelessWidget {
           trailing: PopupMenuButton<String>(
             onSelected: (v) {
               switch (v) {
-                case 'members':  onManageMembers();  break;
-                case 'paths':    onManagePaths();    break;
-                case 'projects': onManageProjects(); break;
+                case 'members':   onManageMembers();  break;
+                case 'paths':     onManagePaths();    break;
+                case 'projects':  onManageProjects(); break;
                 case 'analytics': onViewAnalytics(); break;
+                case 'reviews':   onManageReviews();  break;
               }
             },
             itemBuilder: (_) => [
@@ -188,6 +217,7 @@ class _ClassCard extends StatelessWidget {
               const PopupMenuItem(value: 'paths',     child: Row(children: [Icon(Icons.route_rounded, size: 16), SizedBox(width: 8), Text('Lộ trình')])),
               const PopupMenuItem(value: 'projects',  child: Row(children: [Icon(Icons.folder_special_rounded, size: 16), SizedBox(width: 8), Text('Dự án')])),
               const PopupMenuItem(value: 'analytics', child: Row(children: [Icon(Icons.bar_chart_rounded, size: 16), SizedBox(width: 8), Text('Analytics')])),
+              const PopupMenuItem(value: 'reviews',   child: Row(children: [Icon(Icons.rate_review_rounded, size: 16), SizedBox(width: 8), Text('Peer Review')])),
             ],
           ),
           onTap: onTap,
@@ -218,14 +248,20 @@ class _ClassCard extends StatelessWidget {
         // Quick action chips
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: Row(children: [
-            _QuickChip('Học viên', Icons.people_rounded, AppColors.primary, onManageMembers),
-            const SizedBox(width: 8),
-            _QuickChip('Lộ trình', Icons.route_rounded, AppColors.secondary, onManagePaths),
-            const SizedBox(width: 8),
-            _QuickChip('Dự án', Icons.folder_special_rounded, AppColors.warning, onManageProjects),
-            const SizedBox(width: 8),
-            _QuickChip('Thống kê', Icons.bar_chart_rounded, AppColors.info, onViewAnalytics),
+          child: Column(children: [
+            Row(children: [
+              _QuickChip('Học viên', Icons.people_rounded, AppColors.primary, onManageMembers),
+              const SizedBox(width: 8),
+              _QuickChip('Lộ trình', Icons.route_rounded, AppColors.secondary, onManagePaths),
+              const SizedBox(width: 8),
+              _QuickChip('Dự án', Icons.folder_special_rounded, AppColors.warning, onManageProjects),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              _QuickChip('Thống kê', Icons.bar_chart_rounded, AppColors.info, onViewAnalytics),
+              const SizedBox(width: 8),
+              _QuickChip('Peer Review', Icons.rate_review_rounded, AppColors.success, onManageReviews),
+            ]),
           ]),
         ),
       ]),
@@ -325,6 +361,7 @@ class _ClassMembersManageScreenState extends State<ClassMembersManageScreen> {
               label: const Text('Thêm'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary, foregroundColor: Colors.white,
+                minimumSize: const Size(0, 44),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 elevation: 0,

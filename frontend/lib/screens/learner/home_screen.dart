@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../viewmodels/viewmodels.dart';
 import '../../widgets/widgets.dart';
+import 'profile/profile_screen.dart';
+import 'progress/progress_screen.dart';
 
 /// SCR-L05 - Home Dashboard (Learner)
 class HomeScreen extends StatefulWidget {
@@ -28,11 +30,11 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _currentIndex,
-        children: const [
-          _HomeTab(),
-          _CoursesTab(),
-          _ProgressTab(),
-          _ProfileTab(),
+        children: [
+          _HomeTab(onViewAllCourses: () => setState(() => _currentIndex = 1)),
+          const _CoursesTab(),
+          const ProgressScreen(),
+          const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -51,7 +53,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
 class _HomeTab extends StatelessWidget {
-  const _HomeTab();
+  final VoidCallback onViewAllCourses;
+  const _HomeTab({required this.onViewAllCourses});
 
   @override
   Widget build(BuildContext context) {
@@ -120,12 +123,12 @@ class _HomeTab extends StatelessWidget {
               child: SectionHeader(
                 title: 'Khóa học của tôi',
                 actionLabel: 'Xem tất cả',
-                onAction: () {},
+                onAction: onViewAllCourses,
               ),
             ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 210,
+                height: 225,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -260,89 +263,6 @@ class _CoursesTabState extends State<_CoursesTab> {
   }
 }
 
-// ─── Progress Tab placeholder ─────────────────────────────────────────────────
-class _ProgressTab extends StatelessWidget {
-  const _ProgressTab();
-  @override
-  Widget build(BuildContext context) => const Scaffold(
-    body: Center(child: Text('Progress - Coming Soon', style: TextStyle(fontSize: 18, color: AppColors.textHint))),
-  );
-}
 
-// ─── Profile Tab ──────────────────────────────────────────────────────────────
-class _ProfileTab extends StatelessWidget {
-  const _ProfileTab();
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
-    body: SafeArea(
-      child: SingleChildScrollView(
-        child: Column(children: [
-          // Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(bottom: BorderSide(color: AppColors.border)),
-            ),
-            child: Column(children: [
-              const CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.primaryLight,
-                child: Icon(Icons.person_rounded, size: 40, color: AppColors.primary),
-              ),
-              const SizedBox(height: 12),
-              const Text('Học viên', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              const Text('learner@student.edu.vn', style: TextStyle(fontSize: 14, color: AppColors.textHint)),
-            ]),
-          ),
-          const SizedBox(height: 16),
-          // Menu items
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(children: [
-              _profileTile(Icons.edit_rounded, 'Chỉnh sửa hồ sơ', () {}),
-              const Divider(height: 1),
-              _profileTile(Icons.lock_rounded, 'Đổi mật khẩu', () {}),
-              const Divider(height: 1),
-              _profileTile(Icons.logout_rounded, 'Đăng xuất', () async {
-                final confirmed = await ConfirmDialog.show(
-                  context,
-                  title: 'Xác nhận đăng xuất',
-                  message: 'Bạn có chắc muốn đăng xuất?',
-                  confirmLabel: 'Đăng xuất',
-                  isDanger: true,
-                );
-                if (confirmed == true && context.mounted) {
-                  await context.read<AuthViewModel>().logout();
-                  if (context.mounted) Navigator.pushReplacementNamed(context, '/login');
-                }
-              }, color: AppColors.error),
-            ]),
-          ),
-        ]),
-      ),
-    ),
-  );
 
-  Widget _profileTile(IconData icon, String label, VoidCallback onTap, {Color? color}) => ListTile(
-    leading: Container(
-      width: 36, height: 36,
-      decoration: BoxDecoration(
-        color: (color ?? AppColors.primary).withAlpha(26),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Icon(icon, color: color ?? AppColors.primary, size: 18),
-    ),
-    title: Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: color ?? AppColors.textPrimary)),
-    trailing: Icon(Icons.chevron_right_rounded, color: color ?? AppColors.textHint),
-    onTap: onTap,
-  );
-}
