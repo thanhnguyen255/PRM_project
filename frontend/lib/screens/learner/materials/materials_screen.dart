@@ -142,6 +142,7 @@ class _ManageMaterialsState extends State<ManageMaterialsScreen> {
             width: 300,
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Type selector
                 Row(
@@ -167,62 +168,52 @@ class _ManageMaterialsState extends State<ManageMaterialsScreen> {
                   enabled: !isSaving,
                   decoration: InputDecoration(labelText: 'URL (Liên kết)', hintText: 'https://...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
                 ),
-                const SizedBox(height: 12),
-                const Row(
-                  children: [
-                    Expanded(child: Divider()),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text('HOẶC', style: TextStyle(fontSize: 11, color: AppColors.textHint, fontWeight: FontWeight.bold)),
-                    ),
-                    Expanded(child: Divider()),
-                  ],
+                const SizedBox(height: 16),
+                const Center(
+                  child: Text('— HOẶC —', style: TextStyle(fontSize: 11, color: AppColors.textHint, fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        fileName ?? 'Chưa chọn tệp từ máy',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: fileName != null ? AppColors.textPrimary : AppColors.textHint),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: isSaving ? null : () async {
-                        try {
-                          final result = await FilePicker.platform.pickFiles(
-                            type: FileType.custom,
-                            allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'mp3', 'wav', 'mp4', 'm4a', 'aac'],
-                          );
-                          if (result != null && result.files.single.path != null) {
-                            setS(() {
-                              filePath = result.files.single.path;
-                              fileName = result.files.single.name;
-                              if (titleCtrl.text.trim().isEmpty) {
-                                final name = result.files.single.name;
-                                final lastDot = name.lastIndexOf('.');
-                                titleCtrl.text = lastDot > 0 ? name.substring(0, lastDot) : name;
-                              }
-                            });
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: isSaving ? null : () async {
+                    try {
+                      final result = await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'mp3', 'wav', 'mp4', 'm4a', 'aac'],
+                      );
+                      if (result != null && result.files.single.path != null) {
+                        setS(() {
+                          filePath = result.files.single.path;
+                          fileName = result.files.single.name;
+                          if (titleCtrl.text.trim().isEmpty) {
+                            final name = result.files.single.name;
+                            final lastDot = name.lastIndexOf('.');
+                            titleCtrl.text = lastDot > 0 ? name.substring(0, lastDot) : name;
                           }
-                        } catch (e) {
-                          debugPrint('File picker error: $e');
-                        }
-                      },
-                      icon: const Icon(Icons.attach_file_rounded, size: 16),
-                      label: const Text('Chọn tệp', style: TextStyle(fontSize: 12)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryLight,
-                        foregroundColor: AppColors.primary,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                      ),
-                    ),
-                  ],
+                        });
+                      }
+                    } catch (e) {
+                      debugPrint('File picker error: $e');
+                    }
+                  },
+                  icon: const Icon(Icons.attach_file_rounded, size: 16),
+                  label: const Text('Chọn tệp từ thiết bị', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryLight,
+                    foregroundColor: AppColors.primary,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
+                if (fileName != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Đã chọn: $fileName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w600),
+                  ),
+                ],
               ],
             ),
           ),

@@ -5,24 +5,23 @@ class ApiConfig {
   ApiConfig._();
 
   // ── Base URL ───────────────────────────────────────────────────────────────
-  // Thay đổi IP này thành IP máy tính của bạn nếu test thiết bị thật qua mạng Wi-Fi
   static const String _pcIpAddress = '192.168.1.15';
 
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:5111/api';
 
     if (Platform.isAndroid) {
-      // 1. Test qua cáp USB (đã chạy adb reverse tcp:5111 tcp:5111):
+      // 1. Chạy trên thiết bị Android thật bằng cáp USB (đã chạy adb reverse tcp:5111 tcp:5111):
       return 'http://localhost:5111/api';
 
-      // 2. Test qua Máy ảo Android (Emulator) thông thường:
+      // 2. Chạy trên máy ảo Android (Emulator) thông thường:
       // return 'http://10.0.2.2:5111/api';
 
-      // 3. Test qua mạng Wi-Fi cục bộ (không dùng cáp USB):
+      // 3. Chạy qua mạng Wi-Fi cục bộ không dùng cáp:
       // return 'http://$_pcIpAddress:5111/api';
     }
 
-    // Mặc định cho iOS Simulator, Web, và các nền tảng khác
+    // Mặc định cho iOS Simulator, Desktop, Web và các nền tảng khác
     return 'http://localhost:5111/api';
   }
 
