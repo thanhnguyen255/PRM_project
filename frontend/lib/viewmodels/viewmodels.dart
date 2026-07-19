@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+export 'course_viewmodel.dart';
 import '../models/models.dart';
 import '../services/auth_service.dart';
 import '../services/services.dart';

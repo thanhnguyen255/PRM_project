@@ -1,11 +1,13 @@
 using backend.BLL.DTOs.Review;
 using backend.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/feedbacks")]
+[Authorize]
 public class FeedbackController : BaseController
 {
     private readonly IReviewService _reviewService;
@@ -15,24 +17,12 @@ public class FeedbackController : BaseController
         _reviewService = reviewService;
     }
 
-    private int CurrentUserId
-    {
-        get
-        {
-            if (Request.Headers.TryGetValue("X-User-Id", out var value) && int.TryParse(value, out var id))
-            {
-                return id;
-            }
-            return 3; // Default to learner1 for testing
-        }
-    }
-
     [HttpPost]
     public async Task<IActionResult> SubmitFeedback(CreateFeedbackDto dto)
     {
         try
         {
-            var feedback = await _reviewService.SubmitFeedbackAsync(dto, CurrentUserId);
+            var feedback = await _reviewService.SubmitFeedbackAsync(dto, GetCurrentUserId());
             return StatusCode(201, ApiResponse.Success(feedback, "Feedback created"));
         }
         catch (KeyNotFoundException ex)
@@ -56,7 +46,7 @@ public class FeedbackController : BaseController
     [HttpGet("received")]
     public async Task<IActionResult> GetReceivedFeedback([FromQuery] int sessionId)
     {
-        var feedbacks = await _reviewService.GetReceivedFeedbackAsync(sessionId, CurrentUserId);
+        var feedbacks = await _reviewService.GetReceivedFeedbackAsync(sessionId, GetCurrentUserId());
         return Ok(ApiResponse.Success(feedbacks));
     }
 

@@ -69,6 +69,14 @@ class MilestoneService {
     return null;
   }
 
+  Future<MilestoneSubmissionModel?> getMilestoneSubmission(int milestoneId) async {
+    final res = await _api.get(ApiConfig.milestoneSubmission(milestoneId));
+    if (res['success'] == true && res['data'] != null) {
+      return MilestoneSubmissionModel.fromJson(res['data'] as Map<String, dynamic>);
+    }
+    return null;
+  }
+
   Future<({bool success, String? error})> createMilestone({
     required int projectId,
     required String title,
@@ -105,12 +113,14 @@ class MilestoneService {
   Future<({bool success, String? error})> submitMilestone({
     required int milestoneId,
     String? description,
-    String? filePath,
+    List<int>? fileBytes,
+    String? fileName,
   }) async {
     final formData = FormData.fromMap({
       'milestoneId': milestoneId,
       if (description != null && description.isNotEmpty) 'description': description,
-      if (filePath != null) 'file': await MultipartFile.fromFile(filePath),
+      if (fileBytes != null && fileName != null)
+        'file': MultipartFile.fromBytes(fileBytes, filename: fileName),
     });
 
     final res = await _api.postForm(ApiConfig.submitMilestone, formData);

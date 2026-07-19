@@ -101,73 +101,85 @@ public class AnalyticsController : BaseController
     {
         int userId = GetCurrentUserId();
 
-        int activeClassId = 0;
+        // Xác định các lớp cần tính:
+        // - Nếu truyền classId cụ thể -> chỉ lớp đó.
+        // - Nếu không -> GỘP TẤT CẢ các lớp mà learner đang tham gia.
+        List<int> classIds;
         if (classId.HasValue && classId.Value > 0)
         {
-            activeClassId = classId.Value;
+            classIds = new List<int> { classId.Value };
         }
         else
         {
-            var firstClass = await _unitOfWork.Repository<ClassMember>().GetQueryable()
-                .FirstOrDefaultAsync(cm => cm.UserId == userId);
-            if (firstClass != null)
-            {
-                activeClassId = firstClass.ClassId;
-            }
+            classIds = await _unitOfWork.Repository<ClassMember>().GetQueryable()
+                .Where(cm => cm.UserId == userId)
+                .Select(cm => cm.ClassId)
+                .Distinct()
+                .ToListAsync();
         }
 
-        if (activeClassId == 0)
+        if (classIds.Count == 0)
         {
             return Ok(ApiResponse.Success(new MyProgressDto()));
         }
 
         var totalActivities = await _unitOfWork.Repository<Activity>().GetQueryable()
-            .CountAsync(a => a.LearningPath.ClassId == activeClassId);
+            .CountAsync(a => classIds.Contains(a.LearningPath.ClassId));
 
+        // Đếm số HOẠT ĐỘNG RIÊNG BIỆT có bài duyệt (không đếm số bản ghi submission,
+        // vì một hoạt động có thể có nhiều bài nộp được duyệt -> tránh vượt quá 100%).
         var approvedEvidence = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
-            .CountAsync(s => s.Activity.LearningPath.ClassId == activeClassId && s.UserId == userId && s.Status == EvidenceStatus.Approved);
+            .Where(s => classIds.Contains(s.Activity.LearningPath.ClassId) && s.UserId == userId && s.Status == EvidenceStatus.Approved)
+            .Select(s => s.ActivityId).Distinct().CountAsync();
 
+        // Số hoạt động đang chờ duyệt (riêng biệt) và chưa có bài nào được duyệt.
         var pendingEvidence = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
-            .CountAsync(s => s.Activity.LearningPath.ClassId == activeClassId && s.UserId == userId && s.Status == EvidenceStatus.Pending);
+            .Where(s => classIds.Contains(s.Activity.LearningPath.ClassId) && s.UserId == userId && s.Status == EvidenceStatus.Pending)
+            .Select(s => s.ActivityId).Distinct().CountAsync();
 
         int completionRate = totalActivities > 0 ? (int)Math.Round((double)approvedEvidence / totalActivities * 100) : 0;
 
         var totalPre = await _unitOfWork.Repository<Activity>().GetQueryable()
-            .CountAsync(a => a.LearningPath.ClassId == activeClassId && a.Type == ActivityType.PreClass);
+            .CountAsync(a => classIds.Contains(a.LearningPath.ClassId) && a.Type == ActivityType.PreClass);
         var approvedPre = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
-            .CountAsync(s => s.Activity.LearningPath.ClassId == activeClassId && s.UserId == userId && s.Activity.Type == ActivityType.PreClass && s.Status == EvidenceStatus.Approved);
+            .Where(s => classIds.Contains(s.Activity.LearningPath.ClassId) && s.UserId == userId && s.Activity.Type == ActivityType.PreClass && s.Status == EvidenceStatus.Approved)
+            .Select(s => s.ActivityId).Distinct().CountAsync();
         int preClassRate = totalPre > 0 ? (int)Math.Round((double)approvedPre / totalPre * 100) : 0;
 
         var totalIn = await _unitOfWork.Repository<Activity>().GetQueryable()
-            .CountAsync(a => a.LearningPath.ClassId == activeClassId && a.Type == ActivityType.InClass);
+            .CountAsync(a => classIds.Contains(a.LearningPath.ClassId) && a.Type == ActivityType.InClass);
         var approvedIn = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
-            .CountAsync(s => s.Activity.LearningPath.ClassId == activeClassId && s.UserId == userId && s.Activity.Type == ActivityType.InClass && s.Status == EvidenceStatus.Approved);
+            .Where(s => classIds.Contains(s.Activity.LearningPath.ClassId) && s.UserId == userId && s.Activity.Type == ActivityType.InClass && s.Status == EvidenceStatus.Approved)
+            .Select(s => s.ActivityId).Distinct().CountAsync();
         int inClassRate = totalIn > 0 ? (int)Math.Round((double)approvedIn / totalIn * 100) : 0;
 
         var totalPost = await _unitOfWork.Repository<Activity>().GetQueryable()
-            .CountAsync(a => a.LearningPath.ClassId == activeClassId && a.Type == ActivityType.PostClass);
+            .CountAsync(a => classIds.Contains(a.LearningPath.ClassId) && a.Type == ActivityType.PostClass);
         var approvedPost = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
-            .CountAsync(s => s.Activity.LearningPath.ClassId == activeClassId && s.UserId == userId && s.Activity.Type == ActivityType.PostClass && s.Status == EvidenceStatus.Approved);
+            .Where(s => classIds.Contains(s.Activity.LearningPath.ClassId) && s.UserId == userId && s.Activity.Type == ActivityType.PostClass && s.Status == EvidenceStatus.Approved)
+            .Select(s => s.ActivityId).Distinct().CountAsync();
         int postClassRate = totalPost > 0 ? (int)Math.Round((double)approvedPost / totalPost * 100) : 0;
 
+        // Gộp tiến độ theo TUẦN trên tất cả các lớp: cùng số tuần (WeekNumber) được cộng dồn.
         var weeklyPaths = await _unitOfWork.Repository<LearningPath>().GetQueryable()
-            .Where(lp => lp.ClassId == activeClassId)
-            .OrderBy(lp => lp.WeekNumber)
+            .Where(lp => classIds.Contains(lp.ClassId))
             .ToListAsync();
 
         var weeklyProgress = new List<WeeklyProgressRateDto>();
-        foreach (var lp in weeklyPaths)
+        foreach (var weekGroup in weeklyPaths.GroupBy(lp => lp.WeekNumber).OrderBy(g => g.Key))
         {
+            var pathIds = weekGroup.Select(lp => lp.Id).ToList();
             var totalAct = await _unitOfWork.Repository<Activity>().GetQueryable()
-                .CountAsync(a => a.LearningPathId == lp.Id);
+                .CountAsync(a => pathIds.Contains(a.LearningPathId));
             var appAct = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
-                .CountAsync(s => s.Activity.LearningPathId == lp.Id && s.UserId == userId && s.Status == EvidenceStatus.Approved);
+                .Where(s => pathIds.Contains(s.Activity.LearningPathId) && s.UserId == userId && s.Status == EvidenceStatus.Approved)
+                .Select(s => s.ActivityId).Distinct().CountAsync();
             int rate = totalAct > 0 ? (int)Math.Round((double)appAct / totalAct * 100) : 0;
 
             weeklyProgress.Add(new WeeklyProgressRateDto
             {
-                WeekNumber = lp.WeekNumber,
-                Title = lp.Title,
+                WeekNumber = weekGroup.Key,
+                Title = $"Tuần {weekGroup.Key}",
                 Rate = rate
             });
         }

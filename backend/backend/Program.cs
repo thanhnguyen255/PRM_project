@@ -67,8 +67,13 @@ builder.Services.AddScoped<IEvidenceService, EvidenceService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
-// ── Controllers & Swagger ─────────────────────────────────────────────────
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new backend.Converters.UtcDateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new backend.Converters.NullableUtcDateTimeConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -116,6 +121,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
+
+// Phục vụ file người dùng upload (avatar, tài liệu, minh chứng) từ thư mục NGOÀI project.
+// Tránh 'dotnet watch' theo dõi wwwroot rồi hot-reload -> crash HotReloadMSBuildWorkspace.
+var uploadsRoot = backend.BLL.Helpers.UploadPaths.Root;
+Directory.CreateDirectory(uploadsRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsRoot),
+    RequestPath = backend.BLL.Helpers.UploadPaths.RequestPath
+});
 app.UseAuthentication();   // PHẢI trước UseAuthorization
 app.UseAuthorization();
 app.MapControllers();

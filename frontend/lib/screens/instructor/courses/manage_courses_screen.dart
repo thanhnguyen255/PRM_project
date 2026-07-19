@@ -200,7 +200,8 @@ class _CreateEditCourseScreenState extends State<CreateEditCourseScreen> {
     if (!mounted) return;
     if (err == null) {
       AppSnackBar.show(context, _isEdit ? 'Cập nhật thành công!' : 'Tạo khóa học thành công!', type: SnackType.success);
-      context.read<CourseViewModel>().loadMyCourses();
+      await context.read<CourseViewModel>().loadMyCourses();
+      if (!mounted) return;
       Navigator.pop(context);
     } else {
       AppSnackBar.show(context, err, type: SnackType.error);
