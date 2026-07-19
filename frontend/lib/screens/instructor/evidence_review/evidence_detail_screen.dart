@@ -174,6 +174,7 @@ class _EvidenceDetailScreenState extends State<EvidenceDetailScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<EvidenceViewModel>();
     final e  = vm.detail;
+    final currentUserId = context.watch<AuthViewModel>().userId ?? 1;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -281,7 +282,7 @@ class _EvidenceDetailScreenState extends State<EvidenceDetailScreen> {
                           isInstructor: c.isInstructor,
                           content:      c.content,
                           createdAt:    c.createdAt,
-                          currentUserId: context.watch<AuthViewModel>().userId ?? 1,
+                          currentUserId: currentUserId,
                         )),
                     ]),
                   )),
