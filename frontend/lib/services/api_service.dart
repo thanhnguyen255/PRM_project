@@ -32,9 +32,15 @@ class ApiService {
       },
       onError: (e, handler) async {
         if (e.response?.statusCode == 401) {
-          // Token hết hạn — xóa local data
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
+          final data = e.response?.data;
+          final msg = (data is Map && data['message'] != null) ? data['message'].toString() : '';
+          
+          // Tránh xóa token nếu lỗi 401 thực chất là lỗi phân quyền từ backend (Backend trả nhầm 401 thay vì 403)
+          if (!msg.contains('không có quyền')) {
+            // Token hết hạn — xóa local data
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.clear();
+          }
         }
         handler.next(e);
       },
@@ -92,6 +98,15 @@ class ApiService {
   Future<Map<String, dynamic>> put(String path, {dynamic data}) async {
     try {
       final res = await dio.put(path, data: data);
+      return {'success': true, 'data': _unwrap(res)};
+    } on DioException catch (e) {
+      return {'success': false, 'message': _errorMessage(e)};
+    }
+  }
+
+  Future<Map<String, dynamic>> patch(String path, {dynamic data}) async {
+    try {
+      final res = await dio.patch(path, data: data);
       return {'success': true, 'data': _unwrap(res)};
     } on DioException catch (e) {
       return {'success': false, 'message': _errorMessage(e)};

@@ -82,7 +82,7 @@ class _MyEvidenceListState extends State<MyEvidenceListScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
                       itemCount: evidences.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (_, i) {
                         final e = evidences[i];
                         return _EvidenceCard(
@@ -209,8 +209,11 @@ class _LearnerEvidenceDetailState extends State<LearnerEvidenceDetailScreen> {
     if (txt.isEmpty) return;
     final err = await context.read<EvidenceViewModel>().addComment(widget.evidenceId, txt);
     if (!mounted) return;
-    if (err == null) _commentCtrl.clear();
-    else AppSnackBar.show(context, err, type: SnackType.error);
+    if (err == null) {
+      _commentCtrl.clear();
+    } else {
+      AppSnackBar.show(context, err, type: SnackType.error);
+    }
   }
 
   @override

@@ -1,11 +1,29 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class ApiConfig {
   ApiConfig._();
 
   // ── Base URL ───────────────────────────────────────────────────────────────
-  // Đổi sang IP thực của máy khi chạy trên điện thoại thật hoặc emulator khác
-  static const String baseUrl = 'http://DESKTOP-KN8VR1N:5111/api';
-  // static const String baseUrl = 'http://10.0.2.2:5111/api'; // Android emulator
-  // static const String baseUrl = 'http://localhost:5111/api';  // Chrome/Windows
+  static const String _pcIpAddress = '192.168.1.15';
+
+  static String get baseUrl {
+    if (kIsWeb) return 'http://localhost:5111/api';
+
+    if (Platform.isAndroid) {
+      // 1. Chạy trên thiết bị Android thật bằng cáp USB (đã chạy adb reverse tcp:5111 tcp:5111):
+      return 'http://localhost:5111/api';
+
+      // 2. Chạy trên máy ảo Android (Emulator) thông thường:
+      // return 'http://10.0.2.2:5111/api';
+
+      // 3. Chạy qua mạng Wi-Fi cục bộ không dùng cáp:
+      // return 'http://$_pcIpAddress:5111/api';
+    }
+
+    // Mặc định cho iOS Simulator, Desktop, Web và các nền tảng khác
+    return 'http://localhost:5111/api';
+  }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
   static const String login    = '/auth/login';
@@ -21,6 +39,7 @@ class ApiConfig {
   static String deleteCourse(int id) => '/courses/$id';
 
   // ── Classes ────────────────────────────────────────────────────────────────
+  static const String myClasses                = '/classes/my';
   static String classesByCourse(int courseId) => '/classes?courseId=$courseId';
   static String classDetail(int id)            => '/classes/$id';
   static const String createClass              = '/classes';
@@ -28,6 +47,7 @@ class ApiConfig {
   static String deleteClass(int id)            => '/classes/$id';
   static String classMembers(int id)           => '/classes/$id/members';
   static String removeMember(int classId, int userId) => '/classes/$classId/members/$userId';
+
 
   // ── Learning Paths ─────────────────────────────────────────────────────────
   static String learningPaths(int classId) => '/learning-paths?classId=$classId';
@@ -47,16 +67,16 @@ class ApiConfig {
   static String activities(int pathId, {String? type}) =>
       '/activities?pathId=$pathId${type != null ? '&type=$type' : ''}';
   static String activityDetail(int id)   => '/activities/$id';
-  static String upcomingActivities(int classId, {int limit = 5}) =>
-      '/activities/upcoming?classId=$classId&limit=$limit';
+  static String upcomingActivities({int? classId, int limit = 5}) =>
+      '/activities/upcoming?limit=$limit${classId != null ? '&classId=$classId' : ''}';
   static const String createActivity     = '/activities';
   static String updateActivity(int id)   => '/activities/$id';
   static String deleteActivity(int id)   => '/activities/$id';
 
   // ── Evidences ──────────────────────────────────────────────────────────────
   static const String evidences          = '/evidences';
-  static String evidencesByClass(int classId, {String? status}) =>
-      '/evidences?classId=$classId${status != null ? '&status=$status' : ''}';
+  static String evidencesByClass(int? classId, {String? status}) =>
+      '/evidences?${classId != null ? 'classId=$classId' : ''}${status != null ? '&status=$status' : ''}';
   static String evidencesByActivity(int activityId) =>
       '/evidences?activityId=$activityId&userId=me';
   static String evidenceDetail(int id)   => '/evidences/$id';

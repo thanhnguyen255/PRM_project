@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/app_colors.dart';
+export 'material_list_tile.dart';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -367,7 +368,7 @@ class CourseCard extends StatelessWidget {
             ),
           ),
           child: coverImageUrl != null
-              ? Image.network(coverImageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _placeholder())
+              ? Image.network(coverImageUrl!, fit: BoxFit.cover, errorBuilder: (_, _, _) => _placeholder())
               : _placeholder(),
         ),
         // Content
@@ -409,6 +410,7 @@ class ActivityCard extends StatelessWidget {
   final String type;         // "PreClass" | "InClass" | "PostClass"
   final DateTime? deadline;
   final String? submissionStatus;
+  final bool hasReview;
   final VoidCallback onTap;
 
   const ActivityCard({
@@ -417,6 +419,7 @@ class ActivityCard extends StatelessWidget {
     required this.type,
     this.deadline,
     this.submissionStatus,
+    this.hasReview = false,
     required this.onTap,
   });
 
@@ -462,6 +465,20 @@ class ActivityCard extends StatelessWidget {
                 decoration: BoxDecoration(color: color.withAlpha(26), borderRadius: BorderRadius.circular(4)),
                 child: Text(typeLabel(type), style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
               ),
+              if (hasReview) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: AppColors.secondary.withAlpha(26), borderRadius: BorderRadius.circular(4)),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.rate_review_rounded, size: 10, color: AppColors.secondary),
+                      SizedBox(width: 3),
+                      Text('Peer Review', style: TextStyle(fontSize: 10, color: AppColors.secondary, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ],
             ]),
             const SizedBox(height: 6),
             Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),

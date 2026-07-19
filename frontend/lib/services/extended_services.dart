@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../config/api_config.dart';
 import '../models/models.dart';
 import 'api_service.dart';
@@ -17,8 +19,11 @@ class ProjectService {
 
   Future<Map<String, dynamic>?> getProjectDetail(int id) async {
     final res = await _api.get(ApiConfig.projectDetail(id));
-    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
-    return null;
+    if (res['success'] == true) {
+      final data = res['data'];
+      if (data is Map) return Map<String, dynamic>.from(data);
+    }
+    return {'error': res['message']?.toString() ?? 'API Failed', 'raw': res.toString()};
   }
 
   Future<({bool success, String? error})> createProject({
@@ -64,6 +69,14 @@ class MilestoneService {
     return null;
   }
 
+  Future<MilestoneSubmissionModel?> getMilestoneSubmission(int milestoneId) async {
+    final res = await _api.get(ApiConfig.milestoneSubmission(milestoneId));
+    if (res['success'] == true && res['data'] != null) {
+      return MilestoneSubmissionModel.fromJson(res['data'] as Map<String, dynamic>);
+    }
+    return null;
+  }
+
   Future<({bool success, String? error})> createMilestone({
     required int projectId,
     required String title,
@@ -100,11 +113,15 @@ class MilestoneService {
   Future<({bool success, String? error})> submitMilestone({
     required int milestoneId,
     String? description,
+    String? filePath,
   }) async {
-    final res = await _api.post(ApiConfig.submitMilestone, data: {
+    final formData = FormData.fromMap({
       'milestoneId': milestoneId,
-      'description': description,
+      if (description != null && description.isNotEmpty) 'description': description,
+      if (filePath != null) 'file': await MultipartFile.fromFile(filePath),
     });
+
+    final res = await _api.postForm(ApiConfig.submitMilestone, formData);
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 }
@@ -130,12 +147,14 @@ class ReviewService {
 
   Future<({bool success, String? error})> createSession({
     required int classId,
+    required int activityId,
     required String title,
     required String startDate,
     required String endDate,
   }) async {
     final res = await _api.post(ApiConfig.createReviewSession, data: {
       'classId': classId,
+      'activityId': activityId,
       'title': title,
       'startDate': startDate,
       'endDate': endDate,
@@ -144,8 +163,21 @@ class ReviewService {
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 
+  Future<List<Map<String, dynamic>>> getClassActivities(int classId) async {
+    final res = await _api.get('/activities/class/$classId');
+    if (res['success'] == true) {
+      return (res['data'] as List<dynamic>).cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  Future<({bool success, String? error})> deleteSession(int id) async {
+    final res = await _api.delete('/review-sessions/$id');
+    return (success: res['success'] == true, error: res['message'] as String?);
+  }
+
   Future<List<Map<String, dynamic>>> getAssignments(int sessionId) async {
-    final res = await _api.get(ApiConfig.allAssignments(sessionId));
+    final res = await _api.get('/review-assignments?sessionId=$sessionId');
     if (res['success'] == true) {
       return (res['data'] as List<dynamic>).cast<Map<String, dynamic>>();
     }
@@ -213,18 +245,36 @@ class MaterialService {
     return [];
   }
 
+  Future<Map<String, dynamic>?> getMaterialDetail(int id) async {
+    final res = await _api.get(ApiConfig.materialDetail(id));
+    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
+    return null;
+  }
+
   Future<({bool success, String? error})> createMaterial({
     required int learningPathId,
     required String title,
     required String type,
     String? linkUrl,
+    String? filePath,
   }) async {
-    final res = await _api.post(ApiConfig.createMaterial, data: {
-      'learningPathId': learningPathId,
-      'title': title,
-      'type': type,
-      'linkUrl': linkUrl,
-    });
+    final Map<String, dynamic> map = {
+      'LearningPathId': learningPathId,
+      'Title': title,
+      'Type': type == 'Video' ? 0 : 1,
+    };
+
+    if (linkUrl != null && linkUrl.isNotEmpty) {
+      map['LinkUrl'] = linkUrl;
+    }
+
+    if (filePath != null && filePath.isNotEmpty) {
+      map['File'] = await MultipartFile.fromFile(filePath);
+    }
+
+    final data = FormData.fromMap(map);
+
+    final res = await _api.post(ApiConfig.createMaterial, data: data);
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 
@@ -233,3 +283,23 @@ class MaterialService {
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 }
+
+// ─── ActivityService ──────────────────────────────────────────────────────────
+class ActivityService {
+  final _api = ApiService.instance;
+
+  Future<List<Map<String, dynamic>>> getActivities(int pathId, {String? type}) async {
+    final res = await _api.get(ApiConfig.activities(pathId, type: type));
+    if (res['success'] == true) {
+      return (res['data'] as List<dynamic>).cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> getActivityDetail(int id) async {
+    final res = await _api.get(ApiConfig.activityDetail(id));
+    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
+    return null;
+  }
+}
+

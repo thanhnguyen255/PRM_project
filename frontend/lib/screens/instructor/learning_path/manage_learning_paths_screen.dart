@@ -110,6 +110,7 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
                     return _PathCard(
                       key: Key('path_${p.id}'),
                       path: p,
+                      index: i,
                       onManage: () => Navigator.pushNamed(context, '/instructor/paths/${p.id}/activities'),
                       onDelete: () async {
                         final confirmed = await ConfirmDialog.show(
@@ -122,6 +123,17 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
                         if (confirmed == true && context.mounted) {
                           await context.read<InstructorManageViewModel>().deleteLearningPath(p.id);
                           if (context.mounted) context.read<LearningPathViewModel>().loadPaths(widget.classId);
+                        }
+                      },
+                      onToggleLock: () async {
+                        final m = context.read<InstructorManageViewModel>();
+                        final err = await m.toggleLearningPathLock(p.id);
+                        if (context.mounted) {
+                          if (err == null) {
+                            context.read<LearningPathViewModel>().loadPaths(widget.classId);
+                          } else {
+                            AppSnackBar.show(context, err, type: SnackType.error);
+                          }
                         }
                       },
                     );
@@ -143,9 +155,11 @@ class _ManageLearningPathsState extends State<ManageLearningPathsScreen> {
 
 class _PathCard extends StatelessWidget {
   final dynamic path;
+  final int index;
   final VoidCallback onManage;
   final VoidCallback onDelete;
-  const _PathCard({super.key, required this.path, required this.onManage, required this.onDelete});
+  final VoidCallback onToggleLock;
+  const _PathCard({super.key, required this.path, required this.index, required this.onManage, required this.onDelete, required this.onToggleLock});
 
   @override
   Widget build(BuildContext context) {
@@ -158,49 +172,157 @@ class _PathCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 2))],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-        leading: Container(
-          width: 48, height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(child: Text(
-            'W${path.weekNumber}',
-            style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w800),
-          )),
-        ),
-        title: Text(path.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(height: 4),
-          Text('${path.totalActivities} hoạt động • ${path.completedActivities} hoàn thành',
-              style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.border,
-              valueColor: AlwaysStoppedAnimation(progress >= 1.0 ? AppColors.success : AppColors.primary),
-              minHeight: 4,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onManage,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'W${path.weekNumber}',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            path.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${path.totalActivities} hoạt động • ${path.completedActivities} hoàn thành',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ReorderableDragStartListener(
+                      index: index,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                        child: Icon(Icons.drag_handle_rounded, color: AppColors.textHint),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: AppColors.border,
+                    valueColor: AlwaysStoppedAnimation(progress >= 1.0 ? AppColors.success : AppColors.primary),
+                    minHeight: 4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1, thickness: 1, color: AppColors.border),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        _ActionButton(
+                          icon: Icons.folder_shared_rounded,
+                          color: AppColors.secondary,
+                          tooltip: 'Quản lý tài liệu',
+                          onPressed: () => Navigator.pushNamed(context, '/instructor/paths/${path.id}/materials'),
+                        ),
+                        const SizedBox(width: 8),
+                        _ActionButton(
+                          icon: path.isUnlocked ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
+                          color: path.isUnlocked ? AppColors.success : AppColors.textHint,
+                          tooltip: path.isUnlocked ? 'Đang mở (Bấm để Khóa)' : 'Đang khóa (Bấm để Mở)',
+                          onPressed: onToggleLock,
+                        ),
+                        const SizedBox(width: 8),
+                        _ActionButton(
+                          icon: Icons.edit_note_rounded,
+                          color: AppColors.primary,
+                          tooltip: 'Quản lý hoạt động',
+                          onPressed: onManage,
+                        ),
+                      ],
+                    ),
+                    _ActionButton(
+                      icon: Icons.delete_outline_rounded,
+                      color: AppColors.error,
+                      tooltip: 'Xoá',
+                      onPressed: onDelete,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ]),
-        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          IconButton(
-            icon: const Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 22),
-            tooltip: 'Quản lý hoạt động',
-            onPressed: onManage,
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: color.withAlpha(20),
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_rounded, color: AppColors.error, size: 20),
-            tooltip: 'Xoá lộ trình',
-            onPressed: onDelete,
-          ),
-          const Icon(Icons.drag_handle_rounded, color: AppColors.textHint),
-        ]),
-        onTap: onManage,
+        ),
       ),
     );
   }

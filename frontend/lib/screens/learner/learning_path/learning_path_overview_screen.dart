@@ -27,6 +27,15 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<LearningPathViewModel>();
 
+    int totalActs = 0;
+    int completedActs = 0;
+    for (var p in vm.paths) {
+      totalActs += (p.totalActivities as int? ?? 0);
+      completedActs += (p.completedActivities as int? ?? 0);
+    }
+    double progress = totalActs == 0 ? 0 : completedActs / totalActs;
+    String progressStr = '${(progress * 100).toInt()}%';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Lộ trình học')),
@@ -34,14 +43,51 @@ class _LearningPathScreenState extends State<LearningPathScreen> {
           ? const LoadingWidget()
           : vm.paths.isEmpty
               ? const EmptyState(icon: Icons.route_rounded, title: 'Chưa có lộ trình', message: 'Giảng viên chưa tạo lộ trình học.')
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: vm.paths.length,
-                  itemBuilder: (_, i) {
-                    final p      = vm.paths[i];
-                    final isLast = i == vm.paths.length - 1;
-                    return _WeekStep(path: p, isLast: isLast);
-                  },
+              : Column(
+                  children: [
+                    // Overall Progress Header
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        border: const Border(bottom: BorderSide(color: AppColors.border)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('$completedActs/$totalActs hoạt động', style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                              Text(progressStr, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 12,
+                              backgroundColor: AppColors.border,
+                              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // List of Weeks
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: vm.paths.length,
+                        itemBuilder: (_, i) {
+                          final p      = vm.paths[i];
+                          final isLast = i == vm.paths.length - 1;
+                          return _WeekStep(path: p, isLast: isLast);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
     );
   }

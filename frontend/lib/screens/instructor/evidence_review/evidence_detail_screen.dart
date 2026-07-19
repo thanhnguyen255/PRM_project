@@ -22,7 +22,7 @@ class _EvidenceListTabState extends State<EvidenceListTab> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EvidenceViewModel>().loadEvidencesByClass(1); // replaced by real classId
+      context.read<EvidenceViewModel>().loadEvidencesByClass(null); // replaced by real classId
     });
   }
 
@@ -39,7 +39,7 @@ class _EvidenceListTabState extends State<EvidenceListTab> {
           selected: vm.statusFilter,
           onSelected: (f) {
             vm.setStatusFilter(f);
-            vm.loadEvidencesByClass(1);
+            vm.loadEvidencesByClass(null);
           },
         ),
         const SizedBox(height: 12),
@@ -48,12 +48,12 @@ class _EvidenceListTabState extends State<EvidenceListTab> {
             : vm.evidences.isEmpty
                 ? const EmptyState(icon: Icons.task_outlined, title: 'Không có evidence', message: 'Không có evidence nào cần duyệt.')
                 : RefreshIndicator(
-                    onRefresh: () => vm.loadEvidencesByClass(1),
+                    onRefresh: () => vm.loadEvidencesByClass(null),
                     color: AppColors.primary,
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: vm.evidences.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (_, i) {
                         final e = vm.evidences[i];
                         return _EvidenceItem(evidence: e);
@@ -73,7 +73,9 @@ class _EvidenceItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => Navigator.pushNamed(context, '/instructor/evidence/${evidence.id}'),
+      onTap: () => Navigator.pushNamed(context, '/instructor/evidence/${evidence.id}').then((_) {
+        context.read<EvidenceViewModel>().loadEvidencesByClass(null);
+      }),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -143,7 +145,7 @@ class _EvidenceDetailScreenState extends State<EvidenceDetailScreen> {
     final vm  = context.read<EvidenceViewModel>();
     final err = await vm.approve(widget.evidenceId);
     if (!mounted) return;
-    AppSnackBar.show(context, err == null ? '✅ Đã Approve evidence.' : err, type: err == null ? SnackType.success : SnackType.error);
+    AppSnackBar.show(context, err ?? '✅ Đã Approve evidence.', type: err == null ? SnackType.success : SnackType.error);
   }
 
   Future<void> _reject() async {
@@ -152,7 +154,7 @@ class _EvidenceDetailScreenState extends State<EvidenceDetailScreen> {
     final vm  = context.read<EvidenceViewModel>();
     final err = await vm.reject(widget.evidenceId);
     if (!mounted) return;
-    AppSnackBar.show(context, err == null ? '❌ Đã Reject evidence.' : err, type: err == null ? SnackType.success : SnackType.error);
+    AppSnackBar.show(context, err ?? '❌ Đã Reject evidence.', type: err == null ? SnackType.success : SnackType.error);
   }
 
   Future<void> _sendComment() async {
@@ -279,7 +281,7 @@ class _EvidenceDetailScreenState extends State<EvidenceDetailScreen> {
                           isInstructor: c.isInstructor,
                           content:      c.content,
                           createdAt:    c.createdAt,
-                          currentUserId: 1, // TODO: from AuthViewModel
+                          currentUserId: context.watch<AuthViewModel>().userId ?? 1,
                         )),
                     ]),
                   )),

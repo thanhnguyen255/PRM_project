@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../config/app_colors.dart';
+import '../../../../viewmodels/extended_viewmodels.dart';
+import '../../../../widgets/widgets.dart';
+
+class PreClassListScreen extends StatefulWidget {
+  final int pathId;
+  const PreClassListScreen({super.key, required this.pathId});
+
+  @override
+  State<PreClassListScreen> createState() => _PreClassListScreenState();
+}
+
+class _PreClassListScreenState extends State<PreClassListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ExtendedActivityViewModel>().loadActivities(widget.pathId, type: 'PreClass');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<ExtendedActivityViewModel>();
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(title: const Text('Hoạt động Pre-Class')),
+      body: vm.isLoading
+          ? const LoadingWidget()
+          : vm.activities.isEmpty
+              ? const EmptyState(
+                  icon: Icons.assignment_outlined,
+                  title: 'Chưa có hoạt động',
+                  message: 'Không có hoạt động Pre-Class nào cho lộ trình này.',
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: vm.activities.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final activity = vm.activities[index];
+                    return _ActivityCard(activity: activity);
+                  },
+                ),
+    );
+  }
+}
+
+class _ActivityCard extends StatelessWidget {
+  final Map<String, dynamic> activity;
+
+  const _ActivityCard({required this.activity});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = activity['title'] as String? ?? 'Không có tiêu đề';
+    final type = activity['type'] as String? ?? '';
+    final id = activity['id'] as int;
+
+    final deadline = activity['deadline'] as String?;
+    final submissionStatus = activity['submissionStatus'] as String? ?? 'Pending';
+
+    Color badgeColor;
+    Color badgeTextColor;
+    String badgeText;
+
+    if (submissionStatus == 'Approved') {
+      badgeColor = const Color(0xFFD1FAE5);
+      badgeTextColor = const Color(0xFF065F46);
+      badgeText = 'Approved ✓';
+    } else if (submissionStatus == 'Rejected') {
+      badgeColor = const Color(0xFFFEE2E2);
+      badgeTextColor = const Color(0xFF991B1B);
+      badgeText = 'Rejected ✗';
+    } else {
+      badgeColor = const Color(0xFFFEF3C7);
+      badgeTextColor = const Color(0xFF92400E);
+      badgeText = 'Pending';
+    }
+
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(context, '/pre-class-detail', arguments: {'id': id});
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(5),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withAlpha(20),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.assignment, color: AppColors.primary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          type,
+                          style: const TextStyle(fontSize: 12, color: AppColors.secondary, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      if (deadline != null) ...[
+                        const SizedBox(width: 8),
+                        Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Hạn: ${DateTime.parse(deadline).toLocal().toString().substring(0, 16)}',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                badgeText,
+                style: TextStyle(color: badgeTextColor, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -23,12 +23,28 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     });
   }
 
+  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      final y = picked.year;
+      final m = picked.month.toString().padLeft(2, '0');
+      final d = picked.day.toString().padLeft(2, '0');
+      controller.text = '$y-$m-$d';
+    }
+  }
+
   void _showAddProjectDialog() {
     final titleCtrl = TextEditingController();
     final descCtrl  = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(children: [
           Icon(Icons.folder_special_rounded, color: AppColors.warning),
@@ -48,26 +64,49 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<ProjectViewModel>();
-              final err = await vm.createProject(
-                classId: widget.classId,
-                title: titleCtrl.text.trim(),
-                description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-              );
-              if (!context.mounted) return;
-              if (err == null) {
-                AppSnackBar.show(context, 'Tạo dự án thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Tạo dự án'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<ProjectViewModel>();
+                    final err = await vm.createProject(
+                      classId: widget.classId,
+                      title: titleCtrl.text.trim(),
+                      description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                    );
+                    if (!context.mounted) return;
+                    if (err == null) {
+                      AppSnackBar.show(context, 'Tạo dự án thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tạo dự án'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -81,38 +120,71 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Thêm Milestone — $projectTitle', style: const TextStyle(fontSize: 15)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: titleCtrl, decoration: InputDecoration(labelText: 'Tên milestone *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
           const SizedBox(height: 12),
-          TextField(controller: dueDateCtrl, decoration: InputDecoration(labelText: 'Hạn nộp (YYYY-MM-DD)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18))),
+          TextField(
+            controller: dueDateCtrl,
+            readOnly: true,
+            onTap: () => _selectDate(ctx, dueDateCtrl),
+            decoration: InputDecoration(
+              labelText: 'Hạn nộp (YYYY-MM-DD)',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
+            ),
+          ),
           const SizedBox(height: 12),
           TextField(controller: descCtrl, maxLines: 2, decoration: InputDecoration(labelText: 'Mô tả', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)))),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleCtrl.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              final vm  = context.read<ProjectViewModel>();
-              final err = await vm.createMilestone(
-                projectId: projectId,
-                title: titleCtrl.text.trim(),
-                dueDate: dueDateCtrl.text.trim().isEmpty ? null : dueDateCtrl.text.trim(),
-                description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-              );
-              if (!context.mounted) return;
-              if (err == null) {
-                vm.loadProjects(widget.classId);
-                AppSnackBar.show(context, 'Thêm milestone thành công!', type: SnackType.success);
-              } else {
-                AppSnackBar.show(context, err, type: SnackType.error);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Thêm'),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<ProjectViewModel>();
+                    final err = await vm.createMilestone(
+                      projectId: projectId,
+                      title: titleCtrl.text.trim(),
+                      dueDate: dueDateCtrl.text.trim().isEmpty ? null : dueDateCtrl.text.trim(),
+                      description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                    );
+                    if (!context.mounted) return;
+                    if (err == null) {
+                      vm.loadProjects(widget.classId);
+                      AppSnackBar.show(context, 'Thêm milestone thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Thêm'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -147,7 +219,7 @@ class _ManageProjectsScreenState extends State<ManageProjectsScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.projects.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) {
                     final p = vm.projects[i];
                     return _ProjectCard(
@@ -195,25 +267,28 @@ class _ProjectCard extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(children: [
-        ListTile(
-          contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
-          leading: Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(color: AppColors.warning.withAlpha(20), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.folder_special_rounded, color: AppColors.warning, size: 24),
-          ),
-          title: Text(project.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          subtitle: Text('${project.milestoneCount} milestones • ${project.completedMilestones} hoàn thành',
-              style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
-          trailing: PopupMenuButton<String>(
-            onSelected: (v) {
-              if (v == 'add') onAddMilestone();
-              if (v == 'delete') onDelete();
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: 'add', child: Row(children: [Icon(Icons.flag_rounded, size: 16, color: AppColors.primary), SizedBox(width: 8), Text('Thêm Milestone')])),
-              const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 16, color: AppColors.error), SizedBox(width: 8), Text('Xoá dự án', style: TextStyle(color: AppColors.error))])),
-            ],
+        Material(
+          color: Colors.transparent,
+          child: ListTile(
+            contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+            leading: Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(color: AppColors.warning.withAlpha(20), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.folder_special_rounded, color: AppColors.warning, size: 24),
+            ),
+            title: Text(project.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            subtitle: Text('${project.milestoneCount} milestones • ${project.completedMilestones} hoàn thành',
+                style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+            trailing: PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'add') onAddMilestone();
+                if (v == 'delete') onDelete();
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'add', child: Row(children: [Icon(Icons.flag_rounded, size: 16, color: AppColors.primary), SizedBox(width: 8), Text('Thêm Milestone')])),
+                const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 16, color: AppColors.error), SizedBox(width: 8), Text('Xoá dự án', style: TextStyle(color: AppColors.error))])),
+              ],
+            ),
           ),
         ),
         Padding(
@@ -233,6 +308,52 @@ class _ProjectCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text('${(progress * 100).toInt()}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: progress >= 1.0 ? AppColors.success : AppColors.warning)),
             ]),
+            if (project.milestones.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Danh sách Milestone:',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...project.milestones.map<Widget>((m) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.flag_rounded, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              m.title,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                            if (m.description != null && m.description!.isNotEmpty)
+                              Text(
+                                m.description!,
+                                style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                              ),
+                            if (m.dueDate != null)
+                              Text(
+                                'Hạn nộp: ${m.dueDate!.year}-${m.dueDate!.month.toString().padLeft(2, '0')}-${m.dueDate!.day.toString().padLeft(2, '0')}',
+                                style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
             const SizedBox(height: 10),
             SizedBox(width: double.infinity, child: OutlinedButton.icon(
               onPressed: onAddMilestone,
