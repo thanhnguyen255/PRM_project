@@ -112,8 +112,8 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
                     );
                     if (!mounted) return;
                     if (err == null) {
-                      context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                      AppSnackBar.show(context, 'Tạo lớp thành công!', type: SnackType.success);
+                      await context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                      if (mounted) AppSnackBar.show(context, 'Tạo lớp thành công!', type: SnackType.success);
                     } else {
                       AppSnackBar.show(context, err, type: SnackType.error);
                     }
@@ -340,8 +340,8 @@ class _ClassMembersManageScreenState extends State<ClassMembersManageScreen> {
     if (!mounted) return;
     if (err == null) {
       _emailCtrl.clear();
-      context.read<ClassViewModel>().loadMembers(widget.classId);
-      AppSnackBar.show(context, 'Thêm học viên thành công!', type: SnackType.success);
+      await context.read<ClassViewModel>().loadMembers(widget.classId);
+      if (mounted) AppSnackBar.show(context, 'Thêm học viên thành công!', type: SnackType.success);
     } else {
       AppSnackBar.show(context, err, type: SnackType.error);
     }
@@ -438,8 +438,8 @@ class _ClassMembersManageScreenState extends State<ClassMembersManageScreen> {
                               final err = await context.read<InstructorManageViewModel>().removeMember(widget.classId, m.userId);
                               if (context.mounted) {
                                 if (err == null) {
-                                  context.read<ClassViewModel>().loadMembers(widget.classId);
-                                  AppSnackBar.show(context, 'Đã xoá học viên.', type: SnackType.success);
+                                  await context.read<ClassViewModel>().loadMembers(widget.classId);
+                                  if (context.mounted) AppSnackBar.show(context, 'Đã xoá học viên.', type: SnackType.success);
                                 } else {
                                   AppSnackBar.show(context, err, type: SnackType.error);
                                 }

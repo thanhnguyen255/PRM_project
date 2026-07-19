@@ -153,7 +153,7 @@ class _PreClassDetailScreenState extends State<PreClassDetailScreen> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/review', arguments: {'id': submission['id']});
+                            Navigator.pushNamed(context, '/evidences/${submission['id']}/comments');
                           },
                           icon: const Icon(Icons.comment),
                           label: Text('XEM BÌNH LUẬN ($commentCount)'),

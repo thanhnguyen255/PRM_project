@@ -293,27 +293,47 @@ class SubmitFeedbackScreen extends StatefulWidget {
   State<SubmitFeedbackScreen> createState() => _SubmitFeedbackState();
 }
 
-class _SubmitFeedbackState extends State<SubmitFeedbackScreen> {
+class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTickerProviderStateMixin {
   final _contentCtrl = TextEditingController();
-  int _rating = 3;
+  int _rating = 0;
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
 
   @override
-  void dispose() { _contentCtrl.dispose(); super.dispose(); }
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() { 
+    _contentCtrl.dispose(); 
+    _animCtrl.dispose();
+    super.dispose(); 
+  }
 
   Future<void> _submit() async {
-    final content = _contentCtrl.text.trim();
-    if (content.isEmpty) {
-      AppSnackBar.show(context, 'Vui lòng nhập nội dung nhận xét.', type: SnackType.error);
+    if (_rating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn mức đánh giá sao.'), backgroundColor: AppColors.error));
       return;
     }
+    final content = _contentCtrl.text.trim();
+    if (content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập nội dung nhận xét.'), backgroundColor: AppColors.error));
+      return;
+    }
+    
     final vm  = context.read<ReviewViewModel>();
     final err = await vm.submitFeedback(assignmentId: widget.assignmentId, content: content, rating: _rating);
     if (!mounted) return;
+    
     if (err == null) {
-      AppSnackBar.show(context, 'Đã gửi feedback!', type: SnackType.success);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã gửi feedback thành công!'), backgroundColor: AppColors.success));
       Navigator.pop(context);
     } else {
-      AppSnackBar.show(context, err, type: SnackType.error);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $err'), backgroundColor: AppColors.error));
     }
   }
 
@@ -322,131 +342,198 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> {
     final vm = context.watch<ReviewViewModel>();
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text('Review: ${widget.revieweeName}')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Reviewer info
-          Center(
-            child: Column(children: [
-              CircleAvatar(
-                radius: 36,
-                backgroundColor: AppColors.secondary.withAlpha(20),
-                child: Text(
-                  widget.revieweeName.isNotEmpty ? widget.revieweeName[0] : '?',
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.secondary),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(widget.revieweeName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              const SizedBox(height: 4),
-              const Text('Bạn đang review bài của người này', style: TextStyle(fontSize: 13, color: AppColors.textHint)),
-            ]),
-          ),
-          const SizedBox(height: 24),
-
-          // Student Evidence Preview
-          const Text('Bằng chứng học tập (Evidence)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(color: AppColors.errorLight, borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.description_rounded, color: AppColors.error, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Bao_cao_hoat_dong_${widget.revieweeName.replaceAll(' ', '_')}.pdf', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  const Text('Kích thước: 2.4 MB  •  Đã nộp 2 ngày trước', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
-                ])),
-              ]),
-              const SizedBox(height: 12),
-              const Divider(height: 1, color: AppColors.border),
-              const SizedBox(height: 12),
-              const Text('Ghi chú của học viên:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-              const SizedBox(height: 4),
-              const Text(
-                'Đây là báo cáo hoạt động nhóm của chúng em. Chúng em đã nghiên cứu tài liệu pre-class và thực hiện thảo luận, thiết kế mô hình giải pháp hoàn chỉnh đính kèm trong file báo cáo trên. Mong nhận được ý kiến đóng góp từ các bạn!',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    AppSnackBar.show(context, 'Mở tài liệu báo cáo của ${widget.revieweeName}...', type: SnackType.info);
-                  },
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('Xem tài liệu đính kèm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary),
-                    foregroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-            ]),
-          ),
-          const SizedBox(height: 28),
-
-          // Star rating
-          const Text('Đánh giá', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => GestureDetector(
-            onTap: () => setState(() => _rating = i + 1),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(
-                i < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: AppColors.warning,
-                size: 40,
-              ),
-            ),
-          ))),
-          Center(child: Text(_ratingLabel(), style: const TextStyle(fontSize: 13, color: AppColors.textHint))),
-          const SizedBox(height: 24),
-
-          // Content
-          const Text('Nhận xét chi tiết *', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _contentCtrl,
-            maxLines: 6,
-            decoration: InputDecoration(
-              hintText: 'Nhận xét điểm mạnh, điểm cần cải thiện, gợi ý...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              contentPadding: const EdgeInsets.all(14),
+      appBar: AppBar(
+        title: Text('Review: ${widget.revieweeName}'),
+        elevation: 0,
+        backgroundColor: AppColors.background,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.background, AppColors.surface],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
-          const SizedBox(height: 24),
+        ),
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Reviewer Info Card
+            _buildRevieweeCard(),
+            const SizedBox(height: 28),
 
-          AppButton(
-            label: 'GỬI FEEDBACK',
-            onPressed: _submit,
-            isLoading: vm.isSaving,
-            icon: Icons.send_rounded,
-          ),
-        ]),
+            // Evidence Preview
+            const Text('Bằng chứng học tập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const SizedBox(height: 12),
+            _buildEvidenceCard(),
+            const SizedBox(height: 32),
+
+            // Star rating
+            const Text('Đánh giá của bạn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const SizedBox(height: 16),
+            _buildStarRating(),
+            const SizedBox(height: 28),
+
+            // Content
+            const Text('Nhận xét chi tiết *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _contentCtrl,
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: 'Nhận xét điểm mạnh, điểm cần cải thiện, gợi ý...',
+                hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14),
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.border.withOpacity(0.5))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.border.withOpacity(0.5))),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                contentPadding: const EdgeInsets.all(16),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Submit Button
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton.icon(
+                onPressed: vm.isSaving ? null : _submit,
+                icon: vm.isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send_rounded),
+                label: Text(vm.isSaving ? 'ĐANG GỬI...' : 'GỬI FEEDBACK', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 4,
+                ),
+              ),
+            ),
+          ]),
+        ),
       ),
     );
   }
 
+  Widget _buildRevieweeCard() {
+    return Center(
+      child: Column(children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(colors: [AppColors.primary, AppColors.secondary], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+          ),
+          child: CircleAvatar(
+            radius: 40,
+            backgroundColor: AppColors.surface,
+            child: Text(
+              widget.revieweeName.isNotEmpty ? widget.revieweeName[0].toUpperCase() : '?',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(widget.revieweeName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+          child: const Text('Đang review bài tập', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildEvidenceCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(color: AppColors.errorLight, borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.error, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Bao_cao_hoat_dong_${widget.revieweeName.replaceAll(' ', '_')}.pdf', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 4),
+            const Text('Kích thước: 2.4 MB  •  2 ngày trước', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+          ])),
+        ]),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+            Text('Ghi chú của học viên:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+            SizedBox(height: 6),
+            Text(
+              'Đây là báo cáo hoạt động nhóm của chúng em. Chúng em đã nghiên cứu tài liệu pre-class và thực hiện thảo luận. Mong nhận được ý kiến đóng góp từ bạn!',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          height: 44,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đang mở tài liệu báo cáo của ${widget.revieweeName}...')));
+            },
+            icon: const Icon(Icons.remove_red_eye_rounded, size: 18),
+            label: const Text('XEM TÀI LIỆU ĐÍNH KÈM', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+              foregroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildStarRating() {
+    return Column(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => GestureDetector(
+        onTap: () => setState(() => _rating = i + 1),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Icon(
+            i < _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+            color: i < _rating ? AppColors.warning : AppColors.border,
+            size: i < _rating ? 48 : 42,
+            shadows: i < _rating ? [BoxShadow(color: AppColors.warning.withOpacity(0.4), blurRadius: 10)] : null,
+          ),
+        ),
+      ))),
+      const SizedBox(height: 12),
+      Text(_ratingLabel(), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: _rating > 0 ? AppColors.warning : AppColors.textHint)),
+    ]);
+  }
+
   String _ratingLabel() {
     switch (_rating) {
-      case 1: return '⭐ Rất tệ';
-      case 2: return '⭐⭐ Tệ';
-      case 3: return '⭐⭐⭐ Trung bình';
-      case 4: return '⭐⭐⭐⭐ Tốt';
-      default: return '⭐⭐⭐⭐⭐ Xuất sắc';
+      case 1: return 'Rất tệ';
+      case 2: return 'Cần cải thiện nhiều';
+      case 3: return 'Đạt yêu cầu';
+      case 4: return 'Khá tốt';
+      case 5: return 'Tuyệt vời / Xuất sắc';
+      default: return 'Chưa chọn';
     }
   }
 }

@@ -4,6 +4,7 @@ import '../config/api_config.dart';
 import '../models/models.dart';
 import 'api_service.dart';
 
+
 class CourseService {
   final _api = ApiService.instance;
 
@@ -226,23 +227,28 @@ class ProfileService {
     return null;
   }
 
-  Future<({bool success, String? error})> updateProfile({
+  Future<({bool success, String? error, String? avatarUrl})> updateProfile({
     required String fullName,
-    String? avatarUrl,
+    List<int>? avatarBytes,
+    String? avatarFileName,
   }) async {
-    final res = await _api.put('/profile', data: {
+    final formData = FormData.fromMap({
       'fullName': fullName,
-      'avatarUrl': avatarUrl,
+      if (avatarBytes != null && avatarFileName != null)
+        'avatar': MultipartFile.fromBytes(avatarBytes, filename: avatarFileName),
     });
+
+    final res = await _api.putForm('/profile', formData);
     if (res['success'] == true) {
+      final data = res['data'] as Map<String, dynamic>?;
+      final newAvatar = data?['avatarUrl'] as String?;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('fullName', fullName);
-      if (avatarUrl != null) {
-        await prefs.setString('avatarUrl', avatarUrl);
-      } else {
-        await prefs.remove('avatarUrl');
+      if (newAvatar != null && newAvatar.isNotEmpty) {
+        await prefs.setString('avatarUrl', newAvatar);
       }
+      return (success: true, error: null, avatarUrl: newAvatar);
     }
-    return (success: res['success'] == true, error: res['message'] as String?);
+    return (success: false, error: res['message'] as String?, avatarUrl: null);
   }
 }

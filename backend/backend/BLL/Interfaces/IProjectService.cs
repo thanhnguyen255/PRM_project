@@ -13,5 +13,6 @@ public interface IProjectService
     Task<MilestoneDto> CreateMilestoneAsync(CreateMilestoneDto dto);
     Task<bool> DeleteMilestoneAsync(int id);
     Task<MilestoneSubmissionDto> SubmitMilestoneAsync(CreateMilestoneSubmissionDto dto, int userId);
+    Task<MilestoneSubmissionDto?> GetMilestoneSubmissionAsync(int milestoneId, int userId);
     Task<IEnumerable<MilestoneSubmissionDto>> GetSubmissionsByMilestoneAsync(int milestoneId);
 }

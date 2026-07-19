@@ -34,6 +34,6 @@ public class MilestoneSubmissionDto
 public class CreateMilestoneSubmissionDto
 {
     public int MilestoneId { get; set; }
-    public string? FileUrl { get; set; }
+    public Microsoft.AspNetCore.Http.IFormFile? File { get; set; }
     public string? Description { get; set; }
 }

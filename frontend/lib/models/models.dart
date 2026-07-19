@@ -26,7 +26,7 @@ class UserModel {
     fullName:  json['fullName'] as String,
     role:      json['role'] as String,
     avatarUrl: json['avatarUrl'] as String?,
-    createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+    createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']).toLocal() : null,
     stats:     json['stats'] != null ? UserStats.fromJson(json['stats']) : null,
   );
 }
@@ -109,7 +109,7 @@ class CourseModel {
     activeClassId:   json['activeClassId'] as int?,
     activeClassName: json['activeClassName'] as String?,
     classCount:      json['classCount'] as int? ?? 0,
-    createdAt:       json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+    createdAt:       json['createdAt'] != null ? DateTime.parse(json['createdAt']).toLocal() : null,
     classes:         json['classes'] as List<dynamic>?,
   );
 }
@@ -143,8 +143,8 @@ class ClassModel {
     courseId:        json['courseId'] as int? ?? 0,
     courseTitle:     json['courseTitle'] as String?,
     name:            json['name'] as String,
-    startDate:       json['startDate'] != null ? DateTime.parse(json['startDate']) : null,
-    endDate:         json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
+    startDate:       json['startDate'] != null ? DateTime.parse(json['startDate']).toLocal() : null,
+    endDate:         json['endDate'] != null ? DateTime.parse(json['endDate']).toLocal() : null,
     memberCount:     json['memberCount'] as int? ?? 0,
     weekCount:       json['weekCount'] as int? ?? 0,
     progressPercent: (json['progressPercent'] as num?)?.toDouble() ?? 0.0,
@@ -172,7 +172,7 @@ class ClassMemberModel {
     fullName:  json['fullName'] as String,
     email:     json['email'] as String,
     avatarUrl: json['avatarUrl'] as String?,
-    joinedAt:  json['joinedAt'] != null ? DateTime.parse(json['joinedAt']) : null,
+    joinedAt:  json['joinedAt'] != null ? DateTime.parse(json['joinedAt']).toLocal() : null,
   );
 }
 
@@ -245,10 +245,10 @@ class ActivityModel {
     title:            json['title'] as String,
     type:             json['type'] as String,
     description:      json['description'] as String?,
-    deadline:         json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
+    deadline:         json['deadline'] != null ? DateTime.parse(json['deadline']).toLocal() : null,
     submissionId:     json['submissionId'] as int?,
     submissionStatus: json['submissionStatus'] as String? ?? (json['submission'] != null ? json['submission']['status'] as String? : null),
-    submittedAt:      json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
+    submittedAt:      json['submittedAt'] != null ? DateTime.parse(json['submittedAt']).toLocal() : null,
   );
 }
 
@@ -305,8 +305,8 @@ class EvidenceModel {
       fileUrl:       json['fileUrl'] as String?,
       note:          json['note'] as String?,
       status:        statusStr,
-      submittedAt:   DateTime.parse(json['submittedAt'] as String),
-      reviewedAt:    json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt']) : null,
+      submittedAt:   DateTime.parse(json['submittedAt'] as String).toLocal(),
+      reviewedAt:    json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt']).toLocal() : null,
       commentCount:  json['commentCount'] as int? ?? 0,
     );
   }
@@ -351,7 +351,7 @@ class EvidenceCommentModel {
       authorAvatar: json['authorAvatar'] as String?,
       isInstructor: isInst,
       content:      json['content'] as String,
-      createdAt:    DateTime.parse(json['createdAt'] as String),
+      createdAt:    DateTime.parse(json['createdAt'] as String).toLocal(),
     );
   }
 }
@@ -377,7 +377,7 @@ class NotificationModel {
     title:     json['title'] as String,
     body:      json['body'] as String,
     isRead:    json['isRead'] as bool? ?? false,
-    createdAt: DateTime.parse(json['createdAt'] as String),
+    createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
   );
 }
 
@@ -414,7 +414,7 @@ class ProjectModel {
     completedMilestones:  json['completedMilestones'] as int? ?? 0,
     nextMilestoneTitle:   json['nextMilestoneTitle'] as String?,
     nextMilestoneDueDate: json['nextMilestoneDueDate'] != null
-        ? DateTime.parse(json['nextMilestoneDueDate'])
+        ? DateTime.parse(json['nextMilestoneDueDate']).toLocal()
         : null,
     milestones: json['milestones'] != null
         ? (json['milestones'] as List<dynamic>)
@@ -448,16 +448,62 @@ class MilestoneModel {
     this.submittedAt,
   });
 
-  factory MilestoneModel.fromJson(Map<String, dynamic> json) => MilestoneModel(
+  factory MilestoneModel.fromJson(Map<String, dynamic> json) {
+    final dueDate = json['dueDate'] != null ? DateTime.parse(json['dueDate']).toLocal() : null;
+    final submittedAt = json['submittedAt'] != null ? DateTime.parse(json['submittedAt']).toLocal() : null;
+    final isSubmitted = json['isSubmitted'] as bool? ?? false;
+    
+    // Add logic to determine if submission is late. 
+    // Usually if submittedAt > dueDate, it's late.
+    // We can expose an isLate getter or field if needed, but since it's computed, let's just make it a getter.
+    
+    return MilestoneModel(
+      id:           json['id'] as int,
+      projectId:    json['projectId'] as int? ?? 0,
+      projectTitle: json['projectTitle'] as String?,
+      title:        json['title'] as String,
+      description:  json['description'] as String?,
+      dueDate:      dueDate,
+      stepNumber:   json['stepNumber'] as int? ?? 1,
+      isSubmitted:  isSubmitted,
+      submittedAt:  submittedAt,
+    );
+  }
+
+  bool get isLate {
+    if (!isSubmitted || submittedAt == null || dueDate == null) return false;
+    return submittedAt!.isAfter(dueDate!);
+  }
+}
+
+// ─── MilestoneSubmissionModel ─────────────────────────────────────────────────
+class MilestoneSubmissionModel {
+  final int id;
+  final int milestoneId;
+  final int userId;
+  final String userFullName;
+  final String? fileUrl;
+  final String? description;
+  final DateTime submittedAt;
+
+  const MilestoneSubmissionModel({
+    required this.id,
+    required this.milestoneId,
+    required this.userId,
+    required this.userFullName,
+    this.fileUrl,
+    this.description,
+    required this.submittedAt,
+  });
+
+  factory MilestoneSubmissionModel.fromJson(Map<String, dynamic> json) => MilestoneSubmissionModel(
     id:           json['id'] as int,
-    projectId:    json['projectId'] as int? ?? 0,
-    projectTitle: json['projectTitle'] as String?,
-    title:        json['title'] as String,
+    milestoneId:  json['milestoneId'] as int,
+    userId:       json['userId'] as int,
+    userFullName: json['userFullName'] as String? ?? '',
+    fileUrl:      json['fileUrl'] as String?,
     description:  json['description'] as String?,
-    dueDate:      json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
-    stepNumber:   json['stepNumber'] as int? ?? 1,
-    isSubmitted:  json['isSubmitted'] as bool? ?? false,
-    submittedAt:  json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
+    submittedAt:  DateTime.parse(json['submittedAt']).toLocal(),
   );
 }
 
@@ -491,8 +537,8 @@ class ReviewSessionModel {
     id:                 json['id'] as int,
     classId:            json['classId'] as int? ?? 0,
     title:              json['title'] as String,
-    startDate:          DateTime.parse(json['startDate'] as String),
-    endDate:            DateTime.parse(json['endDate'] as String),
+    startDate:          DateTime.parse(json['startDate'] as String).toLocal(),
+    endDate:            DateTime.parse(json['endDate'] as String).toLocal(),
     isOpen:             json['isOpen'] as bool? ?? false,
     myAssignmentCount:  json['myAssignmentCount'] as int? ?? 0,
     myCompletedCount:   json['myCompletedCount'] as int? ?? 0,
@@ -525,6 +571,6 @@ class FeedbackModel {
     reviewerAvatar: json['reviewerAvatar'] as String?,
     content:        json['content'] as String,
     rating:         json['rating'] as int? ?? 0,
-    createdAt:      DateTime.parse(json['createdAt'] as String),
+    createdAt:      DateTime.parse(json['createdAt'] as String).toLocal(),
   );
 }

@@ -35,7 +35,7 @@ class ProjectViewModel extends ChangeNotifier {
     try {
       _projectDetail = await _projectSvc.getProjectDetail(id);
       if (_projectDetail != null && _projectDetail!.containsKey('error')) {
-        _projectDetail = {'title': 'API Error', 'description': _projectDetail!['error'] + '\n\n' + (_projectDetail!['raw'] ?? '')};
+        _projectDetail = {'title': 'API Error', 'description': '${_projectDetail!['error']}\n\n${_projectDetail!['raw'] ?? ''}'};
         _milestones = [];
       } else if (_projectDetail != null && _projectDetail!['milestones'] != null) {
         final raw = _projectDetail!['milestones'];
@@ -61,9 +61,17 @@ class ProjectViewModel extends ChangeNotifier {
     _isLoading  = false; notifyListeners();
   }
 
+  MilestoneSubmissionModel? _submission;
+  MilestoneSubmissionModel? get submission => _submission;
+
   Future<void> loadMilestoneDetail(int id) async {
     _isLoading = true; notifyListeners();
     _milestone = await _milestoneSvc.getMilestoneDetail(id);
+    if (_milestone != null && _milestone!.isSubmitted) {
+      _submission = await _milestoneSvc.getMilestoneSubmission(id);
+    } else {
+      _submission = null;
+    }
     _isLoading = false; notifyListeners();
   }
 
@@ -104,10 +112,13 @@ class ProjectViewModel extends ChangeNotifier {
     return r.success ? null : r.error;
   }
 
-  Future<String?> submitMilestone({required int milestoneId, String? description, String? filePath}) async {
+  Future<String?> submitMilestone({required int milestoneId, String? description, List<int>? fileBytes, String? fileName}) async {
     _isSaving = true; notifyListeners();
-    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description, filePath: filePath);
+    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description, fileBytes: fileBytes, fileName: fileName);
     _isSaving = false; notifyListeners();
+    if (r.success) {
+      await loadMilestoneDetail(milestoneId);
+    }
     return r.success ? null : r.error;
   }
 }
