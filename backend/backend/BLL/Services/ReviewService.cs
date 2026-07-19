@@ -20,6 +20,7 @@ public class ReviewService : IReviewService
     {
         var now = DateTime.UtcNow;
         var sessions = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
+            .Include(s => s.Activity)
             .Include(s => s.Assignments)
                 .ThenInclude(a => a.Feedbacks)
             .Where(s => s.ClassId == classId)
@@ -29,6 +30,8 @@ public class ReviewService : IReviewService
         {
             Id = s.Id,
             ClassId = s.ClassId,
+            ActivityId = s.ActivityId,
+            ActivityTitle = s.Activity?.Title ?? string.Empty,
             Title = s.Title,
             StartDate = s.StartDate,
             EndDate = s.EndDate,
@@ -44,6 +47,7 @@ public class ReviewService : IReviewService
     {
         var now = DateTime.UtcNow;
         var session = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
+            .Include(s => s.Activity)
             .Include(s => s.Assignments)
                 .ThenInclude(a => a.Feedbacks)
             .Include(s => s.Assignments)
@@ -57,6 +61,8 @@ public class ReviewService : IReviewService
         {
             Id = session.Id,
             ClassId = session.ClassId,
+            ActivityId = session.ActivityId,
+            ActivityTitle = session.Activity?.Title ?? string.Empty,
             Title = session.Title,
             StartDate = session.StartDate,
             EndDate = session.EndDate,
@@ -79,6 +85,7 @@ public class ReviewService : IReviewService
         var session = new ReviewSession
         {
             ClassId = dto.ClassId,
+            ActivityId = dto.ActivityId,
             Title = dto.Title,
             StartDate = dto.StartDate ?? DateTime.UtcNow,
             EndDate = dto.EndDate ?? DateTime.UtcNow.AddDays(14)
@@ -115,6 +122,7 @@ public class ReviewService : IReviewService
         {
             Id = session.Id,
             ClassId = session.ClassId,
+            ActivityId = session.ActivityId,
             Title = session.Title,
             StartDate = session.StartDate,
             EndDate = session.EndDate
@@ -133,6 +141,15 @@ public class ReviewService : IReviewService
 
     public async Task<IEnumerable<ReviewAssignmentDto>> GetAssignmentsAsync(int sessionId, int? reviewerId)
     {
+        var session = await _unitOfWork.Repository<ReviewSession>().GetQueryable()
+            .Include(s => s.Activity)
+                .ThenInclude(a => a.LearningPath)
+                    .ThenInclude(lp => lp.Class)
+                        .ThenInclude(c => c.Course)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session == null) return [];
+
         var query = _unitOfWork.Repository<ReviewAssignment>().GetQueryable()
             .Include(ra => ra.Reviewer)
             .Include(ra => ra.Reviewee)
@@ -146,6 +163,10 @@ public class ReviewService : IReviewService
 
         var assignments = await query.ToListAsync();
 
+        var submissions = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
+            .Where(s => s.ActivityId == session.ActivityId)
+            .ToListAsync();
+
         return assignments.Select(ra => new ReviewAssignmentDto
         {
             Id = ra.Id,
@@ -154,7 +175,19 @@ public class ReviewService : IReviewService
             ReviewerName = ra.Reviewer?.FullName ?? "Unknown Reviewer",
             RevieweeId = ra.RevieweeId,
             RevieweeName = ra.Reviewee?.FullName ?? "Unknown Reviewee",
-            IsCompleted = ra.Feedbacks != null && ra.Feedbacks.Any()
+            IsCompleted = ra.Feedbacks != null && ra.Feedbacks.Any(),
+
+            ClassName = session.Activity?.LearningPath?.Class?.Name ?? string.Empty,
+            CourseName = session.Activity?.LearningPath?.Class?.Course?.Title ?? string.Empty,
+            ActivityTitle = session.Activity?.Title ?? string.Empty,
+            ActivityDescription = session.Activity?.Description,
+
+            SubmissionFileUrl = submissions.FirstOrDefault(s => s.UserId == ra.RevieweeId)?.FileUrl,
+            SubmissionNote = submissions.FirstOrDefault(s => s.UserId == ra.RevieweeId)?.Note,
+            SubmissionDate = submissions.FirstOrDefault(s => s.UserId == ra.RevieweeId)?.SubmittedAt,
+
+            FeedbackContent = ra.Feedbacks?.FirstOrDefault()?.Content,
+            FeedbackRating = ra.Feedbacks?.FirstOrDefault()?.Rating
         });
     }
 
@@ -204,12 +237,25 @@ public class ReviewService : IReviewService
             throw new UnauthorizedAccessException("Bạn không được phân công thực hiện đánh giá này.");
         }
 
-        // Check if feedback already submitted for this assignment
         var existingFeedback = await _unitOfWork.Repository<Feedback>().GetQueryable()
             .FirstOrDefaultAsync(f => f.AssignmentId == dto.AssignmentId);
         if (existingFeedback != null)
         {
-            throw new InvalidOperationException("Bạn đã gửi đánh giá cho phân công này rồi.");
+            existingFeedback.Content = dto.Content;
+            existingFeedback.Rating = dto.Rating;
+            existingFeedback.CreatedAt = DateTime.UtcNow;
+
+            _unitOfWork.Repository<Feedback>().Update(existingFeedback);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new FeedbackDto
+            {
+                Id = existingFeedback.Id,
+                AssignmentId = existingFeedback.AssignmentId,
+                Content = existingFeedback.Content,
+                Rating = existingFeedback.Rating,
+                CreatedAt = existingFeedback.CreatedAt
+            };
         }
 
         var feedback = new Feedback

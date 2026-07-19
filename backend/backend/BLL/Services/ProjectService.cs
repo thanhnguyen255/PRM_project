@@ -133,7 +133,10 @@ public class ProjectService : IProjectService
 
     public async Task<MilestoneDto?> GetMilestoneByIdAsync(int id)
     {
-        var milestone = await _unitOfWork.Repository<Milestone>().GetByIdAsync(id);
+        var milestone = await _unitOfWork.Repository<Milestone>().GetQueryable()
+            .Include(m => m.Submissions)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
         if (milestone == null) return null;
 
         return new MilestoneDto
@@ -142,7 +145,9 @@ public class ProjectService : IProjectService
             ProjectId = milestone.ProjectId,
             Title = milestone.Title,
             Description = milestone.Description,
-            DueDate = milestone.DueDate
+            DueDate = milestone.DueDate,
+            IsSubmitted = milestone.Submissions.Any(),
+            SubmittedAt = milestone.Submissions.OrderByDescending(s => s.SubmittedAt).FirstOrDefault()?.SubmittedAt
         };
     }
 
@@ -188,7 +193,7 @@ public class ProjectService : IProjectService
         {
             MilestoneId = dto.MilestoneId,
             UserId = userId,
-            FileUrl = dto.FileUrl,
+            FileUrl = dto.File?.FileName,
             Description = dto.Description,
             SubmittedAt = DateTime.UtcNow
         };
@@ -210,6 +215,25 @@ public class ProjectService : IProjectService
         };
     }
 
+    public async Task<MilestoneSubmissionDto?> GetMilestoneSubmissionAsync(int milestoneId, int userId)
+    {
+        var submission = await _unitOfWork.Repository<MilestoneSubmission>().GetQueryable()
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.MilestoneId == milestoneId && s.UserId == userId);
+        
+        if (submission == null) return null;
+
+        return new MilestoneSubmissionDto
+        {
+            Id = submission.Id,
+            MilestoneId = submission.MilestoneId,
+            UserId = submission.UserId,
+            UserFullName = submission.User?.FullName ?? "Unknown User",
+            FileUrl = submission.FileUrl,
+            Description = submission.Description,
+            SubmittedAt = submission.SubmittedAt
+        };
+    }
     public async Task<IEnumerable<MilestoneSubmissionDto>> GetSubmissionsByMilestoneAsync(int milestoneId)
     {
         var submissions = await _unitOfWork.Repository<MilestoneSubmission>().GetQueryable()

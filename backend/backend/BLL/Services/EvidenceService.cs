@@ -104,15 +104,16 @@ public class EvidenceService : IEvidenceService
         };
     }
 
-    public async Task<IEnumerable<EvidenceCommentDto>> GetCommentsByEvidenceIdAsync(int evidenceId, int instructorId)
+    public async Task<IEnumerable<EvidenceCommentDto>> GetCommentsByEvidenceIdAsync(int evidenceId, int userId)
     {
-        // Verify instructor owns the class that the evidence belongs to
+        // Verify user is either the instructor of the course OR the learner who submitted it
         var submissionExists = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
             .Include(s => s.Activity)
             .ThenInclude(a => a.LearningPath)
             .ThenInclude(lp => lp.Class)
             .ThenInclude(c => c.Course)
-            .AnyAsync(s => s.Id == evidenceId && s.Activity.LearningPath.Class.Course.InstructorId == instructorId);
+            .AnyAsync(s => s.Id == evidenceId && 
+                (s.Activity.LearningPath.Class.Course.InstructorId == userId || s.UserId == userId));
 
         if (!submissionExists) return [];
 

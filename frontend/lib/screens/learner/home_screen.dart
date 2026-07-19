@@ -3,58 +3,11 @@ import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../viewmodels/viewmodels.dart';
 import '../../widgets/widgets.dart';
-import 'profile/profile_screen.dart';
-import 'progress/progress_screen.dart';
-
-/// SCR-L05 - Home Dashboard (Learner)
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeViewModel>().init();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _HomeTab(onViewAllCourses: () => setState(() => _currentIndex = 1)),
-          const _CoursesTab(),
-          const ProgressScreen(),
-          const ProfileScreen(),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.book_rounded), label: 'Courses'),
-          BottomNavigationBarItem(icon: Icon(Icons.insights_rounded), label: 'Progress'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
 
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
-class _HomeTab extends StatelessWidget {
+class HomeTab extends StatelessWidget {
   final VoidCallback onViewAllCourses;
-  const _HomeTab({required this.onViewAllCourses});
+  const HomeTab({super.key, required this.onViewAllCourses});
 
   @override
   Widget build(BuildContext context) {
@@ -190,13 +143,13 @@ class _HomeTab extends StatelessWidget {
 }
 
 // ─── Courses Tab (placeholder → dùng chung CourseViewModel) ──────────────────
-class _CoursesTab extends StatefulWidget {
-  const _CoursesTab();
+class CoursesTab extends StatefulWidget {
+  const CoursesTab({super.key});
   @override
-  State<_CoursesTab> createState() => _CoursesTabState();
+  State<CoursesTab> createState() => _CoursesTabState();
 }
 
-class _CoursesTabState extends State<_CoursesTab> {
+class _CoursesTabState extends State<CoursesTab> {
   final _searchCtrl = TextEditingController();
 
   @override

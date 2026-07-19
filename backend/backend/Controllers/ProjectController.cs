@@ -1,11 +1,13 @@
 using backend.BLL.DTOs.Project;
 using backend.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/projects")]
+[Authorize]
 public class ProjectController : BaseController
 {
     private readonly IProjectService _projectService;

@@ -13,8 +13,9 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 
-// Learner — Home
+// Learner — Home & Shell
 import 'screens/learner/home_screen.dart';
+import 'screens/learner/learner_shell.dart';
 
 // Learner — Notifications
 import 'screens/learner/notifications/notifications_screen.dart';
@@ -42,6 +43,8 @@ import 'screens/learner/evidence/evidence_comments_screen.dart';
 
 // Learner — Projects
 import 'screens/learner/projects/project_screens.dart';
+import 'screens/learner/projects/milestone_list_screen.dart';
+import 'screens/learner/projects/milestone_detail_screen.dart';
 
 // Learner — Review
 import 'screens/learner/review/review_screens.dart';
@@ -127,7 +130,7 @@ class FlippedClassroomApp extends StatelessWidget {
     // /login → /forgot-password
 
     // ── Learner Core ──────────────────────────────────────────────────────────
-    if (name == '/home') return _page(const HomeScreen(), settings);
+    if (name == '/home') return _page(const LearnerShell(), settings);
     if (name == '/notifications')
       return _page(const NotificationsScreen(), settings);
 
@@ -314,6 +317,13 @@ class FlippedClassroomApp extends StatelessWidget {
         return _page(LearnerProjectDetailScreen(projectId: id), settings);
     }
 
+    // /projects/:id/milestones
+    if (_matches(name, '/milestones') && name.startsWith('/projects/')) {
+      final id = _parseSegment(name, 1);
+      if (id != null)
+        return _page(MilestoneListScreen(projectId: id), settings);
+    }
+
     // /milestones/:id
     if (_matches(name, '/milestones/')) {
       final id = _parseId(name, '/milestones/');
@@ -339,8 +349,7 @@ class FlippedClassroomApp extends StatelessWidget {
     if (name == '/submit-feedback' && args != null) {
       return _page(
         SubmitFeedbackScreen(
-          assignmentId: args['assignmentId'] as int,
-          revieweeName: args['revieweeName'] as String? ?? '',
+          assignment: args['assignment'] as Map<String, dynamic>,
         ),
         settings,
       );

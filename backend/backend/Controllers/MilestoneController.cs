@@ -1,11 +1,13 @@
 using backend.BLL.DTOs.Project;
 using backend.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api")]
+[Authorize]
 public class MilestoneController : BaseController
 {
     private readonly IProjectService _projectService;
@@ -15,17 +17,7 @@ public class MilestoneController : BaseController
         _projectService = projectService;
     }
 
-    private int CurrentUserId
-    {
-        get
-        {
-            if (Request.Headers.TryGetValue("X-User-Id", out var value) && int.TryParse(value, out var id))
-            {
-                return id;
-            }
-            return 3; // Default to learner1
-        }
-    }
+
 
     [HttpGet("milestones")]
     public async Task<IActionResult> GetMilestones([FromQuery] int projectId)
@@ -57,13 +49,13 @@ public class MilestoneController : BaseController
         return Ok(ApiResponse.Success<object?>(null));
     }
 
-    [HttpPost("milestone-submissions")]
+    [HttpPost("submissions")]
     public async Task<IActionResult> SubmitMilestone([FromForm] CreateMilestoneSubmissionDto dto)
     {
         try
         {
-            var submission = await _projectService.SubmitMilestoneAsync(dto, CurrentUserId);
-            return StatusCode(201, ApiResponse.Success(submission, "Milestone submission created"));
+            var submission = await _projectService.SubmitMilestoneAsync(dto, GetCurrentUserId());
+            return StatusCode(201, ApiResponse.Success(submission, "Đã nộp bài thành công"));
         }
         catch (KeyNotFoundException ex)
         {
@@ -71,7 +63,7 @@ public class MilestoneController : BaseController
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResponse.Fail(ex.Message));
+            return StatusCode(500, ApiResponse.Fail(ex.Message));
         }
     }
 
@@ -80,5 +72,22 @@ public class MilestoneController : BaseController
     {
         var submissions = await _projectService.GetSubmissionsByMilestoneAsync(id);
         return Ok(ApiResponse.Success(submissions));
+    }
+
+    [HttpGet("milestone-submissions")]
+    public async Task<IActionResult> GetMySubmission([FromQuery] int milestoneId, [FromQuery] string userId)
+    {
+        int targetUserId = GetCurrentUserId();
+        if (userId != "me")
+        {
+            if (int.TryParse(userId, out int parsedId))
+            {
+                targetUserId = parsedId;
+            }
+        }
+        
+        var submission = await _projectService.GetMilestoneSubmissionAsync(milestoneId, targetUserId);
+        if (submission == null) return NotFound(ApiResponse.Fail("Không tìm thấy submission."));
+        return Ok(ApiResponse.Success(submission));
     }
 }

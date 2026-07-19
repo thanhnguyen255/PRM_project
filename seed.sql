@@ -125,9 +125,9 @@ SET IDENTITY_INSERT MilestoneSubmissions OFF;
 
 -- ReviewSessions
 SET IDENTITY_INSERT ReviewSessions ON;
-INSERT INTO ReviewSessions (Id, ClassId, Title, StartDate, EndDate)
+INSERT INTO ReviewSessions (Id, ClassId, ActivityId, Title, StartDate, EndDate)
 VALUES 
-(1, 1, 'Midterm Peer Review', DATEADD(day, 15, GETDATE()), DATEADD(day, 20, GETDATE()));
+(1, 1, 2, 'Midterm Peer Review', DATEADD(day, 15, GETDATE()), DATEADD(day, 20, GETDATE()));
 SET IDENTITY_INSERT ReviewSessions OFF;
 
 -- ReviewAssignments

@@ -137,7 +137,8 @@ public class LearningPathService : ILearningPathService
             Id = lp.Id,
             Title = lp.Title,
             ClassId = lp.ClassId,
-            WeekNumber = lp.WeekNumber
+            WeekNumber = lp.WeekNumber,
+            IsUnlocked = lp.IsUnlocked
         });
     }
 
@@ -164,7 +165,8 @@ public class LearningPathService : ILearningPathService
             Id = learningPath.Id,
             Title = learningPath.Title,
             ClassId = learningPath.ClassId,
-            WeekNumber = learningPath.WeekNumber
+            WeekNumber = learningPath.WeekNumber,
+            IsUnlocked = learningPath.IsUnlocked
         };
     }
 

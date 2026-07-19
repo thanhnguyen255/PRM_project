@@ -1,11 +1,13 @@
 using backend.BLL.DTOs.Review;
 using backend.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/review-sessions")]
+[Authorize]
 public class ReviewSessionController : BaseController
 {
     private readonly IReviewService _reviewService;

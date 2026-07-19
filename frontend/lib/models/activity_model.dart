@@ -4,7 +4,11 @@ class ActivityModel {
   final String title;
   final String? description;
   final String type; // PreClass, InClass, PostClass
+  final DateTime? deadline;
   final String? submissionStatus;
+  final int? reviewSessionId;
+  final String? reviewSessionTitle;
+  final bool? isReviewSessionOpen;
 
   ActivityModel({
     required this.id, 
@@ -14,6 +18,9 @@ class ActivityModel {
     required this.type, 
     this.deadline,
     this.submissionStatus,
+    this.reviewSessionId,
+    this.reviewSessionTitle,
+    this.isReviewSessionOpen,
   });
 
   factory ActivityModel.fromJson(Map<String, dynamic> json) => ActivityModel(
@@ -24,5 +31,8 @@ class ActivityModel {
     type:             json['type'] ?? '',
     deadline:         json['deadline'] != null ? DateTime.tryParse(json['deadline']) : null,
     submissionStatus: json['submissionStatus'] ?? (json['submission'] != null ? json['submission']['status'] : null),
+    reviewSessionId:  json['reviewSessionId'] as int?,
+    reviewSessionTitle: json['reviewSessionTitle'] as String?,
+    isReviewSessionOpen: json['isReviewSessionOpen'] as bool?,
   );
 }

@@ -198,6 +198,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                   .HasForeignKey(rs => rs.ClassId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasOne(rs => rs.Activity)
+                  .WithMany()
+                  .HasForeignKey(rs => rs.ActivityId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
             entity.Property(rs => rs.Title).HasMaxLength(200).IsRequired();
         });
 

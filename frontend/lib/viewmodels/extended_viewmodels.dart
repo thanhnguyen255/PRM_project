@@ -35,7 +35,7 @@ class ProjectViewModel extends ChangeNotifier {
     try {
       _projectDetail = await _projectSvc.getProjectDetail(id);
       if (_projectDetail != null && _projectDetail!.containsKey('error')) {
-        _projectDetail = {'title': 'API Error', 'description': _projectDetail!['error'] + '\n\n' + (_projectDetail!['raw'] ?? '')};
+        _projectDetail = {'title': 'API Error', 'description': '${_projectDetail!['error']}\n\n${_projectDetail!['raw'] ?? ''}'};
         _milestones = [];
       } else if (_projectDetail != null && _projectDetail!['milestones'] != null) {
         final raw = _projectDetail!['milestones'];
@@ -61,9 +61,17 @@ class ProjectViewModel extends ChangeNotifier {
     _isLoading  = false; notifyListeners();
   }
 
+  MilestoneSubmissionModel? _submission;
+  MilestoneSubmissionModel? get submission => _submission;
+
   Future<void> loadMilestoneDetail(int id) async {
     _isLoading = true; notifyListeners();
     _milestone = await _milestoneSvc.getMilestoneDetail(id);
+    if (_milestone != null && _milestone!.isSubmitted) {
+      _submission = await _milestoneSvc.getMilestoneSubmission(id);
+    } else {
+      _submission = null;
+    }
     _isLoading = false; notifyListeners();
   }
 
@@ -108,6 +116,9 @@ class ProjectViewModel extends ChangeNotifier {
     _isSaving = true; notifyListeners();
     final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description, filePath: filePath);
     _isSaving = false; notifyListeners();
+    if (r.success) {
+      await loadMilestoneDetail(milestoneId);
+    }
     return r.success ? null : r.error;
   }
 }
@@ -120,6 +131,7 @@ class ReviewViewModel extends ChangeNotifier {
   Map<String,dynamic>?      _sessionDetail;
   List<FeedbackModel>       _receivedFeedback = [];
   List<Map<String,dynamic>> _assignments      = [];
+  List<Map<String,dynamic>> _classActivities  = [];
   bool                      _isLoading        = false;
   bool                      _isSaving         = false;
 
@@ -127,8 +139,15 @@ class ReviewViewModel extends ChangeNotifier {
   Map<String,dynamic>?      get sessionDetail    => _sessionDetail;
   List<FeedbackModel>       get receivedFeedback => _receivedFeedback;
   List<Map<String,dynamic>> get assignments      => _assignments;
+  List<Map<String,dynamic>> get classActivities => _classActivities;
   bool                      get isLoading        => _isLoading;
   bool                      get isSaving         => _isSaving;
+
+  Future<void> loadClassActivities(int classId) async {
+    _isLoading = true; notifyListeners();
+    _classActivities = await _svc.getClassActivities(classId);
+    _isLoading = false; notifyListeners();
+  }
 
   Future<void> loadSessions(int classId) async {
     _isLoading = true; notifyListeners();
@@ -182,12 +201,28 @@ class ReviewViewModel extends ChangeNotifier {
 
   Future<String?> createSession({
     required int classId,
+    required int activityId,
     required String title,
     required String startDate,
     required String endDate,
   }) async {
     _isSaving = true; notifyListeners();
-    final r = await _svc.createSession(classId: classId, title: title, startDate: startDate, endDate: endDate);
+    final r = await _svc.createSession(
+      classId: classId,
+      activityId: activityId,
+      title: title,
+      startDate: startDate,
+      endDate: endDate,
+    );
+    _isSaving = false;
+    if (r.success) await loadSessions(classId);
+    notifyListeners();
+    return r.success ? null : r.error;
+  }
+
+  Future<String?> deleteSession(int id, int classId) async {
+    _isSaving = true; notifyListeners();
+    final r = await _svc.deleteSession(id);
     _isSaving = false;
     if (r.success) await loadSessions(classId);
     notifyListeners();

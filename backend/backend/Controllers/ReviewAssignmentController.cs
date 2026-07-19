@@ -18,9 +18,17 @@ public class ReviewAssignmentController : BaseController
     [HttpGet]
     public async Task<IActionResult> GetAssignments([FromQuery] int sessionId, [FromQuery] int? reviewerId)
     {
-        if (!reviewerId.HasValue && Request.Headers.TryGetValue("X-User-Id", out var val) && int.TryParse(val, out var id))
+        var role = GetCurrentUserRole();
+        if (role == "Learner")
         {
-            reviewerId = id;
+            reviewerId = GetCurrentUserId();
+        }
+        else if (!reviewerId.HasValue)
+        {
+            if (Request.Headers.TryGetValue("X-User-Id", out var val) && int.TryParse(val, out var id))
+            {
+                reviewerId = id;
+            }
         }
 
         var assignments = await _reviewService.GetAssignmentsAsync(sessionId, reviewerId);

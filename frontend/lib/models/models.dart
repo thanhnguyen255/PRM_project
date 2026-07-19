@@ -223,6 +223,9 @@ class ActivityModel {
   final int? submissionId;
   final String? submissionStatus; // "Pending" | "Approved" | "Rejected" | null
   final DateTime? submittedAt;
+  final int? reviewSessionId;
+  final String? reviewSessionTitle;
+  final bool? isReviewSessionOpen;
 
   const ActivityModel({
     required this.id,
@@ -234,6 +237,9 @@ class ActivityModel {
     this.submissionId,
     this.submissionStatus,
     this.submittedAt,
+    this.reviewSessionId,
+    this.reviewSessionTitle,
+    this.isReviewSessionOpen,
   });
 
   bool get isOverdue => deadline != null && deadline!.isBefore(DateTime.now()) && submissionStatus == null;
@@ -249,6 +255,9 @@ class ActivityModel {
     submissionId:     json['submissionId'] as int?,
     submissionStatus: json['submissionStatus'] as String? ?? (json['submission'] != null ? json['submission']['status'] as String? : null),
     submittedAt:      json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
+    reviewSessionId:  json['reviewSessionId'] as int?,
+    reviewSessionTitle: json['reviewSessionTitle'] as String?,
+    isReviewSessionOpen: json['isReviewSessionOpen'] as bool?,
   );
 }
 
@@ -448,16 +457,62 @@ class MilestoneModel {
     this.submittedAt,
   });
 
-  factory MilestoneModel.fromJson(Map<String, dynamic> json) => MilestoneModel(
+  factory MilestoneModel.fromJson(Map<String, dynamic> json) {
+    final dueDate = json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null;
+    final submittedAt = json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null;
+    final isSubmitted = json['isSubmitted'] as bool? ?? false;
+    
+    // Add logic to determine if submission is late. 
+    // Usually if submittedAt > dueDate, it's late.
+    // We can expose an isLate getter or field if needed, but since it's computed, let's just make it a getter.
+    
+    return MilestoneModel(
+      id:           json['id'] as int,
+      projectId:    json['projectId'] as int? ?? 0,
+      projectTitle: json['projectTitle'] as String?,
+      title:        json['title'] as String,
+      description:  json['description'] as String?,
+      dueDate:      dueDate,
+      stepNumber:   json['stepNumber'] as int? ?? 1,
+      isSubmitted:  isSubmitted,
+      submittedAt:  submittedAt,
+    );
+  }
+
+  bool get isLate {
+    if (!isSubmitted || submittedAt == null || dueDate == null) return false;
+    return submittedAt!.isAfter(dueDate!);
+  }
+}
+
+// ─── MilestoneSubmissionModel ─────────────────────────────────────────────────
+class MilestoneSubmissionModel {
+  final int id;
+  final int milestoneId;
+  final int userId;
+  final String userFullName;
+  final String? fileUrl;
+  final String? description;
+  final DateTime submittedAt;
+
+  const MilestoneSubmissionModel({
+    required this.id,
+    required this.milestoneId,
+    required this.userId,
+    required this.userFullName,
+    this.fileUrl,
+    this.description,
+    required this.submittedAt,
+  });
+
+  factory MilestoneSubmissionModel.fromJson(Map<String, dynamic> json) => MilestoneSubmissionModel(
     id:           json['id'] as int,
-    projectId:    json['projectId'] as int? ?? 0,
-    projectTitle: json['projectTitle'] as String?,
-    title:        json['title'] as String,
+    milestoneId:  json['milestoneId'] as int,
+    userId:       json['userId'] as int,
+    userFullName: json['userFullName'] as String? ?? '',
+    fileUrl:      json['fileUrl'] as String?,
     description:  json['description'] as String?,
-    dueDate:      json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
-    stepNumber:   json['stepNumber'] as int? ?? 1,
-    isSubmitted:  json['isSubmitted'] as bool? ?? false,
-    submittedAt:  json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
+    submittedAt:  DateTime.parse(json['submittedAt']),
   );
 }
 

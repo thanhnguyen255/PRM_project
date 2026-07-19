@@ -38,9 +38,14 @@ public class ActivityService : IActivityService
             .GroupBy(s => s.ActivityId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(s => s.SubmittedAt).First());
 
+        var reviewSessions = await _db.ReviewSessions
+            .Where(rs => activityIds.Contains(rs.ActivityId))
+            .ToListAsync();
+
         return activities.Select(a =>
         {
             submissions.TryGetValue(a.Id, out var sub);
+            var rs = reviewSessions.FirstOrDefault(r => r.ActivityId == a.Id);
             return new ActivityDto
             {
                 Id = a.Id,
@@ -51,7 +56,10 @@ public class ActivityService : IActivityService
                 SubmissionId = sub?.Id,
                 SubmissionStatus = sub?.Status.ToString(),
                 SubmittedAt = sub?.SubmittedAt,
-                LearningPathId = a.LearningPathId
+                LearningPathId = a.LearningPathId,
+                ReviewSessionId = rs?.Id,
+                ReviewSessionTitle = rs?.Title,
+                IsReviewSessionOpen = rs != null ? (DateTime.UtcNow >= rs.StartDate && DateTime.UtcNow <= rs.EndDate) : null
             };
         }).ToList();
     }
@@ -123,6 +131,8 @@ public class ActivityService : IActivityService
         if (sub != null)
             commentCount = await _db.EvidenceComments.CountAsync(c => c.SubmissionId == sub.Id);
 
+        var rs = await _db.ReviewSessions.FirstOrDefaultAsync(r => r.ActivityId == activityId);
+
         return new ActivityDetailDto
         {
             Id = activity.Id,
@@ -141,7 +151,10 @@ public class ActivityService : IActivityService
                 SubmittedAt = sub.SubmittedAt,
                 ReviewedAt = sub.ReviewedAt,
                 CommentCount = commentCount
-            }
+            },
+            ReviewSessionId = rs?.Id,
+            ReviewSessionTitle = rs?.Title,
+            IsReviewSessionOpen = rs != null ? (DateTime.UtcNow >= rs.StartDate && DateTime.UtcNow <= rs.EndDate) : null
         };
     }
 
@@ -163,15 +176,27 @@ public class ActivityService : IActivityService
         }
 
         var activities = await query.ToListAsync();
+        var activityIds = activities.Select(a => a.Id).ToList();
 
-        return activities.Select(a => new ActivityDto
+        var reviewSessions = await _db.ReviewSessions
+            .Where(rs => activityIds.Contains(rs.ActivityId))
+            .ToListAsync();
+
+        return activities.Select(a =>
         {
-            Id = a.Id,
-            Title = a.Title,
-            Description = a.Description,
-            Type = a.Type.ToString(),
-            Deadline = a.Deadline,
-            LearningPathId = a.LearningPathId
+            var rs = reviewSessions.FirstOrDefault(r => r.ActivityId == a.Id);
+            return new ActivityDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                Type = a.Type.ToString(),
+                Deadline = a.Deadline,
+                LearningPathId = a.LearningPathId,
+                ReviewSessionId = rs?.Id,
+                ReviewSessionTitle = rs?.Title,
+                IsReviewSessionOpen = rs != null ? (DateTime.UtcNow >= rs.StartDate && DateTime.UtcNow <= rs.EndDate) : null
+            };
         });
     }
 
@@ -251,5 +276,38 @@ public class ActivityService : IActivityService
         _unitOfWork.Repository<Activity>().Delete(activity);
         await _unitOfWork.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<IEnumerable<ActivityDto>> GetByClassAsync(int classId)
+    {
+        var activities = await _db.Activities
+            .Include(a => a.LearningPath)
+            .Where(a => a.LearningPath.ClassId == classId)
+            .OrderBy(a => a.LearningPath.WeekNumber)
+            .ThenBy(a => a.Id)
+            .ToListAsync();
+
+        var activityIds = activities.Select(a => a.Id).ToList();
+
+        var reviewSessions = await _db.ReviewSessions
+            .Where(rs => activityIds.Contains(rs.ActivityId))
+            .ToListAsync();
+
+        return activities.Select(a =>
+        {
+            var rs = reviewSessions.FirstOrDefault(r => r.ActivityId == a.Id);
+            return new ActivityDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                Type = a.Type.ToString(),
+                Deadline = a.Deadline,
+                LearningPathId = a.LearningPathId,
+                ReviewSessionId = rs?.Id,
+                ReviewSessionTitle = rs?.Title,
+                IsReviewSessionOpen = rs != null ? (DateTime.UtcNow >= rs.StartDate && DateTime.UtcNow <= rs.EndDate) : null
+            };
+        }).ToList();
     }
 }

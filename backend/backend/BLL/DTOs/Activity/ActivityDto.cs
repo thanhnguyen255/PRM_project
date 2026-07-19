@@ -12,6 +12,9 @@ public class ActivityDto
     public int? SubmissionId { get; set; }
     public string? SubmissionStatus { get; set; } 
     public DateTime? SubmittedAt { get; set; }
+    public int? ReviewSessionId { get; set; }
+    public string? ReviewSessionTitle { get; set; }
+    public bool? IsReviewSessionOpen { get; set; }
 }
 
 public class ActivityDetailDto
@@ -24,6 +27,9 @@ public class ActivityDetailDto
     public string? Description { get; set; }
     public DateTime? Deadline { get; set; }
     public SubmissionDetailDto? Submission { get; set; }
+    public int? ReviewSessionId { get; set; }
+    public string? ReviewSessionTitle { get; set; }
+    public bool? IsReviewSessionOpen { get; set; }
 }
 
 public class SubmissionDetailDto

@@ -222,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () async {
                   await authVm.logout();
                   if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+                    Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (_) => false);
                   }
                 },
                 variant: ButtonVariant.danger,
@@ -367,12 +367,17 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textHint, letterSpacing: 0.5)),
     const SizedBox(height: 8),
-    Container(
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
-      child: Column(children: children.asMap().entries.map((e) => Column(children: [
-        e.value,
-        if (e.key < children.length - 1) const Divider(height: 1, indent: 56),
-      ])).toList()),
+    Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+        child: Column(children: children.asMap().entries.map((e) => Column(children: [
+          e.value,
+          if (e.key < children.length - 1) const Divider(height: 1, indent: 56),
+        ])).toList()),
+      ),
     ),
   ]);
 }
