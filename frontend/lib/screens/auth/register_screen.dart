@@ -109,9 +109,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Vui lòng nhập mật khẩu';
                         if (v.length < 8) return 'Mật khẩu tối thiểu 8 ký tự';
-                        if (!RegExp(r'(?=.*[A-Z])').hasMatch(v)) return 'Cần ít nhất 1 chữ hoa';
-                        if (!RegExp(r'(?=.*[a-z])').hasMatch(v)) return 'Cần ít nhất 1 chữ thường';
-                        if (!RegExp(r'(?=.*[0-9])').hasMatch(v)) return 'Cần ít nhất 1 chữ số';
                         return null;
                       },
                     ),

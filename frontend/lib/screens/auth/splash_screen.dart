@@ -33,11 +33,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (!mounted) return;
 
     if (session.token == null) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+      Navigator.pushReplacementNamed(context, '/login');
     } else if (session.role == 'Instructor') {
-      Navigator.pushNamedAndRemoveUntil(context, '/instructor/dashboard', (_) => false);
+      Navigator.pushReplacementNamed(context, '/instructor/dashboard');
     } else {
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 
@@ -47,8 +47,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) => Scaffold(
     body: Container(
-      width: double.infinity,
-      height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -60,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       child: SafeArea(
         child: AnimatedBuilder(
           animation: _ctrl,
-          builder: (_, _) => FadeTransition(
+          builder: (_, __) => FadeTransition(
             opacity: _fadeAnim,
             child: Transform.translate(
               offset: Offset(0, _slideAnim.value),

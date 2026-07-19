@@ -19,8 +19,6 @@ public class LearningPath
     [Required]
     public int WeekNumber { get; set; }
 
-    public bool IsUnlocked { get; set; } = false;
-
     // Navigation
     [ForeignKey(nameof(ClassId))]
     public Class Class { get; set; } = null!;

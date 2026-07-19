@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../config/app_colors.dart';
 import '../../../viewmodels/viewmodels.dart';
 import '../../../widgets/widgets.dart';
-import '../../../models/models.dart';
 
 // ════════════════════════════════════════════════════════════════════════════════
 // SCR-L05 — Learning Path Detail / Week View (Learner)
@@ -24,38 +23,24 @@ class _LearningPathDetailState extends State<LearningPathDetailScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LearningPathViewModel>().loadPathDetail(widget.pathId);
+      context.read<ActivityViewModel>().loadActivities(widget.pathId);
     });
   }
 
   @override
   void dispose() { _tabController.dispose(); super.dispose(); }
 
-  List<ActivityModel> _parseActivities(dynamic data) {
-    if (data == null || data is! List) return [];
-    return data.map((item) => ActivityModel.fromJson(item)).toList();
-  }
+  List _filterByType(List activities, String type) =>
+      activities.where((a) => a.type == type).toList();
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<LearningPathViewModel>();
-    final title = vm.detail?['title'] as String? ?? 'Lộ trình tuần';
-    
-    final preClass = _parseActivities(vm.detail?['preClassActivities']);
-    final inClass = _parseActivities(vm.detail?['inClassActivities']);
-    final postClass = _parseActivities(vm.detail?['postClassActivities']);
+    final vm = context.watch<ActivityViewModel>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.folder_copy_rounded),
-            tooltip: 'Tài liệu học tập',
-            onPressed: () => Navigator.pushNamed(context, '/paths/${widget.pathId}/materials'),
-          ),
-        ],
+        title: const Text('Lộ trình tuần'),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.primary,
@@ -93,17 +78,17 @@ class _LearningPathDetailState extends State<LearningPathDetailScreen>
               controller: _tabController,
               children: [
                 _ActivityTypeList(
-                  activities: preClass,
+                  activities: _filterByType(vm.activities, 'PreClass'),
                   type: 'PreClass',
                   emptyMsg: 'Chưa có hoạt động Pre-Class',
                 ),
                 _ActivityTypeList(
-                  activities: inClass,
+                  activities: _filterByType(vm.activities, 'InClass'),
                   type: 'InClass',
                   emptyMsg: 'Chưa có hoạt động In-Class',
                 ),
                 _ActivityTypeList(
-                  activities: postClass,
+                  activities: _filterByType(vm.activities, 'PostClass'),
                   type: 'PostClass',
                   emptyMsg: 'Chưa có hoạt động Post-Class',
                 ),
@@ -114,7 +99,7 @@ class _LearningPathDetailState extends State<LearningPathDetailScreen>
 }
 
 class _ActivityTypeList extends StatelessWidget {
-  final List<ActivityModel> activities;
+  final List activities;
   final String type;
   final String emptyMsg;
   const _ActivityTypeList({required this.activities, required this.type, required this.emptyMsg});
@@ -131,7 +116,7 @@ class _ActivityTypeList extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: activities.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
         final a = activities[i];
         return ActivityCard(

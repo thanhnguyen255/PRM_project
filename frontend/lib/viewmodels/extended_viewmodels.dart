@@ -29,29 +29,8 @@ class ProjectViewModel extends ChangeNotifier {
   }
 
   Future<void> loadProjectDetail(int id) async {
-    _projectDetail = null;
-    _milestones    = [];
     _isLoading     = true; notifyListeners();
-    try {
-      _projectDetail = await _projectSvc.getProjectDetail(id);
-      if (_projectDetail != null && _projectDetail!.containsKey('error')) {
-        _projectDetail = {'title': 'API Error', 'description': '${_projectDetail!['error']}\n\n${_projectDetail!['raw'] ?? ''}'};
-        _milestones = [];
-      } else if (_projectDetail != null && _projectDetail!['milestones'] != null) {
-        final raw = _projectDetail!['milestones'];
-        if (raw is List) {
-          _milestones = raw.map((m) => MilestoneModel.fromJson(Map<String, dynamic>.from(m as Map))).toList();
-        } else {
-          _milestones = [];
-        }
-      } else {
-        _milestones = [];
-      }
-    } catch (e) {
-      print('Error parsing project detail: $e');
-      _projectDetail = {'title': 'Error', 'description': e.toString()};
-      _milestones = [];
-    }
+    _projectDetail = await _projectSvc.getProjectDetail(id);
     _isLoading     = false; notifyListeners();
   }
 
@@ -61,17 +40,9 @@ class ProjectViewModel extends ChangeNotifier {
     _isLoading  = false; notifyListeners();
   }
 
-  MilestoneSubmissionModel? _submission;
-  MilestoneSubmissionModel? get submission => _submission;
-
   Future<void> loadMilestoneDetail(int id) async {
     _isLoading = true; notifyListeners();
     _milestone = await _milestoneSvc.getMilestoneDetail(id);
-    if (_milestone != null && _milestone!.isSubmitted) {
-      _submission = await _milestoneSvc.getMilestoneSubmission(id);
-    } else {
-      _submission = null;
-    }
     _isLoading = false; notifyListeners();
   }
 
@@ -112,13 +83,10 @@ class ProjectViewModel extends ChangeNotifier {
     return r.success ? null : r.error;
   }
 
-  Future<String?> submitMilestone({required int milestoneId, String? description, String? filePath}) async {
+  Future<String?> submitMilestone({required int milestoneId, String? description}) async {
     _isSaving = true; notifyListeners();
-    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description, filePath: filePath);
+    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description);
     _isSaving = false; notifyListeners();
-    if (r.success) {
-      await loadMilestoneDetail(milestoneId);
-    }
     return r.success ? null : r.error;
   }
 }
@@ -131,7 +99,6 @@ class ReviewViewModel extends ChangeNotifier {
   Map<String,dynamic>?      _sessionDetail;
   List<FeedbackModel>       _receivedFeedback = [];
   List<Map<String,dynamic>> _assignments      = [];
-  List<Map<String,dynamic>> _classActivities  = [];
   bool                      _isLoading        = false;
   bool                      _isSaving         = false;
 
@@ -139,15 +106,8 @@ class ReviewViewModel extends ChangeNotifier {
   Map<String,dynamic>?      get sessionDetail    => _sessionDetail;
   List<FeedbackModel>       get receivedFeedback => _receivedFeedback;
   List<Map<String,dynamic>> get assignments      => _assignments;
-  List<Map<String,dynamic>> get classActivities => _classActivities;
   bool                      get isLoading        => _isLoading;
   bool                      get isSaving         => _isSaving;
-
-  Future<void> loadClassActivities(int classId) async {
-    _isLoading = true; notifyListeners();
-    _classActivities = await _svc.getClassActivities(classId);
-    _isLoading = false; notifyListeners();
-  }
 
   Future<void> loadSessions(int classId) async {
     _isLoading = true; notifyListeners();
@@ -155,37 +115,21 @@ class ReviewViewModel extends ChangeNotifier {
     _isLoading = false; notifyListeners();
   }
 
-  Future<void> loadReviewDetail(int sessionId) async {
-    _isLoading     = true;
-    _sessionDetail = null;
-    _assignments   = [];
-    notifyListeners();
-    final results = await Future.wait([
-      _svc.getSessionDetail(sessionId),
-      _svc.getAssignments(sessionId),
-    ]);
-    _sessionDetail = results[0] as Map<String, dynamic>?;
-    _assignments   = results[1] as List<Map<String, dynamic>>;
-    _isLoading     = false;
-    notifyListeners();
-  }
-
-  // Keep individual methods for backward compat
   Future<void> loadSessionDetail(int id) async {
     _isLoading     = true; notifyListeners();
     _sessionDetail = await _svc.getSessionDetail(id);
     _isLoading     = false; notifyListeners();
   }
 
+  Future<void> loadReceivedFeedback(int sessionId) async {
+    _receivedFeedback = await _svc.getReceivedFeedback(sessionId);
+    notifyListeners();
+  }
+
   Future<void> loadAssignments(int sessionId) async {
     _isLoading   = true; notifyListeners();
     _assignments = await _svc.getAssignments(sessionId);
     _isLoading   = false; notifyListeners();
-  }
-
-  Future<void> loadReceivedFeedback(int sessionId) async {
-    _receivedFeedback = await _svc.getReceivedFeedback(sessionId);
-    notifyListeners();
   }
 
   Future<String?> submitFeedback({
@@ -201,28 +145,12 @@ class ReviewViewModel extends ChangeNotifier {
 
   Future<String?> createSession({
     required int classId,
-    required int activityId,
     required String title,
     required String startDate,
     required String endDate,
   }) async {
     _isSaving = true; notifyListeners();
-    final r = await _svc.createSession(
-      classId: classId,
-      activityId: activityId,
-      title: title,
-      startDate: startDate,
-      endDate: endDate,
-    );
-    _isSaving = false;
-    if (r.success) await loadSessions(classId);
-    notifyListeners();
-    return r.success ? null : r.error;
-  }
-
-  Future<String?> deleteSession(int id, int classId) async {
-    _isSaving = true; notifyListeners();
-    final r = await _svc.deleteSession(id);
+    final r = await _svc.createSession(classId: classId, title: title, startDate: startDate, endDate: endDate);
     _isSaving = false;
     if (r.success) await loadSessions(classId);
     notifyListeners();
@@ -268,20 +196,12 @@ class MaterialViewModel extends ChangeNotifier {
   final _svc = MaterialService();
 
   List<Map<String,dynamic>> _materials = [];
-  Map<String,dynamic>?      _materialDetail;
   bool                      _isLoading = false;
   bool                      _isSaving  = false;
 
-  List<Map<String,dynamic>> get materials      => _materials;
-  Map<String,dynamic>?      get materialDetail => _materialDetail;
-  bool                      get isLoading      => _isLoading;
-  bool                      get isSaving       => _isSaving;
-
-  Future<void> loadMaterialDetail(int id) async {
-    _isLoading      = true; notifyListeners();
-    _materialDetail = await _svc.getMaterialDetail(id);
-    _isLoading      = false; notifyListeners();
-  }
+  List<Map<String,dynamic>> get materials => _materials;
+  bool                      get isLoading => _isLoading;
+  bool                      get isSaving  => _isSaving;
 
   Future<void> loadMaterials(int pathId) async {
     _isLoading = true; notifyListeners();
@@ -294,11 +214,10 @@ class MaterialViewModel extends ChangeNotifier {
     required String title,
     required String type,
     String? linkUrl,
-    String? filePath,
   }) async {
     _isSaving = true; notifyListeners();
     final r = await _svc.createMaterial(
-      learningPathId: learningPathId, title: title, type: type, linkUrl: linkUrl, filePath: filePath,
+      learningPathId: learningPathId, title: title, type: type, linkUrl: linkUrl,
     );
     _isSaving = false;
     if (r.success) await loadMaterials(learningPathId);
@@ -310,35 +229,6 @@ class MaterialViewModel extends ChangeNotifier {
     final r = await _svc.deleteMaterial(id);
     if (r.success) await loadMaterials(pathId);
     return r.success ? null : r.error;
-  }
-}
-
-// ─── ExtendedActivityViewModel ────────────────────────────────────────────────────────
-class ExtendedActivityViewModel extends ChangeNotifier {
-  final _svc = ActivityService();
-
-  List<Map<String, dynamic>> _activities = [];
-  Map<String, dynamic>? _activityDetail;
-  bool _isLoading = false;
-
-  List<Map<String, dynamic>> get activities => _activities;
-  Map<String, dynamic>? get activityDetail => _activityDetail;
-  bool get isLoading => _isLoading;
-
-  Future<void> loadActivities(int pathId, {String? type}) async {
-    _isLoading = true;
-    notifyListeners();
-    _activities = await _svc.getActivities(pathId, type: type);
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  Future<void> loadActivityDetail(int id) async {
-    _isLoading = true;
-    notifyListeners();
-    _activityDetail = await _svc.getActivityDetail(id);
-    _isLoading = false;
-    notifyListeners();
   }
 }
 
@@ -405,11 +295,6 @@ class InstructorManageViewModel extends ChangeNotifier {
 
   Future<String?> deleteLearningPath(int id) async {
     final res = await ApiService.instance.delete('/learning-paths/$id');
-    return res['success'] == true ? null : res['message'] as String?;
-  }
-
-  Future<String?> toggleLearningPathLock(int id) async {
-    final res = await ApiService.instance.patch('/learning-paths/$id/toggle-lock');
     return res['success'] == true ? null : res['message'] as String?;
   }
 

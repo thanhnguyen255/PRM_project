@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-export 'course_viewmodel.dart';
 import '../models/models.dart';
 import '../services/auth_service.dart';
 import '../services/services.dart';
@@ -10,20 +9,9 @@ class AuthViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _error;
-  int? _userId;
-
-  AuthViewModel() {
-    _loadUserId();
-  }
-
-  Future<void> _loadUserId() async {
-    _userId = await _auth.getUserId();
-    notifyListeners();
-  }
 
   bool get isLoading => _isLoading;
   String? get error  => _error;
-  int? get userId    => _userId;
 
   void _setLoading(bool v) { _isLoading = v; notifyListeners(); }
   void _setError(String? v) { _error = v; notifyListeners(); }
@@ -33,12 +21,7 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true); _setError(null);
     final result = await _auth.login(email: email, password: password);
     _setLoading(false);
-    if (!result.success) {
-      _setError(result.error);
-    } else if (result.data != null) {
-      _userId = result.data!.userId;
-      notifyListeners();
-    }
+    if (!result.success) _setError(result.error);
     return result.success ? result.data!.role : null;
   }
 
@@ -46,20 +29,11 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true); _setError(null);
     final result = await _auth.register(fullName: fullName, email: email, password: password);
     _setLoading(false);
-    if (!result.success) {
-      _setError(result.error);
-    } else if (result.data != null) {
-      _userId = result.data!.userId;
-      notifyListeners();
-    }
+    if (!result.success) _setError(result.error);
     return result.success ? result.data!.role : null;
   }
 
-  Future<void> logout() async {
-    await _auth.logout();
-    _userId = null;
-    notifyListeners();
-  }
+  Future<void> logout() => _auth.logout();
 }
 
 // ─── HomeViewModel ────────────────────────────────────────────────────────────
@@ -68,13 +42,11 @@ class HomeViewModel extends ChangeNotifier {
   final _activityService = ActivityService();
   final _notifService = NotificationService();
   final _auth = AuthService();
-  final _profileService = ProfileService();
 
   List<CourseModel>   _courses    = [];
   List<ActivityModel> _upcoming   = [];
   int                 _unreadCount = 0;
   String              _greeting   = '';
-  UserModel?          _profile;
   bool                _isLoading  = true;
   String?             _error;
 
@@ -82,7 +54,6 @@ class HomeViewModel extends ChangeNotifier {
   List<ActivityModel> get upcoming    => _upcoming;
   int                 get unreadCount => _unreadCount;
   String              get greeting    => _greeting;
-  UserModel?          get profile     => _profile;
   bool                get isLoading   => _isLoading;
   String?             get error       => _error;
 
@@ -90,14 +61,6 @@ class HomeViewModel extends ChangeNotifier {
     _isLoading = true; notifyListeners();
     final name = await _auth.getFullName();
     _greeting = name ?? 'Học viên';
-
-    try {
-      final data = await _profileService.getProfile();
-      if (data != null) {
-        _profile = UserModel.fromJson(data);
-        _greeting = _profile!.fullName;
-      }
-    } catch (_) {}
 
     await Future.wait([
       _loadCourses(),
@@ -108,8 +71,10 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> _loadCourses() async {
     _courses = await _courseService.getMyCourses();
-    // Load toàn bộ upcoming activities của học viên
-    _upcoming = await _activityService.getUpcoming();
+    // Load upcoming từ active class của course đầu tiên
+    if (_courses.isNotEmpty && _courses.first.activeClassId != null) {
+      _upcoming = await _activityService.getUpcoming(_courses.first.activeClassId!);
+    }
   }
 
   Future<void> _loadUnreadCount() async {
@@ -251,7 +216,6 @@ class EvidenceViewModel extends ChangeNotifier {
   bool                       _isSubmitting = false;
   String?                    _error;
   String                     _statusFilter = 'All';
-  int?                       _currentClassId;
 
   List<EvidenceModel>        get evidences    => _evidences;
   EvidenceModel?             get detail       => _detail;
@@ -260,12 +224,10 @@ class EvidenceViewModel extends ChangeNotifier {
   bool                       get isSubmitting => _isSubmitting;
   String?                    get error        => _error;
   String                     get statusFilter => _statusFilter;
-  int?                       get currentClassId => _currentClassId;
 
   void setStatusFilter(String v) { _statusFilter = v; notifyListeners(); }
 
-  Future<void> loadEvidencesByClass(int? classId) async {
-    _currentClassId = classId;
+  Future<void> loadEvidencesByClass(int classId) async {
     _isLoading = true; notifyListeners();
     _evidences = await _service.getEvidencesByClass(classId, status: _statusFilter == 'All' ? null : _statusFilter);
     _isLoading = false; notifyListeners();
@@ -282,28 +244,22 @@ class EvidenceViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> submitEvidence({required int activityId, String? note, String? filePath, List<int>? fileBytes, String? fileName}) async {
+  Future<String?> submitEvidence({required int activityId, String? note}) async {
     _isSubmitting = true; notifyListeners();
-    final result = await _service.submitEvidence(activityId: activityId, note: note, filePath: filePath, fileBytes: fileBytes, fileName: fileName);
+    final result = await _service.submitEvidence(activityId: activityId, note: note);
     _isSubmitting = false; notifyListeners();
     return result.success ? null : result.error;
   }
 
   Future<String?> approve(int id, {String? comment}) async {
     final r = await _service.approveEvidence(id, comment: comment);
-    if (r.success) {
-      await loadDetail(id);
-      await loadEvidencesByClass(_currentClassId);
-    }
+    if (r.success) await loadDetail(id);
     return r.success ? null : r.error;
   }
 
   Future<String?> reject(int id, {String? comment}) async {
     final r = await _service.rejectEvidence(id, comment: comment);
-    if (r.success) {
-      await loadDetail(id);
-      await loadEvidencesByClass(_currentClassId);
-    }
+    if (r.success) await loadDetail(id);
     return r.success ? null : r.error;
   }
 

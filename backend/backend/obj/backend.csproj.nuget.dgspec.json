@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Ky8\\PRM393\\Code\\PRM_project\\backend\\backend\\backend.csproj": {}
+    "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj": {}
   },
   "projects": {
-    "D:\\Ky8\\PRM393\\Code\\PRM_project\\backend\\backend\\backend.csproj": {
+    "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Ky8\\PRM393\\Code\\PRM_project\\backend\\backend\\backend.csproj",
+        "projectUniqueName": "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj",
         "projectName": "backend",
-        "projectPath": "D:\\Ky8\\PRM393\\Code\\PRM_project\\backend\\backend\\backend.csproj",
+        "projectPath": "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\backend.csproj",
         "packagesPath": "C:\\Users\\admin\\.nuget\\packages\\",
-        "outputPath": "D:\\Ky8\\PRM393\\Code\\PRM_project\\backend\\backend\\obj\\",
+        "outputPath": "D:\\Ky8\\PRM393\\Code\\project\\backend\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -55,10 +55,6 @@
             "BCrypt.Net-Next": {
               "target": "Package",
               "version": "[4.0.3, )"
-            },
-            "Microsoft.AspNetCore.Authentication.JwtBearer": {
-              "target": "Package",
-              "version": "[8.0.0, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",

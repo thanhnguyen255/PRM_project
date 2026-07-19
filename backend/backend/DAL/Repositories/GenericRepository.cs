@@ -1,4 +1,4 @@
-using backend.DAL.Interfaces;
+﻿using backend.DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.DAL.Repositories;
@@ -8,7 +8,6 @@ public class GenericRepository<T>(DbContext context) : IGenericRepository<T> whe
     protected readonly DbContext _context = context;
     protected readonly DbSet<T> _dbSet = context.Set<T>();
 
-    public IQueryable<T> GetQueryable() => _dbSet;
     public async Task<IEnumerable<T>> GetAllAsync() => await _dbSet.ToListAsync();
     public async Task<T?> GetByIdAsync(int id) => await _dbSet.FindAsync(id);
     public async Task AddAsync(T entity) => await _dbSet.AddAsync(entity);

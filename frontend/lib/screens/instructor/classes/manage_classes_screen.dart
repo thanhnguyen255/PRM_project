@@ -25,24 +25,6 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context, TextEditingController controller, {DateTime? minDate}) async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final initial = minDate != null && minDate.isAfter(now) ? minDate : today;
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: minDate ?? today,
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      final y = picked.year;
-      final m = picked.month.toString().padLeft(2, '0');
-      final d = picked.day.toString().padLeft(2, '0');
-      controller.text = '$y-$m-$d';
-    }
-  }
-
   void _showCreateDialog() {
     final nameCtrl  = TextEditingController();
     final startCtrl = TextEditingController();
@@ -50,126 +32,55 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(children: [
           Icon(Icons.add_circle_rounded, color: AppColors.primary),
           SizedBox(width: 8),
           Text('Tạo lớp học kỳ mới'),
         ]),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: nameCtrl, decoration: InputDecoration(
-            labelText: 'Tên lớp *',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          )),
-          const SizedBox(height: 12),
-          TextField(
-            controller: startCtrl,
-            readOnly: true,
-            onTap: () => _selectDate(ctx, startCtrl),
-            decoration: InputDecoration(
-              labelText: 'Ngày bắt đầu (YYYY-MM-DD) *',
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(controller: nameCtrl, decoration: InputDecoration(
+              labelText: 'Tên lớp *',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            )),
+            const SizedBox(height: 12),
+            TextField(controller: startCtrl, decoration: InputDecoration(
+              labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: endCtrl,
-            readOnly: true,
-            onTap: () {
-              DateTime? minDate;
-              if (startCtrl.text.isNotEmpty) {
-                minDate = DateTime.tryParse(startCtrl.text);
-              }
-              _selectDate(ctx, endCtrl, minDate: minDate);
-            },
-            decoration: InputDecoration(
-              labelText: 'Ngày kết thúc (YYYY-MM-DD) *',
+            )),
+            const SizedBox(height: 12),
+            TextField(controller: endCtrl, decoration: InputDecoration(
+              labelText: 'Ngày kết thúc (YYYY-MM-DD)',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               suffixIcon: const Icon(Icons.event_rounded, size: 18),
-            ),
-          ),
-        ]),
+            )),
+          ]),
+        ),
         actions: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Hủy'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (nameCtrl.text.trim().isEmpty) {
-                      AppSnackBar.show(context, 'Vui lòng nhập tên lớp học!', type: SnackType.error);
-                      return;
-                    }
-                    
-                    final now = DateTime.now();
-                    final today = DateTime(now.year, now.month, now.day);
-                    
-                    DateTime? startDate;
-                    if (startCtrl.text.trim().isNotEmpty) {
-                      startDate = DateTime.tryParse(startCtrl.text.trim());
-                    }
-                    DateTime? endDate;
-                    if (endCtrl.text.trim().isNotEmpty) {
-                      endDate = DateTime.tryParse(endCtrl.text.trim());
-                    }
-
-                    if (startDate == null) {
-                      AppSnackBar.show(context, 'Vui lòng chọn ngày bắt đầu!', type: SnackType.error);
-                      return;
-                    }
-                    if (startDate.isBefore(today)) {
-                      AppSnackBar.show(context, 'Ngày bắt đầu không được trước hôm nay!', type: SnackType.error);
-                      return;
-                    }
-                    if (endDate == null) {
-                      AppSnackBar.show(context, 'Vui lòng chọn ngày kết thúc!', type: SnackType.error);
-                      return;
-                    }
-                    if (endDate.isBefore(startDate)) {
-                      AppSnackBar.show(context, 'Ngày kết thúc không được trước ngày bắt đầu!', type: SnackType.error);
-                      return;
-                    }
-
-                    Navigator.pop(ctx);
-                    final vm  = context.read<InstructorManageViewModel>();
-                    final err = await vm.createClass(
-                      courseId:  widget.courseId,
-                      name:      nameCtrl.text.trim(),
-                      startDate: startCtrl.text.trim(),
-                      endDate:   endCtrl.text.trim(),
-                    );
-                    if (!mounted) return;
-                    if (err == null) {
-                      context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                      AppSnackBar.show(context, 'Tạo lớp thành công!', type: SnackType.success);
-                    } else {
-                      AppSnackBar.show(context, err, type: SnackType.error);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, 
-                    foregroundColor: Colors.white, 
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Tạo lớp'),
-                ),
-              ),
-            ],
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx);
+              final vm  = context.read<InstructorManageViewModel>();
+              final err = await vm.createClass(
+                courseId:  widget.courseId,
+                name:      nameCtrl.text.trim(),
+                startDate: startCtrl.text.trim().isEmpty ? null : startCtrl.text.trim(),
+                endDate:   endCtrl.text.trim().isEmpty   ? null : endCtrl.text.trim(),
+              );
+              if (!mounted) return;
+              if (err == null) {
+                context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                AppSnackBar.show(context, 'Tạo lớp thành công!', type: SnackType.success);
+              } else {
+                AppSnackBar.show(context, err, type: SnackType.error);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, elevation: 0),
+            child: const Text('Tạo lớp'),
           ),
         ],
       ),
@@ -204,29 +115,21 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: vm.classes.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _ClassCard(
                     cls: vm.classes[i],
-                    onTap: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}').then((_) {
-                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                    }),
-                    onManageMembers: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/members').then((_) {
-                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                    }),
-                    onManagePaths: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/paths').then((_) {
-                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                    }),
-                    onManageProjects: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/projects').then((_) {
-                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                    }),
-                    onViewAnalytics: () => Navigator.pushNamed(context, '/instructor/analytics/${vm.classes[i].id}').then((_) {
-                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                    }),
-                    onManageReviews: () => Navigator.pushNamed(context, '/instructor/review/${vm.classes[i].id}').then((_) {
-                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
-                    }),
+                    onTap: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}'),
+                    onManageMembers: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/members'),
+                    onManagePaths: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/paths'),
+                    onManageProjects: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/projects'),
+                    onViewAnalytics: () => Navigator.pushNamed(context, '/instructor/analytics/${vm.classes[i].id}'),
                   ),
                 ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCreateDialog,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add_rounded, color: Colors.white),
+      ),
     );
   }
 }
@@ -238,7 +141,6 @@ class _ClassCard extends StatelessWidget {
   final VoidCallback onManagePaths;
   final VoidCallback onManageProjects;
   final VoidCallback onViewAnalytics;
-  final VoidCallback onManageReviews;
 
   const _ClassCard({
     required this.cls,
@@ -247,7 +149,6 @@ class _ClassCard extends StatelessWidget {
     required this.onManagePaths,
     required this.onManageProjects,
     required this.onViewAnalytics,
-    required this.onManageReviews,
   });
 
   @override
@@ -276,11 +177,10 @@ class _ClassCard extends StatelessWidget {
           trailing: PopupMenuButton<String>(
             onSelected: (v) {
               switch (v) {
-                case 'members':   onManageMembers();  break;
-                case 'paths':     onManagePaths();    break;
-                case 'projects':  onManageProjects(); break;
+                case 'members':  onManageMembers();  break;
+                case 'paths':    onManagePaths();    break;
+                case 'projects': onManageProjects(); break;
                 case 'analytics': onViewAnalytics(); break;
-                case 'reviews':   onManageReviews();  break;
               }
             },
             itemBuilder: (_) => [
@@ -288,7 +188,6 @@ class _ClassCard extends StatelessWidget {
               const PopupMenuItem(value: 'paths',     child: Row(children: [Icon(Icons.route_rounded, size: 16), SizedBox(width: 8), Text('Lộ trình')])),
               const PopupMenuItem(value: 'projects',  child: Row(children: [Icon(Icons.folder_special_rounded, size: 16), SizedBox(width: 8), Text('Dự án')])),
               const PopupMenuItem(value: 'analytics', child: Row(children: [Icon(Icons.bar_chart_rounded, size: 16), SizedBox(width: 8), Text('Analytics')])),
-              const PopupMenuItem(value: 'reviews',   child: Row(children: [Icon(Icons.rate_review_rounded, size: 16), SizedBox(width: 8), Text('Peer Review')])),
             ],
           ),
           onTap: onTap,
@@ -319,20 +218,14 @@ class _ClassCard extends StatelessWidget {
         // Quick action chips
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: Column(children: [
-            Row(children: [
-              _QuickChip('Học viên', Icons.people_rounded, AppColors.primary, onManageMembers),
-              const SizedBox(width: 8),
-              _QuickChip('Lộ trình', Icons.route_rounded, AppColors.secondary, onManagePaths),
-              const SizedBox(width: 8),
-              _QuickChip('Dự án', Icons.folder_special_rounded, AppColors.warning, onManageProjects),
-            ]),
-            const SizedBox(height: 8),
-            Row(children: [
-              _QuickChip('Thống kê', Icons.bar_chart_rounded, AppColors.info, onViewAnalytics),
-              const SizedBox(width: 8),
-              _QuickChip('Peer Review', Icons.rate_review_rounded, AppColors.success, onManageReviews),
-            ]),
+          child: Row(children: [
+            _QuickChip('Học viên', Icons.people_rounded, AppColors.primary, onManageMembers),
+            const SizedBox(width: 8),
+            _QuickChip('Lộ trình', Icons.route_rounded, AppColors.secondary, onManagePaths),
+            const SizedBox(width: 8),
+            _QuickChip('Dự án', Icons.folder_special_rounded, AppColors.warning, onManageProjects),
+            const SizedBox(width: 8),
+            _QuickChip('Thống kê', Icons.bar_chart_rounded, AppColors.info, onViewAnalytics),
           ]),
         ),
       ]),
@@ -432,7 +325,6 @@ class _ClassMembersManageScreenState extends State<ClassMembersManageScreen> {
               label: const Text('Thêm'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary, foregroundColor: Colors.white,
-                minimumSize: const Size(0, 44),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 elevation: 0,
@@ -464,7 +356,7 @@ class _ClassMembersManageScreenState extends State<ClassMembersManageScreen> {
                 ? const EmptyState(icon: Icons.person_search_rounded, title: 'Không tìm thấy', message: 'Không có học viên phù hợp.')
                 : ListView.separated(
                     itemCount: members.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
+                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
                     itemBuilder: (_, i) {
                       final m = members[i];
                       return MemberListTile(

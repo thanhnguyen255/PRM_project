@@ -1,9 +1,6 @@
-import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/models.dart';
 import 'api_service.dart';
-
 
 class CourseService {
   final _api = ApiService.instance;
@@ -28,15 +25,6 @@ class CourseService {
 
 class ClassService {
   final _api = ApiService.instance;
-
-  Future<List<ClassModel>> getMyClasses() async {
-    final res = await _api.get(ApiConfig.myClasses);
-    if (res['success'] == true) {
-      final list = res['data'] as List<dynamic>;
-      return list.map((e) => ClassModel.fromJson(e as Map<String, dynamic>)).toList();
-    }
-    return [];
-  }
 
   Future<List<ClassModel>> getClassesByCourse(int courseId) async {
     final res = await _api.get(ApiConfig.classesByCourse(courseId));
@@ -64,7 +52,6 @@ class ClassService {
     return [];
   }
 }
-
 
 class LearningPathService {
   final _api = ApiService.instance;
@@ -97,8 +84,8 @@ class ActivityService {
     return [];
   }
 
-  Future<List<ActivityModel>> getUpcoming({int? classId}) async {
-    final res = await _api.get(ApiConfig.upcomingActivities(classId: classId));
+  Future<List<ActivityModel>> getUpcoming(int classId) async {
+    final res = await _api.get(ApiConfig.upcomingActivities(classId));
     if (res['success'] == true) {
       final list = res['data'] as List<dynamic>;
       return list.map((e) => ActivityModel.fromJson(e as Map<String, dynamic>)).toList();
@@ -116,11 +103,10 @@ class ActivityService {
 class EvidenceService {
   final _api = ApiService.instance;
 
-  Future<List<EvidenceModel>> getEvidencesByClass(int? classId, {String? status}) async {
+  Future<List<EvidenceModel>> getEvidencesByClass(int classId, {String? status}) async {
     final res = await _api.get(ApiConfig.evidencesByClass(classId, status: status));
     if (res['success'] == true) {
-      final data = res['data'];
-      final items = data is Map ? data['items'] as List<dynamic> : data as List<dynamic>;
+      final items = (res['data'] as Map<String, dynamic>)['items'] as List<dynamic>;
       return items.map((e) => EvidenceModel.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
@@ -138,34 +124,18 @@ class EvidenceService {
     required int activityId,
     String? note,
     String? filePath,
-    List<int>? fileBytes,
     String? fileName,
   }) async {
-    try {
-      final Map<String, dynamic> data = {'ActivityId': activityId};
-      if (note != null && note.isNotEmpty) data['Note'] = note;
+    final formData = {'activityId': activityId.toString()};
+    if (note != null && note.isNotEmpty) formData['note'] = note;
 
-      if (fileBytes != null && fileBytes.isNotEmpty) {
-        data['File'] = MultipartFile.fromBytes(
-          fileBytes,
-          filename: fileName ?? 'upload.file',
-        );
-      } else if (filePath != null && filePath.isNotEmpty) {
-        data['File'] = await MultipartFile.fromFile(
-          filePath,
-          filename: fileName ?? filePath.split('/').last,
-        );
-      }
+    // TODO: Thêm file nếu có filePath
 
-      final formData = FormData.fromMap(data);
-      final res = await _api.postForm(ApiConfig.evidences, formData);
-      return (
-        success: res['success'] == true,
-        error: res['message'] as String?,
-      );
-    } catch (e) {
-      return (success: false, error: e.toString());
-    }
+    final res = await _api.post(ApiConfig.evidences, data: formData);
+    return (
+      success: res['success'] == true,
+      error: res['message'] as String?,
+    );
   }
 
   Future<({bool success, String? error})> approveEvidence(int id, {String? comment}) async {
@@ -216,34 +186,4 @@ class NotificationService {
 
   Future<void> markRead(int id) => _api.put(ApiConfig.markRead(id));
   Future<void> markAllRead() => _api.put(ApiConfig.markAllRead);
-}
-
-class ProfileService {
-  final _api = ApiService.instance;
-
-  Future<Map<String, dynamic>?> getProfile() async {
-    final res = await _api.get('/profile');
-    if (res['success'] == true) return res['data'] as Map<String, dynamic>;
-    return null;
-  }
-
-  Future<({bool success, String? error})> updateProfile({
-    required String fullName,
-    String? avatarUrl,
-  }) async {
-    final res = await _api.put('/profile', data: {
-      'fullName': fullName,
-      'avatarUrl': avatarUrl,
-    });
-    if (res['success'] == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('fullName', fullName);
-      if (avatarUrl != null) {
-        await prefs.setString('avatarUrl', avatarUrl);
-      } else {
-        await prefs.remove('avatarUrl');
-      }
-    }
-    return (success: res['success'] == true, error: res['message'] as String?);
-  }
 }

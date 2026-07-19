@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/app_colors.dart';
 import '../../../viewmodels/viewmodels.dart';
 import '../../../widgets/widgets.dart';
@@ -18,24 +17,14 @@ class EvidenceCommentsScreen extends StatefulWidget {
 class _EvidenceCommentsScreenState extends State<EvidenceCommentsScreen> {
   final _ctrl       = TextEditingController();
   final _scrollCtrl = ScrollController();
-  int _myId         = 0;
+  final int _myId   = 0; // TODO: load from SharedPreferences
 
   @override
   void initState() {
     super.initState();
-    _loadMyId();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EvidenceViewModel>().loadComments(widget.evidenceId);
     });
-  }
-
-  Future<void> _loadMyId() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _myId = prefs.getInt('userId') ?? 0;
-      });
-    }
   }
 
   @override

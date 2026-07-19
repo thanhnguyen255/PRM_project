@@ -81,7 +81,6 @@ class CourseModel {
   final String? activeClassName;
   final int classCount;
   final DateTime? createdAt;
-  final List<dynamic>? classes;
 
   const CourseModel({
     required this.id,
@@ -95,7 +94,6 @@ class CourseModel {
     this.activeClassName,
     this.classCount = 0,
     this.createdAt,
-    this.classes,
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) => CourseModel(
@@ -110,7 +108,6 @@ class CourseModel {
     activeClassName: json['activeClassName'] as String?,
     classCount:      json['classCount'] as int? ?? 0,
     createdAt:       json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-    classes:         json['classes'] as List<dynamic>?,
   );
 }
 
@@ -185,7 +182,6 @@ class LearningPathModel {
   final int totalActivities;
   final int completedActivities;
   final String state; // "completed" | "inProgress" | "locked"
-  final bool isUnlocked;
 
   const LearningPathModel({
     required this.id,
@@ -195,7 +191,6 @@ class LearningPathModel {
     this.totalActivities = 0,
     this.completedActivities = 0,
     this.state = 'locked',
-    this.isUnlocked = false,
   });
 
   double get progress => totalActivities == 0 ? 0 : completedActivities / totalActivities;
@@ -208,7 +203,6 @@ class LearningPathModel {
     totalActivities:     json['totalActivities'] as int? ?? 0,
     completedActivities: json['completedActivities'] as int? ?? 0,
     state:               json['state'] as String? ?? 'locked',
-    isUnlocked:          json['isUnlocked'] as bool? ?? false,
   );
 }
 
@@ -223,9 +217,6 @@ class ActivityModel {
   final int? submissionId;
   final String? submissionStatus; // "Pending" | "Approved" | "Rejected" | null
   final DateTime? submittedAt;
-  final int? reviewSessionId;
-  final String? reviewSessionTitle;
-  final bool? isReviewSessionOpen;
 
   const ActivityModel({
     required this.id,
@@ -237,9 +228,6 @@ class ActivityModel {
     this.submissionId,
     this.submissionStatus,
     this.submittedAt,
-    this.reviewSessionId,
-    this.reviewSessionTitle,
-    this.isReviewSessionOpen,
   });
 
   bool get isOverdue => deadline != null && deadline!.isBefore(DateTime.now()) && submissionStatus == null;
@@ -253,11 +241,8 @@ class ActivityModel {
     description:      json['description'] as String?,
     deadline:         json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
     submissionId:     json['submissionId'] as int?,
-    submissionStatus: json['submissionStatus'] as String? ?? (json['submission'] != null ? json['submission']['status'] as String? : null),
+    submissionStatus: json['submissionStatus'] as String?,
     submittedAt:      json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
-    reviewSessionId:  json['reviewSessionId'] as int?,
-    reviewSessionTitle: json['reviewSessionTitle'] as String?,
-    isReviewSessionOpen: json['isReviewSessionOpen'] as bool?,
   );
 }
 
@@ -293,32 +278,21 @@ class EvidenceModel {
     this.commentCount = 0,
   });
 
-  factory EvidenceModel.fromJson(Map<String, dynamic> json) {
-    final statusVal = json['status'];
-    String statusStr = 'Pending';
-    if (statusVal is int) {
-      if (statusVal == 1) statusStr = 'Approved';
-      if (statusVal == 2) statusStr = 'Rejected';
-    } else if (statusVal is String) {
-      statusStr = statusVal;
-    }
-
-    return EvidenceModel(
-      id:            json['id'] as int,
-      activityId:    json['activityId'] as int? ?? 0,
-      activityTitle: json['activityTitle'] as String? ?? '',
-      activityType:  json['activityType'] as String? ?? 'PreClass',
-      learnerId:     json['learnerId'] as int? ?? 0,
-      learnerName:   json['learnerName'] as String? ?? '',
-      learnerAvatar: json['learnerAvatar'] as String?,
-      fileUrl:       json['fileUrl'] as String?,
-      note:          json['note'] as String?,
-      status:        statusStr,
-      submittedAt:   DateTime.parse(json['submittedAt'] as String),
-      reviewedAt:    json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt']) : null,
-      commentCount:  json['commentCount'] as int? ?? 0,
-    );
-  }
+  factory EvidenceModel.fromJson(Map<String, dynamic> json) => EvidenceModel(
+    id:            json['id'] as int,
+    activityId:    json['activityId'] as int? ?? 0,
+    activityTitle: json['activityTitle'] as String? ?? '',
+    activityType:  json['activityType'] as String? ?? 'PreClass',
+    learnerId:     json['learnerId'] as int? ?? 0,
+    learnerName:   json['learnerName'] as String? ?? '',
+    learnerAvatar: json['learnerAvatar'] as String?,
+    fileUrl:       json['fileUrl'] as String?,
+    note:          json['note'] as String?,
+    status:        json['status'] as String? ?? 'Pending',
+    submittedAt:   DateTime.parse(json['submittedAt'] as String),
+    reviewedAt:    json['reviewedAt'] != null ? DateTime.parse(json['reviewedAt']) : null,
+    commentCount:  json['commentCount'] as int? ?? 0,
+  );
 }
 
 // ─── EvidenceCommentModel ─────────────────────────────────────────────────────
@@ -341,28 +315,15 @@ class EvidenceCommentModel {
     required this.createdAt,
   });
 
-  factory EvidenceCommentModel.fromJson(Map<String, dynamic> json) {
-    final isInstVal = json['isInstructor'];
-    final userRoleVal = json['userRole'];
-    bool isInst = false;
-    if (isInstVal is bool) {
-      isInst = isInstVal;
-    } else if (userRoleVal is int) {
-      isInst = userRoleVal == 1; // 1 = Instructor in backend UserRole enum
-    } else if (userRoleVal is String) {
-      isInst = userRoleVal == 'Instructor';
-    }
-
-    return EvidenceCommentModel(
-      id:           json['id'] as int,
-      authorId:     json['authorId'] as int? ?? 0,
-      authorName:   json['authorName'] as String? ?? '',
-      authorAvatar: json['authorAvatar'] as String?,
-      isInstructor: isInst,
-      content:      json['content'] as String,
-      createdAt:    DateTime.parse(json['createdAt'] as String),
-    );
-  }
+  factory EvidenceCommentModel.fromJson(Map<String, dynamic> json) => EvidenceCommentModel(
+    id:           json['id'] as int,
+    authorId:     json['authorId'] as int? ?? 0,
+    authorName:   json['authorName'] as String? ?? '',
+    authorAvatar: json['authorAvatar'] as String?,
+    isInstructor: json['isInstructor'] as bool? ?? false,
+    content:      json['content'] as String,
+    createdAt:    DateTime.parse(json['createdAt'] as String),
+  );
 }
 
 // ─── NotificationModel ────────────────────────────────────────────────────────
@@ -400,24 +361,22 @@ class ProjectModel {
   final int completedMilestones;
   final String? nextMilestoneTitle;
   final DateTime? nextMilestoneDueDate;
-  final List<MilestoneModel> milestones;
 
   const ProjectModel({
     required this.id,
     required this.classId,
     required this.title,
     this.description,
-    required this.milestoneCount,
-    required this.completedMilestones,
+    this.milestoneCount = 0,
+    this.completedMilestones = 0,
     this.nextMilestoneTitle,
     this.nextMilestoneDueDate,
-    this.milestones = const [],
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) => ProjectModel(
     id:                   json['id'] as int,
     classId:              json['classId'] as int? ?? 0,
-    title:                json['title'] as String? ?? '',
+    title:                json['title'] as String,
     description:          json['description'] as String?,
     milestoneCount:       json['milestoneCount'] as int? ?? 0,
     completedMilestones:  json['completedMilestones'] as int? ?? 0,
@@ -425,11 +384,6 @@ class ProjectModel {
     nextMilestoneDueDate: json['nextMilestoneDueDate'] != null
         ? DateTime.parse(json['nextMilestoneDueDate'])
         : null,
-    milestones: json['milestones'] != null
-        ? (json['milestones'] as List<dynamic>)
-            .map((e) => MilestoneModel.fromJson(e as Map<String, dynamic>))
-            .toList()
-        : const [],
   );
 }
 
@@ -457,62 +411,16 @@ class MilestoneModel {
     this.submittedAt,
   });
 
-  factory MilestoneModel.fromJson(Map<String, dynamic> json) {
-    final dueDate = json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null;
-    final submittedAt = json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null;
-    final isSubmitted = json['isSubmitted'] as bool? ?? false;
-    
-    // Add logic to determine if submission is late. 
-    // Usually if submittedAt > dueDate, it's late.
-    // We can expose an isLate getter or field if needed, but since it's computed, let's just make it a getter.
-    
-    return MilestoneModel(
-      id:           json['id'] as int,
-      projectId:    json['projectId'] as int? ?? 0,
-      projectTitle: json['projectTitle'] as String?,
-      title:        json['title'] as String,
-      description:  json['description'] as String?,
-      dueDate:      dueDate,
-      stepNumber:   json['stepNumber'] as int? ?? 1,
-      isSubmitted:  isSubmitted,
-      submittedAt:  submittedAt,
-    );
-  }
-
-  bool get isLate {
-    if (!isSubmitted || submittedAt == null || dueDate == null) return false;
-    return submittedAt!.isAfter(dueDate!);
-  }
-}
-
-// ─── MilestoneSubmissionModel ─────────────────────────────────────────────────
-class MilestoneSubmissionModel {
-  final int id;
-  final int milestoneId;
-  final int userId;
-  final String userFullName;
-  final String? fileUrl;
-  final String? description;
-  final DateTime submittedAt;
-
-  const MilestoneSubmissionModel({
-    required this.id,
-    required this.milestoneId,
-    required this.userId,
-    required this.userFullName,
-    this.fileUrl,
-    this.description,
-    required this.submittedAt,
-  });
-
-  factory MilestoneSubmissionModel.fromJson(Map<String, dynamic> json) => MilestoneSubmissionModel(
+  factory MilestoneModel.fromJson(Map<String, dynamic> json) => MilestoneModel(
     id:           json['id'] as int,
-    milestoneId:  json['milestoneId'] as int,
-    userId:       json['userId'] as int,
-    userFullName: json['userFullName'] as String? ?? '',
-    fileUrl:      json['fileUrl'] as String?,
+    projectId:    json['projectId'] as int? ?? 0,
+    projectTitle: json['projectTitle'] as String?,
+    title:        json['title'] as String,
     description:  json['description'] as String?,
-    submittedAt:  DateTime.parse(json['submittedAt']),
+    dueDate:      json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+    stepNumber:   json['stepNumber'] as int? ?? 1,
+    isSubmitted:  json['isSubmitted'] as bool? ?? false,
+    submittedAt:  json['submittedAt'] != null ? DateTime.parse(json['submittedAt']) : null,
   );
 }
 
@@ -526,8 +434,6 @@ class ReviewSessionModel {
   final bool isOpen;
   final int myAssignmentCount;
   final int myCompletedCount;
-  final int totalPairs;
-  final int completedPairs;
 
   const ReviewSessionModel({
     required this.id,
@@ -538,8 +444,6 @@ class ReviewSessionModel {
     this.isOpen = false,
     this.myAssignmentCount = 0,
     this.myCompletedCount = 0,
-    this.totalPairs = 0,
-    this.completedPairs = 0,
   });
 
   factory ReviewSessionModel.fromJson(Map<String, dynamic> json) => ReviewSessionModel(
@@ -551,8 +455,6 @@ class ReviewSessionModel {
     isOpen:             json['isOpen'] as bool? ?? false,
     myAssignmentCount:  json['myAssignmentCount'] as int? ?? 0,
     myCompletedCount:   json['myCompletedCount'] as int? ?? 0,
-    totalPairs:         json['totalPairs'] as int? ?? 0,
-    completedPairs:     json['completedPairs'] as int? ?? 0,
   );
 }
 

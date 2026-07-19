@@ -13,9 +13,6 @@ public class ReviewSession
     public int ClassId { get; set; }
 
     [Required]
-    public int ActivityId { get; set; }
-
-    [Required]
     [MaxLength(200)]
     public string Title { get; set; } = string.Empty;
 
@@ -28,9 +25,6 @@ public class ReviewSession
     // Navigation
     [ForeignKey(nameof(ClassId))]
     public Class Class { get; set; } = null!;
-
-    [ForeignKey(nameof(ActivityId))]
-    public Activity Activity { get; set; } = null!;
 
     public ICollection<ReviewAssignment> Assignments { get; set; } = [];
 }

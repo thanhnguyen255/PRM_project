@@ -47,12 +47,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     _emailCtrl.dispose();
     _newPassCtrl.dispose();
     _confirmCtrl.dispose();
-    for (final c in _otpCtrls) {
-      c.dispose();
-    }
-    for (final f in _otpFocus) {
-      f.dispose();
-    }
+    for (final c in _otpCtrls) c.dispose();
+    for (final f in _otpFocus) f.dispose();
     super.dispose();
   }
 
@@ -101,7 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
     if (res['success'] == true) {
-      _resetToken = res['data']?['token'] as String? ?? _otpCode;
+      _resetToken = res['data']?['resetToken'] as String? ?? _otpCode;
       setState(() => _step = 2);
     } else {
       AppSnackBar.show(context, res['message'] as String? ?? 'OTP không đúng hoặc đã hết hạn.', type: SnackType.error);
