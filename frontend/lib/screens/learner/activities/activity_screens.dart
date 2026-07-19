@@ -19,6 +19,8 @@ class _A {
     if (v is DateTime) return v;
     return DateTime.tryParse(v.toString());
   }
+  int? get submissionId => _m['submission'] != null ? _m['submission']['id'] as int? : null;
+  int get commentCount => _m['submission'] != null ? _m['submission']['commentCount'] as int? ?? 0 : 0;
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -88,7 +90,10 @@ class _PreClassActivityState extends State<PreClassActivityScreen> {
                       const SizedBox(height: 16),
                       const Text('Trạng thái nộp bài', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
-                      _SubmissionStatusCard(status: a.submissionStatus),
+                      if (a.submissionId != null) ...[
+                        const SizedBox(height: 12),
+                        _CommentButton(submissionId: a.submissionId!, commentCount: a.commentCount),
+                      ],
                       if (raw != null && raw['reviewSessionId'] != null) ...[
                         const SizedBox(height: 16),
                         const Text('Đánh giá chéo (Peer Review)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
@@ -198,7 +203,10 @@ class _InClassActivityState extends State<InClassActivityScreen> {
                     const SizedBox(height: 16),
                     const Text('Trạng thái điểm danh', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
-                    _SubmissionStatusCard(status: a.submissionStatus),
+                    if (a.submissionId != null) ...[
+                      const SizedBox(height: 12),
+                      _CommentButton(submissionId: a.submissionId!, commentCount: a.commentCount),
+                    ],
                     if (raw != null && raw['reviewSessionId'] != null) ...[
                       const SizedBox(height: 16),
                       const Text('Đánh giá chéo (Peer Review)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
@@ -306,6 +314,10 @@ class _PostClassActivityState extends State<PostClassActivityScreen> {
                       _MaterialsBlock(learningPathId: a.learningPathId),
                       const SizedBox(height: 16),
                       _SubmissionStatusCard(status: a.submissionStatus),
+                      if (a.submissionId != null) ...[
+                        const SizedBox(height: 12),
+                        _CommentButton(submissionId: a.submissionId!, commentCount: a.commentCount),
+                      ],
                       if (raw != null && raw['reviewSessionId'] != null) ...[
                         const SizedBox(height: 16),
                         const Text('Đánh giá chéo (Peer Review)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
@@ -553,4 +565,27 @@ class _PeerReviewPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CommentButton extends StatelessWidget {
+  final int submissionId;
+  final int commentCount;
+  const _CommentButton({required this.submissionId, required this.commentCount});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: double.infinity,
+    child: OutlinedButton.icon(
+      onPressed: () => Navigator.pushNamed(context, '/evidences/$submissionId/comments'),
+      icon: const Icon(Icons.comment),
+      label: Text('XEM BÌNH LUẬN ($commentCount)'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: const BorderSide(color: AppColors.primary),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      ),
+    ),
+  );
 }

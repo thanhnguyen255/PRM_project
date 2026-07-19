@@ -21,7 +21,7 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ActivityViewModel>().loadActivities(widget.pathId);
+      context.read<ActivityViewModel>().loadActivities(widget.pathId, type: '');
       context.read<LearningPathViewModel>().loadPathDetail(widget.pathId);
     });
   }
@@ -156,8 +156,8 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                       );
                       if (!context.mounted) return;
                       if (err == null) {
-                        context.read<ActivityViewModel>().loadActivities(widget.pathId);
-                        AppSnackBar.show(context, 'Tạo hoạt động thành công!', type: SnackType.success);
+                        await context.read<ActivityViewModel>().loadActivities(widget.pathId, type: '');
+                        if (context.mounted) AppSnackBar.show(context, 'Tạo hoạt động thành công!', type: SnackType.success);
                       } else {
                         AppSnackBar.show(context, err, type: SnackType.error);
                       }
@@ -236,7 +236,7 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                         confirmDismiss: (_) => ConfirmDialog.show(context, title: 'Xoá hoạt động', message: 'Xoá "${a.title}"?', confirmLabel: 'Xoá', isDanger: true),
                         onDismissed: (_) async {
                           await context.read<InstructorManageViewModel>().deleteActivity(a.id);
-                          if (context.mounted) context.read<ActivityViewModel>().loadActivities(widget.pathId);
+                          if (context.mounted) await context.read<ActivityViewModel>().loadActivities(widget.pathId, type: '');
                         },
                         child: Padding(
                         padding: const EdgeInsets.only(bottom: 12),

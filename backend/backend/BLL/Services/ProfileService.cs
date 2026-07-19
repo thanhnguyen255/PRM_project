@@ -28,7 +28,29 @@ public class ProfileService : IProfileService
             ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
 
         user.FullName = dto.FullName;
-        user.AvatarUrl = dto.AvatarUrl;
+
+        if (dto.Avatar != null && dto.Avatar.Length > 0)
+        {
+            // Ưu tiên file ảnh upload: lưu vào thư mục uploads (ngoài project) rồi gán đường dẫn.
+            var uploadsFolder = backend.BLL.Helpers.UploadPaths.Root;
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(dto.Avatar.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await dto.Avatar.CopyToAsync(stream);
+            }
+
+            user.AvatarUrl = $"/uploads/{uniqueFileName}";
+        }
+        else if (dto.AvatarUrl != null)
+        {
+            // Không có file mới -> giữ/đặt theo URL truyền lên (nếu có).
+            user.AvatarUrl = dto.AvatarUrl;
+        }
+
         await _db.SaveChangesAsync();
 
         return MapToDto(user);

@@ -1,15 +1,31 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../config/app_colors.dart';
+import '../../../config/api_config.dart';
 import '../../../viewmodels/viewmodels.dart';
 import '../../../widgets/widgets.dart';
 import '../../../services/services.dart';
 
 
 // ════════════════════════════════════════════════════════════════════════════════
-// SCR-L23/L24 — Profile & Edit Profile (Learner)
+// SCR-L40/L41 — Profile & Edit Profile (Learner)
 // Uses HomeViewModel for user info (name), AuthViewModel for logout
 // ════════════════════════════════════════════════════════════════════════════════
+
+// Ghép đường dẫn media tương đối từ server ('/uploads/..') thành URL tuyệt đối để hiển thị.
+String _mediaUrl(String path) {
+  if (path.startsWith('http')) return path;
+  var base = ApiConfig.baseUrl;
+  if (base.endsWith('/api')) {
+    base = base.substring(0, base.length - 4);
+  } else if (base.endsWith('/api/')) {
+    base = base.substring(0, base.length - 5);
+  }
+  if (base.endsWith('/')) base = base.substring(0, base.length - 1);
+  return '$base$path';
+}
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
   @override
@@ -141,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     radius: 46,
                     backgroundColor: Colors.white.withAlpha(30),
                     backgroundImage: (homeVm.profile?.avatarUrl != null && homeVm.profile!.avatarUrl!.isNotEmpty)
-                        ? NetworkImage(homeVm.profile!.avatarUrl!)
+                        ? NetworkImage(_mediaUrl(homeVm.profile!.avatarUrl!))
                         : null,
                     child: (homeVm.profile?.avatarUrl == null || homeVm.profile!.avatarUrl!.isEmpty)
                         ? Text(
@@ -249,8 +265,11 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey   = GlobalKey<FormState>();
   final _nameCtrl  = TextEditingController();
-  final _avatarCtrl = TextEditingController();
   bool _saving     = false;
+
+  Uint8List? _avatarBytes;      // ảnh mới chọn (bytes — chạy được cả trên web)
+  String? _avatarFileName;
+  String? _existingAvatarUrl;   // avatar hiện tại (đường dẫn từ server)
 
   @override
   void initState() {
@@ -258,30 +277,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final profile = context.read<HomeViewModel>().profile;
     final greeting = context.read<HomeViewModel>().greeting;
     _nameCtrl.text = profile?.fullName ?? greeting;
-    _avatarCtrl.text = profile?.avatarUrl ?? '';
+    _existingAvatarUrl = profile?.avatarUrl;
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _avatarCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _avatarBytes = bytes;
+      _avatarFileName = picked.name;
+    });
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    
-    final name = _nameCtrl.text.trim();
-    final avatar = _avatarCtrl.text.trim();
+
     final res = await ProfileService().updateProfile(
-      fullName: name,
-      avatarUrl: avatar.isNotEmpty ? avatar : null,
+      fullName: _nameCtrl.text.trim(),
+      avatarBytes: _avatarBytes,
+      avatarFileName: _avatarFileName,
     );
-    
+
     if (!mounted) return;
     setState(() => _saving = false);
-    
+
     if (res.success) {
       context.read<HomeViewModel>().init(); // Refresh profile name on home screen
       AppSnackBar.show(context, 'Cập nhật thành công!', type: SnackType.success);
@@ -293,6 +321,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ImageProvider? avatarImage = _avatarBytes != null
+        ? MemoryImage(_avatarBytes!)
+        : (_existingAvatarUrl != null && _existingAvatarUrl!.isNotEmpty
+            ? NetworkImage(_mediaUrl(_existingAvatarUrl!))
+            : null);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Chỉnh sửa thông tin')),
@@ -301,40 +334,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Form(
           key: _formKey,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Avatar preview
+            // Avatar picker
             Center(
-              child: ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _avatarCtrl,
-                builder: (context, value, _) {
-                  final url = value.text.trim();
-                  return CircleAvatar(
-                    radius: 44,
+              child: GestureDetector(
+                onTap: _pickAvatar,
+                child: Stack(children: [
+                  CircleAvatar(
+                    radius: 48,
                     backgroundColor: AppColors.primaryLight,
-                    backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
-                    child: url.isEmpty
+                    backgroundImage: avatarImage,
+                    child: avatarImage == null
                         ? Text(
                             _nameCtrl.text.isNotEmpty ? _nameCtrl.text[0].toUpperCase() : 'U',
-                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary),
+                            style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: AppColors.primary),
                           )
                         : null,
-                  );
-                },
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                      child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                    ),
+                  ),
+                ]),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton.icon(
+                onPressed: _pickAvatar,
+                icon: const Icon(Icons.image_rounded, size: 18),
+                label: const Text('Chọn ảnh đại diện'),
+              ),
+            ),
+            const SizedBox(height: 20),
 
             AppTextField(
               label: 'Họ và tên *',
               hint: 'Nhập họ và tên của bạn',
               controller: _nameCtrl,
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập họ và tên' : null,
-            ),
-            const SizedBox(height: 20),
-
-            AppTextField(
-              label: 'Đường dẫn ảnh đại diện (Avatar URL)',
-              hint: 'Nhập URL ảnh đại diện của bạn',
-              controller: _avatarCtrl,
             ),
             const SizedBox(height: 32),
 

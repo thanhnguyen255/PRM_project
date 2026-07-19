@@ -184,7 +184,7 @@ public class EvidenceService : IEvidenceService
         string? fileUrl = null;
         if (dto.File != null && dto.File.Length > 0)
         {
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            var uploadsFolder = backend.BLL.Helpers.UploadPaths.Root;
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);

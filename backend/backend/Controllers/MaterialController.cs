@@ -33,6 +33,14 @@ public class MaterialController : BaseController
         }
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetMaterial(int id)
+    {
+        var material = await _materialService.GetByIdAsync(id);
+        if (material == null) return NotFound(ApiResponse.Fail("Không tìm thấy tài liệu học tập."));
+        return Ok(ApiResponse.Success(material));
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateMaterial([FromForm] CreateMaterialDto dto)
     {

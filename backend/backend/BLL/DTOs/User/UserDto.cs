@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace backend.BLL.DTOs.User;
 
@@ -20,4 +21,7 @@ public class UpdateProfileDto
 
     [MaxLength(500)]
     public string? AvatarUrl { get; set; }
+
+    // Ảnh đại diện dạng file (multipart) — tùy chọn. Nếu có sẽ được lưu và ghi đè AvatarUrl.
+    public IFormFile? Avatar { get; set; }
 }

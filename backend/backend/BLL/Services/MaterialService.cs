@@ -75,7 +75,7 @@ public class MaterialService : IMaterialService
         string? fileUrl = dto.FileUrl;
         if (dto.File != null && dto.File.Length > 0)
         {
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            var uploadsFolder = backend.BLL.Helpers.UploadPaths.Root;
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);

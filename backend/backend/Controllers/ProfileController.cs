@@ -24,9 +24,9 @@ public class ProfileController : BaseController
         return Ok(ApiResponse.Success(result));
     }
 
-    /// <summary>PUT /api/profile — Cập nhật thông tin cá nhân</summary>
+    /// <summary>PUT /api/profile — Cập nhật thông tin cá nhân (multipart: fullName + avatar file tùy chọn)</summary>
     [HttpPut]
-    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+    public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ApiResponse.Fail("Dữ liệu không hợp lệ."));

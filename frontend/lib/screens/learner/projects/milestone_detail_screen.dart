@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -18,7 +19,7 @@ class _MilestoneDetailScreenState extends State<MilestoneDetailScreen> with Sing
   final TextEditingController _descCtrl = TextEditingController();
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
-  String? _filePath;
+  Uint8List? _fileBytes;
   String? _fileName;
 
   @override
@@ -45,10 +46,11 @@ class _MilestoneDetailScreenState extends State<MilestoneDetailScreen> with Sing
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'doc', 'docx', 'zip', 'rar', 'jpg', 'png'],
+      withData: true,
     );
-    if (result != null && result.files.single.path != null) {
+    if (result != null && result.files.single.bytes != null) {
       setState(() {
-        _filePath = result.files.single.path;
+        _fileBytes = result.files.single.bytes;
         _fileName = result.files.single.name;
       });
     }
@@ -59,7 +61,8 @@ class _MilestoneDetailScreenState extends State<MilestoneDetailScreen> with Sing
     final err = await vm.submitMilestone(
       milestoneId: widget.milestoneId,
       description: _descCtrl.text.trim(),
-      filePath: _filePath,
+      fileBytes: _fileBytes,
+      fileName: _fileName,
     );
     if (!mounted) return;
     if (err == null) {
@@ -69,7 +72,7 @@ class _MilestoneDetailScreenState extends State<MilestoneDetailScreen> with Sing
       ));
       _descCtrl.clear();
       setState(() {
-        _filePath = null;
+        _fileBytes = null;
         _fileName = null;
       });
     } else {
