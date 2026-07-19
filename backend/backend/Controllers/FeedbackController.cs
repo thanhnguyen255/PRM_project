@@ -53,6 +53,11 @@ public class FeedbackController : BaseController
     [HttpGet]
     public async Task<IActionResult> GetAllFeedbacks([FromQuery] int sessionId)
     {
+        var role = GetCurrentUserRole();
+        if (role != "Instructor")
+        {
+            return StatusCode(403, ApiResponse.Fail("Bạn không có quyền xem tất cả đánh giá."));
+        }
         var feedbacks = await _reviewService.GetAllFeedbacksInSessionAsync(sessionId);
         return Ok(ApiResponse.Success(feedbacks));
     }

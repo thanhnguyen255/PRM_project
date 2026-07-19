@@ -69,17 +69,6 @@ public class ClassService : IClassService
 
     public async Task<ClassDto> GetClassByIdAsync(int classId, int userId)
     {
-        // Kiểm tra user có trong class không
-        var isMember = await _db.ClassMembers
-            .AnyAsync(cm => cm.ClassId == classId && cm.UserId == userId);
-        if (!isMember)
-            throw new UnauthorizedAccessException("Bạn không có quyền truy cập lớp học này.");
-
-        var approvedActivityIds = await _db.ActivitySubmissions
-            .Where(s => s.UserId == userId && s.Status == EvidenceStatus.Approved)
-            .Select(s => s.ActivityId)
-            .ToListAsync();
-
         var cls = await _db.Classes
             .Include(c => c.Course)
                 .ThenInclude(co => co.Instructor)
@@ -89,14 +78,51 @@ public class ClassService : IClassService
             .FirstOrDefaultAsync(c => c.Id == classId)
             ?? throw new KeyNotFoundException("Không tìm thấy lớp học.");
 
-        var totalActivities = cls.LearningPaths.SelectMany(lp => lp.Activities).Count();
-        var completedActivities = cls.LearningPaths
-            .SelectMany(lp => lp.Activities)
-            .Count(a => approvedActivityIds.Contains(a.Id));
+        // Kiểm tra xem user có phải học viên trong lớp hoặc giảng viên sở hữu khóa học không
+        var isMember = await _db.ClassMembers
+            .AnyAsync(cm => cm.ClassId == classId && cm.UserId == userId);
+        var isInstructor = cls.Course.InstructorId == userId;
 
-        var progressPercent = totalActivities > 0
-            ? (double)completedActivities / totalActivities
-            : 0.0;
+        if (!isMember && !isInstructor)
+            throw new UnauthorizedAccessException("Bạn không có quyền truy cập lớp học này.");
+
+        double progressPercent = 0.0;
+        var activityIds = cls.LearningPaths.SelectMany(lp => lp.Activities).Select(a => a.Id).ToList();
+        var totalActivities = activityIds.Count;
+        if (totalActivities > 0)
+        {
+            if (isInstructor)
+            {
+                var memberIds = cls.Members.Select(m => m.UserId).ToList();
+                if (memberIds.Count > 0)
+                {
+                    var approvedSubmissions = await _db.ActivitySubmissions
+                        .Where(s => memberIds.Contains(s.UserId) && s.Status == EvidenceStatus.Approved)
+                        .Where(s => activityIds.Contains(s.ActivityId))
+                        .GroupBy(s => s.UserId)
+                        .Select(g => g.Select(s => s.ActivityId).Distinct().Count())
+                        .ToListAsync();
+                    
+                    double totalProgressSum = 0;
+                    foreach (var count in approvedSubmissions)
+                    {
+                        totalProgressSum += (double)count / totalActivities;
+                    }
+                    progressPercent = totalProgressSum / memberIds.Count;
+                }
+            }
+            else
+            {
+                var approvedActivityIds = await _db.ActivitySubmissions
+                    .Where(s => s.UserId == userId && s.Status == EvidenceStatus.Approved)
+                    .Select(s => s.ActivityId)
+                    .ToListAsync();
+
+                var completedActivities = activityIds.Count(aid => approvedActivityIds.Contains(aid));
+
+                progressPercent = (double)completedActivities / totalActivities;
+            }
+        }
 
         return new ClassDto
         {
@@ -138,17 +164,52 @@ public class ClassService : IClassService
 
         var classes = await _unitOfWork.Repository<Class>().GetQueryable()
             .Where(c => c.CourseId == courseId)
+            .Include(c => c.Members)
+            .Include(c => c.LearningPaths)
+                .ThenInclude(lp => lp.Activities)
             .ToListAsync();
 
-        return classes.Select(c => new ClassDto
+        var result = new List<ClassDto>();
+        foreach (var c in classes)
         {
-            Id = c.Id,
-            Name = c.Name,
-            CourseId = c.CourseId,
-            CourseTitle = course.Title,
-            StartDate = c.StartDate,
-            EndDate = c.EndDate
-        });
+            double progressPercent = 0.0;
+            var activityIds = c.LearningPaths.SelectMany(lp => lp.Activities).Select(a => a.Id).ToList();
+            var totalActivities = activityIds.Count;
+            if (totalActivities > 0)
+            {
+                var memberIds = c.Members.Select(m => m.UserId).ToList();
+                if (memberIds.Count > 0)
+                {
+                    var approvedSubmissions = await _db.ActivitySubmissions
+                        .Where(s => memberIds.Contains(s.UserId) && s.Status == EvidenceStatus.Approved)
+                        .Where(s => activityIds.Contains(s.ActivityId))
+                        .GroupBy(s => s.UserId)
+                        .Select(g => g.Select(s => s.ActivityId).Distinct().Count())
+                        .ToListAsync();
+                    
+                    double totalProgressSum = 0;
+                    foreach (var count in approvedSubmissions)
+                    {
+                        totalProgressSum += (double)count / totalActivities;
+                    }
+                    progressPercent = totalProgressSum / memberIds.Count;
+                }
+            }
+
+            result.Add(new ClassDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                CourseId = c.CourseId,
+                CourseTitle = course.Title,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                MemberCount = c.Members.Count,
+                WeekCount = c.LearningPaths.Count,
+                ProgressPercent = Math.Round(progressPercent, 2)
+            });
+        }
+        return result;
     }
 
     public async Task<ClassDto> CreateClassAsync(CreateClassDto dto, int instructorId)
@@ -157,6 +218,17 @@ public class ClassService : IClassService
         var course = await _unitOfWork.Repository<Course>().GetQueryable()
             .FirstOrDefaultAsync(c => c.Id == dto.CourseId && c.InstructorId == instructorId)
             ?? throw new UnauthorizedAccessException("Bạn không sở hữu khóa học này.");
+
+        // Validate ngày tạo lớp học (StartDate >= ngày hôm nay theo UTC)
+        var today = DateTime.UtcNow.Date;
+        if (dto.StartDate.Date < today)
+        {
+            throw new ArgumentException("Ngày bắt đầu không được trước hôm nay.");
+        }
+        if (dto.EndDate < dto.StartDate)
+        {
+            throw new ArgumentException("Ngày kết thúc không được trước ngày bắt đầu.");
+        }
 
         var newClass = new Class
         {

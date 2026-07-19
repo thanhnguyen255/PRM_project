@@ -239,8 +239,7 @@ class _TabNavigator extends StatelessWidget {
     }
     if (name == '/submit-feedback' && args != null) {
       return _p(SubmitFeedbackScreen(
-        assignmentId: args['assignmentId'] as int,
-        revieweeName: args['revieweeName'] as String? ?? '',
+        assignment: args['assignment'] as Map<String, dynamic>,
       ), settings);
     }
 

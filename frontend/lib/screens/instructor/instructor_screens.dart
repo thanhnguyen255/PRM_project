@@ -6,8 +6,20 @@ import '../../widgets/widgets.dart';
 import 'courses/manage_courses_screen.dart';
 import 'evidence_review/evidence_detail_screen.dart';
 
+import '../learner/notifications/notifications_screen.dart';
+import '../learner/profile/profile_screen.dart';
+import 'classes/manage_classes_screen.dart';
+import 'classes/instructor_class_detail_screen.dart';
+import 'learning_path/manage_learning_paths_screen.dart';
+import 'activities/manage_activities_screen.dart';
+import 'materials/materials_screen.dart';
+import 'projects/manage_projects_screen.dart';
+import 'review/instructor_review_screen.dart';
+import 'analytics/class_analytics_screen.dart';
+import 'analytics/student_progress_screen.dart';
+
 // ════════════════════════════════════════════════════════════════════════════════
-// SCR-I01 — Instructor Dashboard
+// SCR-I01 — Instructor Dashboard Shell
 // ════════════════════════════════════════════════════════════════════════════════
 class InstructorDashboardScreen extends StatefulWidget {
   const InstructorDashboardScreen({super.key});
@@ -18,29 +30,222 @@ class InstructorDashboardScreen extends StatefulWidget {
 class _InstructorDashboardState extends State<InstructorDashboardScreen> {
   int _currentIndex = 0;
 
+  final List<GlobalKey<NavigatorState>> _navKeys = [
+    GlobalKey<NavigatorState>(), // 0 - Dashboard
+    GlobalKey<NavigatorState>(), // 1 - Courses
+    GlobalKey<NavigatorState>(), // 2 - Evidence
+    GlobalKey<NavigatorState>(), // 3 - Analytics
+  ];
+
+  void _switchTab(int index) {
+    if (_currentIndex == index) {
+      _navKeys[index].currentState?.popUntil((r) => r.isFirst);
+    } else {
+      setState(() => _currentIndex = index);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _DashboardTab(onTabSelected: (i) => setState(() => _currentIndex = i)),
-          const ManageCoursesTab(),
-          const EvidenceListTab(),
-          const InstructorAnalyticsTab(),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (!didPop) {
+          final nav = _navKeys[_currentIndex].currentState;
+          if (nav != null && nav.canPop()) {
+            nav.pop();
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            _TabNavigator(navigatorKey: _navKeys[0], initialRoute: '/dashboard-tab', onSwitchTab: _switchTab),
+            _TabNavigator(navigatorKey: _navKeys[1], initialRoute: '/courses-tab', onSwitchTab: _switchTab),
+            _TabNavigator(navigatorKey: _navKeys[2], initialRoute: '/evidence-tab', onSwitchTab: _switchTab),
+            _TabNavigator(navigatorKey: _navKeys[3], initialRoute: '/analytics-tab', onSwitchTab: _switchTab),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: _switchTab,
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
+            NavigationDestination(icon: Icon(Icons.school_rounded), label: 'Khóa học'),
+            NavigationDestination(icon: Icon(Icons.task_alt_rounded), label: 'Evidence'),
+            NavigationDestination(icon: Icon(Icons.bar_chart_rounded), label: 'Analytics'),
+          ],
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.school_rounded), label: 'Khóa học'),
-          NavigationDestination(icon: Icon(Icons.task_alt_rounded), label: 'Evidence'),
-          NavigationDestination(icon: Icon(Icons.bar_chart_rounded), label: 'Analytics'),
-        ],
-      ),
+    );
+  }
+}
+
+class _TabNavigator extends StatelessWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
+  final String initialRoute;
+  final void Function(int) onSwitchTab;
+
+  const _TabNavigator({
+    required this.navigatorKey,
+    required this.initialRoute,
+    required this.onSwitchTab,
+  });
+
+  static Route<dynamic>? _p(Widget w, RouteSettings s) =>
+      MaterialPageRoute(builder: (_) => w, settings: s);
+
+  static int? _id(String n, String prefix) {
+    final rest = n.replaceFirst(prefix, '').split('/').first.split('?').first;
+    return int.tryParse(rest);
+  }
+
+  static int? _seg(String n, int i) {
+    final segs = n.split('/').where((s) => s.isNotEmpty).toList();
+    return segs.length > i ? int.tryParse(segs[i]) : null;
+  }
+
+  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    final name = settings.name ?? '';
+    final args = settings.arguments as Map<String, dynamic>?;
+
+    if (name == '/dashboard-tab') {
+      return _p(_DashboardTab(onTabSelected: onSwitchTab), settings);
+    }
+    if (name == '/courses-tab') {
+      return _p(const ManageCoursesTab(), settings);
+    }
+    if (name == '/evidence-tab') {
+      return _p(const EvidenceListTab(), settings);
+    }
+    if (name == '/analytics-tab') {
+      return _p(const InstructorAnalyticsTab(), settings);
+    }
+
+    if (name == '/notifications') {
+      return _p(const NotificationsScreen(), settings);
+    }
+    if (name == '/profile') {
+      return _p(const ProfileScreen(), settings);
+    }
+    if (name == '/edit-profile') {
+      return _p(const EditProfileScreen(), settings);
+    }
+
+    // /instructor/evidence/:id
+    if (name.startsWith('/instructor/evidence/')) {
+      final id = _id(name, '/instructor/evidence/');
+      if (id != null) return _p(EvidenceDetailScreen(evidenceId: id), settings);
+    }
+
+    // /instructor/courses/create
+    if (name == '/instructor/courses/create') {
+      return _p(const CreateEditCourseScreen(), settings);
+    }
+
+    // /instructor/courses/:id/edit
+    if (name.contains('/edit') && name.startsWith('/instructor/courses/') && args != null) {
+      final id = _seg(name, 2);
+      if (id != null) {
+        return _p(CreateEditCourseScreen(
+          courseId: id,
+          initialTitle: args['title'] as String?,
+          initialDesc: args['description'] as String?,
+        ), settings);
+      }
+    }
+
+    // /instructor/courses/:id/classes
+    if (name.contains('/classes') && name.startsWith('/instructor/courses/') && args != null) {
+      final id = _seg(name, 2);
+      if (id != null) {
+        return _p(ManageClassesScreen(
+          courseId: id,
+          courseTitle: args['courseTitle'] as String? ?? '',
+        ), settings);
+      }
+    }
+
+    // /instructor/classes/:id
+    if (name.startsWith('/instructor/classes/') &&
+        !name.contains('/members') &&
+        !name.contains('/paths') &&
+        !name.contains('/projects')) {
+      final id = _id(name, '/instructor/classes/');
+      if (id != null) return _p(InstructorClassDetailScreen(classId: id), settings);
+    }
+
+    // /instructor/classes/:id/members
+    if (name.startsWith('/instructor/classes/') && name.contains('/members')) {
+      final id = _seg(name, 2);
+      if (id != null) return _p(ClassMembersManageScreen(classId: id), settings);
+    }
+
+    // /instructor/classes/:id/paths
+    if (name.startsWith('/instructor/classes/') && name.contains('/paths')) {
+      final id = _seg(name, 2);
+      if (id != null) return _p(ManageLearningPathsScreen(classId: id), settings);
+    }
+
+    // /instructor/paths/:id/activities
+    if (name.startsWith('/instructor/paths/') && name.contains('/activities')) {
+      final id = _seg(name, 2);
+      if (id != null) return _p(ManageActivitiesScreen(pathId: id), settings);
+    }
+
+    // /instructor/paths/:id/materials
+    if (name.startsWith('/instructor/paths/') && name.contains('/materials')) {
+      final id = _seg(name, 2);
+      if (id != null) return _p(ManageMaterialsScreen(pathId: id), settings);
+    }
+
+    // /instructor/classes/:id/projects
+    if (name.startsWith('/instructor/classes/') && name.contains('/projects')) {
+      final id = _seg(name, 2);
+      if (id != null) return _p(ManageProjectsScreen(classId: id), settings);
+    }
+
+    // /instructor/review/:classId
+    if (name.startsWith('/instructor/review/') && !name.contains('/monitor')) {
+      final id = _id(name, '/instructor/review/');
+      if (id != null) return _p(InstructorReviewScreen(classId: id), settings);
+    }
+
+    // /instructor/review/:sessionId/monitor
+    if (name.startsWith('/instructor/review/') && name.contains('/monitor')) {
+      final id = _seg(name, 2);
+      if (id != null) return _p(ReviewMonitorScreen(sessionId: id), settings);
+    }
+
+    // /instructor/analytics/:classId
+    if (name.startsWith('/instructor/analytics/')) {
+      final id = _id(name, '/instructor/analytics/');
+      if (id != null) return _p(ClassAnalyticsScreen(classId: id), settings);
+    }
+
+    // /instructor/students/:userId/progress
+    if (name.startsWith('/instructor/students/') && name.contains('/progress') && args != null) {
+      final userId = _seg(name, 2);
+      if (userId != null) {
+        return _p(StudentProgressAnalyticsScreen(
+          userId: userId,
+          classId: args['classId'] as int,
+          studentName: args['studentName'] as String? ?? 'Học viên',
+        ), settings);
+      }
+    }
+
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: navigatorKey,
+      initialRoute: initialRoute,
+      onGenerateRoute: _onGenerateRoute,
     );
   }
 }

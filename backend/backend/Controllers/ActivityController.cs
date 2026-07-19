@@ -84,4 +84,11 @@ public class ActivityController : BaseController
         if (!result) return NotFound(ApiResponse.Fail("Không tìm thấy hoạt động hoặc bạn không có quyền xóa."));
         return Ok(ApiResponse.Success(new { success = true }, "Xóa thành công."));
     }
+
+    [HttpGet("class/{classId}")]
+    public async Task<IActionResult> GetByClass(int classId)
+    {
+        var activities = await _activityService.GetByClassAsync(classId);
+        return Ok(ApiResponse.Success(activities));
+    }
 }

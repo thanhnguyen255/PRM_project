@@ -131,6 +131,7 @@ class ReviewViewModel extends ChangeNotifier {
   Map<String,dynamic>?      _sessionDetail;
   List<FeedbackModel>       _receivedFeedback = [];
   List<Map<String,dynamic>> _assignments      = [];
+  List<Map<String,dynamic>> _classActivities  = [];
   bool                      _isLoading        = false;
   bool                      _isSaving         = false;
 
@@ -138,8 +139,15 @@ class ReviewViewModel extends ChangeNotifier {
   Map<String,dynamic>?      get sessionDetail    => _sessionDetail;
   List<FeedbackModel>       get receivedFeedback => _receivedFeedback;
   List<Map<String,dynamic>> get assignments      => _assignments;
+  List<Map<String,dynamic>> get classActivities => _classActivities;
   bool                      get isLoading        => _isLoading;
   bool                      get isSaving         => _isSaving;
+
+  Future<void> loadClassActivities(int classId) async {
+    _isLoading = true; notifyListeners();
+    _classActivities = await _svc.getClassActivities(classId);
+    _isLoading = false; notifyListeners();
+  }
 
   Future<void> loadSessions(int classId) async {
     _isLoading = true; notifyListeners();
@@ -193,12 +201,28 @@ class ReviewViewModel extends ChangeNotifier {
 
   Future<String?> createSession({
     required int classId,
+    required int activityId,
     required String title,
     required String startDate,
     required String endDate,
   }) async {
     _isSaving = true; notifyListeners();
-    final r = await _svc.createSession(classId: classId, title: title, startDate: startDate, endDate: endDate);
+    final r = await _svc.createSession(
+      classId: classId,
+      activityId: activityId,
+      title: title,
+      startDate: startDate,
+      endDate: endDate,
+    );
+    _isSaving = false;
+    if (r.success) await loadSessions(classId);
+    notifyListeners();
+    return r.success ? null : r.error;
+  }
+
+  Future<String?> deleteSession(int id, int classId) async {
+    _isSaving = true; notifyListeners();
+    final r = await _svc.deleteSession(id);
     _isSaving = false;
     if (r.success) await loadSessions(classId);
     notifyListeners();

@@ -90,10 +90,19 @@ class _PreClassActivityState extends State<PreClassActivityScreen> {
                       const SizedBox(height: 16),
                       const Text('Trạng thái nộp bài', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
-                      _SubmissionStatusCard(status: a.submissionStatus),
                       if (a.submissionId != null) ...[
                         const SizedBox(height: 12),
                         _CommentButton(submissionId: a.submissionId!, commentCount: a.commentCount),
+                      ],
+                      if (raw != null && raw['reviewSessionId'] != null) ...[
+                        const SizedBox(height: 16),
+                        const Text('Đánh giá chéo (Peer Review)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 8),
+                        _PeerReviewPanel(
+                          sessionId: raw['reviewSessionId'] as int,
+                          sessionTitle: raw['reviewSessionTitle'] as String? ?? 'Phiên Đánh giá chéo',
+                          isOpen: raw['isReviewSessionOpen'] as bool? ?? false,
+                        ),
                       ],
                     ]),
                   )),
@@ -194,10 +203,19 @@ class _InClassActivityState extends State<InClassActivityScreen> {
                     const SizedBox(height: 16),
                     const Text('Trạng thái điểm danh', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
-                    _SubmissionStatusCard(status: a.submissionStatus),
                     if (a.submissionId != null) ...[
                       const SizedBox(height: 12),
                       _CommentButton(submissionId: a.submissionId!, commentCount: a.commentCount),
+                    ],
+                    if (raw != null && raw['reviewSessionId'] != null) ...[
+                      const SizedBox(height: 16),
+                      const Text('Đánh giá chéo (Peer Review)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      _PeerReviewPanel(
+                        sessionId: raw['reviewSessionId'] as int,
+                        sessionTitle: raw['reviewSessionTitle'] as String? ?? 'Phiên Đánh giá chéo',
+                        isOpen: raw['isReviewSessionOpen'] as bool? ?? false,
+                      ),
                     ],
                     const SizedBox(height: 80),
                   ]),
@@ -299,6 +317,16 @@ class _PostClassActivityState extends State<PostClassActivityScreen> {
                       if (a.submissionId != null) ...[
                         const SizedBox(height: 12),
                         _CommentButton(submissionId: a.submissionId!, commentCount: a.commentCount),
+                      ],
+                      if (raw != null && raw['reviewSessionId'] != null) ...[
+                        const SizedBox(height: 16),
+                        const Text('Đánh giá chéo (Peer Review)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 8),
+                        _PeerReviewPanel(
+                          sessionId: raw['reviewSessionId'] as int,
+                          sessionTitle: raw['reviewSessionTitle'] as String? ?? 'Phiên Đánh giá chéo',
+                          isOpen: raw['isReviewSessionOpen'] as bool? ?? false,
+                        ),
                       ],
                       const SizedBox(height: 16),
                       if (a.submissionStatus != 'Approved') ...[
@@ -443,6 +471,97 @@ class _SubmitBar extends StatelessWidget {
           isLoading: isLoading,
           icon: isResubmit ? Icons.refresh_rounded : Icons.upload_file_rounded,
         ),
+      ),
+    );
+  }
+}
+
+class _PeerReviewPanel extends StatelessWidget {
+  final int sessionId;
+  final String sessionTitle;
+  final bool isOpen;
+
+  const _PeerReviewPanel({
+    required this.sessionId,
+    required this.sessionTitle,
+    required this.isOpen,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isOpen ? AppColors.success.withAlpha(80) : AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isOpen ? AppColors.successLight : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.rate_review_rounded,
+                  color: isOpen ? AppColors.success : AppColors.textHint,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sessionTitle,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isOpen ? '● Đang mở nhận đánh giá' : '○ Đã đóng / Chưa mở',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isOpen ? AppColors.success : AppColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/review-sessions/$sessionId');
+              },
+              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+              label: const Text('THỰC HIỆN ĐÁNH GIÁ CHÉO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

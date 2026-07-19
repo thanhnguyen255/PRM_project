@@ -11,4 +11,5 @@ public interface IActivityService
     Task<ActivityDto?> UpdateActivityAsync(int id, UpdateActivityDto dto, int instructorId);
     Task<bool> DeleteActivityAsync(int id, int instructorId);
     Task<IEnumerable<UpcomingActivityDto>> GetUpcomingActivitiesAsync(int learnerId, int? classId, int limit = 5);
+    Task<IEnumerable<ActivityDto>> GetByClassAsync(int classId);
 }

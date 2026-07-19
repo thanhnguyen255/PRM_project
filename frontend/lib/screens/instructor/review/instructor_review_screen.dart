@@ -23,114 +23,6 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      final y = picked.year;
-      final m = picked.month.toString().padLeft(2, '0');
-      final d = picked.day.toString().padLeft(2, '0');
-      controller.text = '$y-$m-$d';
-    }
-  }
-
-  void _showCreateDialog() {
-    final titleCtrl = TextEditingController();
-    final startCtrl = TextEditingController();
-    final endCtrl   = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        scrollable: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(children: [
-          Icon(Icons.rate_review_rounded, color: AppColors.secondary),
-          SizedBox(width: 8),
-          Text('Tạo phiên Peer Review'),
-        ]),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(
-            controller: titleCtrl,
-            decoration: InputDecoration(labelText: 'Tiêu đề phiên *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: startCtrl,
-            readOnly: true,
-            onTap: () => _selectDate(ctx, startCtrl),
-            decoration: InputDecoration(
-              labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: endCtrl,
-            readOnly: true,
-            onTap: () => _selectDate(ctx, endCtrl),
-            decoration: InputDecoration(
-              labelText: 'Ngày kết thúc (YYYY-MM-DD)',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              suffixIcon: const Icon(Icons.event_rounded, size: 18),
-            ),
-          ),
-        ]),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Hủy'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (titleCtrl.text.trim().isEmpty) return;
-                    Navigator.pop(ctx);
-                    final vm  = context.read<ReviewViewModel>();
-                    final err = await vm.createSession(
-                      classId:   widget.classId,
-                      title:     titleCtrl.text.trim(),
-                      startDate: startCtrl.text.trim(),
-                      endDate:   endCtrl.text.trim(),
-                    );
-                    if (!context.mounted) return;
-                    if (err == null) {
-                      AppSnackBar.show(context, 'Tạo phiên review thành công!', type: SnackType.success);
-                    } else {
-                      AppSnackBar.show(context, err, type: SnackType.error);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, 
-                    foregroundColor: Colors.white, 
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Tạo phiên'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ReviewViewModel>();
@@ -138,23 +30,14 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Quản lý Peer Review'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_rounded, color: AppColors.primary),
-            tooltip: 'Tạo phiên',
-            onPressed: _showCreateDialog,
-          ),
-        ],
       ),
       body: vm.isLoading
           ? const LoadingWidget()
           : vm.sessions.isEmpty
-              ? EmptyState(
+              ? const EmptyState(
                   icon: Icons.rate_review_outlined,
                   title: 'Chưa có phiên Review',
-                  message: 'Tạo phiên Peer Review để học viên đánh giá lẫn nhau.',
-                  actionLabel: 'Tạo phiên đầu tiên',
-                  onAction: _showCreateDialog,
+                  message: 'Hãy tạo phiên Peer Review từ các hoạt động lớp học để bắt đầu.',
                 )
               : RefreshIndicator(
                   onRefresh: () => vm.loadSessions(widget.classId),
@@ -169,12 +52,6 @@ class _InstructorReviewScreenState extends State<InstructorReviewScreen> {
                     ),
                   ),
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateDialog,
-        backgroundColor: AppColors.secondary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Tạo phiên', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-      ),
     );
   }
 }
@@ -348,24 +225,106 @@ class _ReviewMonitorScreenState extends State<ReviewMonitorScreen> {
                     else
                       ...(sess['pairs'] as List).map((pair) {
                         final p = pair as Map<String, dynamic>;
+                        final bool isCompleted = p['isCompleted'] as bool? ?? false;
                         return Card(
                           margin: const EdgeInsets.only(bottom: 10),
-                          child: ListTile(
+                          clipBehavior: Clip.antiAlias,
+                          child: ExpansionTile(
                             leading: CircleAvatar(
-                              backgroundColor: AppColors.primaryLight,
+                              backgroundColor: isCompleted ? AppColors.success.withAlpha(20) : AppColors.primaryLight,
                               child: Text(
                                 (p['reviewerName'] as String? ?? '?').isNotEmpty ? (p['reviewerName'] as String)[0] : '?',
-                                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                                style: TextStyle(
+                                  color: isCompleted ? AppColors.success : AppColors.primary, 
+                                  fontWeight: FontWeight.w700
+                                ),
                               ),
                             ),
                             title: Text(p['reviewerName'] as String? ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                            subtitle: Text('→ ${p['revieweeName'] as String? ?? ''}', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
-                            trailing: StatusBadge(status: (p['isCompleted'] as bool? ?? false) ? BadgeStatus.approved : BadgeStatus.pending),
+                            subtitle: Row(
+                              children: [
+                                Text('→ ${p['revieweeName'] as String? ?? ''}', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+                                const SizedBox(width: 8),
+                                if (isCompleted && p['rating'] != null)
+                                  Row(
+                                    children: List.generate(5, (idx) => Icon(
+                                      idx < (p['rating'] as int) ? Icons.star_rounded : Icons.star_outline_rounded,
+                                      size: 14,
+                                      color: Colors.amber,
+                                    )),
+                                  ),
+                              ],
+                            ),
+                            trailing: StatusBadge(status: isCompleted ? BadgeStatus.approved : BadgeStatus.pending),
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Divider(),
+                                    const SizedBox(height: 8),
+                                    if (isCompleted) ...[
+                                      const Text(
+                                        'Nội dung đánh giá chéo:',
+                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.background,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: AppColors.border),
+                                        ),
+                                        child: Text(
+                                          p['content'] as String? ?? 'Không có nội dung nhận xét.',
+                                          style: const TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+                                        ),
+                                      ),
+                                      if (p['submittedAt'] != null) ...[
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Thời gian nộp: ${_fmtDateStr(p['submittedAt'] as String)}',
+                                          style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                                        ),
+                                      ],
+                                    ] else ...[
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.pending_actions_rounded, size: 16, color: AppColors.warning),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Chưa thực hiện đánh giá chéo.',
+                                            style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       }),
                   ]),
                 ),
     );
+  }
+}
+
+String _fmtDateStr(String iso) {
+  try {
+    final dt = DateTime.parse(iso).toLocal();
+    final d = dt.day.toString().padLeft(2, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final y = dt.year;
+    final h = dt.hour.toString().padLeft(2, '0');
+    final min = dt.minute.toString().padLeft(2, '0');
+    return '$d/$m/$y $h:$min';
+  } catch (_) {
+    return iso;
   }
 }

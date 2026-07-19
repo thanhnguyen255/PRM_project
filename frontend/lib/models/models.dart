@@ -223,6 +223,9 @@ class ActivityModel {
   final int? submissionId;
   final String? submissionStatus; // "Pending" | "Approved" | "Rejected" | null
   final DateTime? submittedAt;
+  final int? reviewSessionId;
+  final String? reviewSessionTitle;
+  final bool? isReviewSessionOpen;
 
   const ActivityModel({
     required this.id,
@@ -234,6 +237,9 @@ class ActivityModel {
     this.submissionId,
     this.submissionStatus,
     this.submittedAt,
+    this.reviewSessionId,
+    this.reviewSessionTitle,
+    this.isReviewSessionOpen,
   });
 
   bool get isOverdue => deadline != null && deadline!.isBefore(DateTime.now()) && submissionStatus == null;
@@ -249,6 +255,9 @@ class ActivityModel {
     submissionId:     json['submissionId'] as int?,
     submissionStatus: json['submissionStatus'] as String? ?? (json['submission'] != null ? json['submission']['status'] as String? : null),
     submittedAt:      json['submittedAt'] != null ? DateTime.parse(json['submittedAt']).toLocal() : null,
+    reviewSessionId:  json['reviewSessionId'] as int?,
+    reviewSessionTitle: json['reviewSessionTitle'] as String?,
+    isReviewSessionOpen: json['isReviewSessionOpen'] as bool?,
   );
 }
 

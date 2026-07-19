@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../config/app_colors.dart';
+import '../../../models/models.dart';
 import '../../../viewmodels/viewmodels.dart';
 import '../../../viewmodels/extended_viewmodels.dart';
 import '../../../widgets/widgets.dart';
@@ -21,6 +22,7 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ActivityViewModel>().loadActivities(widget.pathId, type: '');
+      context.read<LearningPathViewModel>().loadPathDetail(widget.pathId);
     });
   }
 
@@ -236,13 +238,17 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                           await context.read<InstructorManageViewModel>().deleteActivity(a.id);
                           if (context.mounted) await context.read<ActivityViewModel>().loadActivities(widget.pathId, type: '');
                         },
+                        child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
                         child: ActivityCard(
                           title: a.title,
                           type: a.type,
                           deadline: a.deadline,
                           submissionStatus: null,
-                          onTap: () {},
+                          hasReview: a.reviewSessionId != null,
+                          onTap: () => _showActivityBottomSheet(a),
                         ),
+                      ),
                       );
                     },
                   )),
@@ -253,6 +259,266 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text('Thêm hoạt động', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
+    );
+  }
+
+  void _showCreateReviewSessionDialog(ActivityModel a, int classId) {
+    final titleCtrl = TextEditingController(text: 'Đánh giá chéo: ${a.title}');
+    final startCtrl = TextEditingController();
+    final endCtrl   = TextEditingController();
+    
+    Future<void> selectD(BuildContext ctx, TextEditingController ctrl) async {
+      final DateTime? picked = await showDatePicker(
+        context: ctx,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        final y = picked.year;
+        final m = picked.month.toString().padLeft(2, '0');
+        final d = picked.day.toString().padLeft(2, '0');
+        ctrl.text = '$y-$m-$d';
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        scrollable: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(children: [
+          const Icon(Icons.rate_review_rounded, color: AppColors.secondary),
+          const SizedBox(width: 8),
+          Expanded(child: Text('Tạo Peer Review cho:\n${a.title}', style: const TextStyle(fontSize: 16))),
+        ]),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(
+            controller: titleCtrl,
+            decoration: InputDecoration(labelText: 'Tiêu đề phiên *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: startCtrl,
+            readOnly: true,
+            onTap: () => selectD(ctx, startCtrl),
+            decoration: InputDecoration(
+              labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: endCtrl,
+            readOnly: true,
+            onTap: () => selectD(ctx, endCtrl),
+            decoration: InputDecoration(
+              labelText: 'Ngày kết thúc (YYYY-MM-DD)',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              suffixIcon: const Icon(Icons.event_rounded, size: 18),
+            ),
+          ),
+        ]),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(ctx);
+                    final vm  = context.read<ReviewViewModel>();
+                    final err = await vm.createSession(
+                      classId: classId,
+                      activityId: a.id,
+                      title: titleCtrl.text.trim(),
+                      startDate: startCtrl.text.trim(),
+                      endDate: endCtrl.text.trim(),
+                    );
+                    if (!context.mounted) return;
+                    if (err == null) {
+                      context.read<ActivityViewModel>().loadActivities(widget.pathId);
+                      AppSnackBar.show(context, 'Tạo phiên review thành công!', type: SnackType.success);
+                    } else {
+                      AppSnackBar.show(context, err, type: SnackType.error);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, 
+                    foregroundColor: Colors.white, 
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tạo'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showActivityBottomSheet(ActivityModel a) {
+    final classDetail = context.read<LearningPathViewModel>().detail;
+    final classId = classDetail?['classId'] as int?;
+    
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final hasReview = a.reviewSessionId != null;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: ActivityCard.typeColor(a.type).withAlpha(30),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        a.type == 'PostClass' ? Icons.assignment_turned_in_rounded : Icons.assignment_rounded,
+                        color: ActivityCard.typeColor(a.type),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            a.title,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Loại: ${a.type}  •  Hạn nộp: ${a.deadline != null ? _fmt(a.deadline!) : "Không có"}',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 10),
+                const Text(
+                  'CHỨC NĂNG PEER REVIEW',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1, color: AppColors.textHint),
+                ),
+                const SizedBox(height: 12),
+                if (classId == null)
+                  const Text('Không tìm thấy thông tin lớp học.')
+                else if (!hasReview) ...[
+                  const Text(
+                    'Hoạt động này chưa có phiên Peer Review liên kết.',
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton(
+                      label: 'TẠO PHIÊN PEER REVIEW',
+                      icon: Icons.rate_review_rounded,
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _showCreateReviewSessionDialog(a, classId);
+                      },
+                    ),
+                  ),
+                ] else ...[
+                  Text(
+                    'Phiên liên kết: ${a.reviewSessionTitle ?? ""}',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            final confirm = await ConfirmDialog.show(
+                              context,
+                              title: 'Xóa phiên Peer Review',
+                              message: 'Bạn có chắc chắn muốn xóa phiên review chéo này?',
+                              confirmLabel: 'Xóa',
+                              isDanger: true,
+                            );
+                            if (confirm == true) {
+                              final vm = context.read<ReviewViewModel>();
+                              final err = await vm.deleteSession(a.reviewSessionId!, classId);
+                              if (context.mounted) {
+                                if (err == null) {
+                                  context.read<ActivityViewModel>().loadActivities(widget.pathId);
+                                  AppSnackBar.show(context, 'Xóa phiên review thành công!', type: SnackType.success);
+                                } else {
+                                  AppSnackBar.show(context, err, type: SnackType.error);
+                                }
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.delete_rounded),
+                          label: const Text('XÓA PHIÊN'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: const BorderSide(color: AppColors.error),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            Navigator.pushNamed(context, '/instructor/review/${a.reviewSessionId}/monitor');
+                          },
+                          icon: const Icon(Icons.monitor_rounded),
+                          label: const Text('THEO DÕI'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -267,3 +533,6 @@ Widget _TypeCount(int count, String label, Color color) => Expanded(
     ]),
   ),
 );
+
+String _fmt(DateTime dt) =>
+    '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';

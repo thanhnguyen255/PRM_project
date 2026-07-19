@@ -349,8 +349,7 @@ class FlippedClassroomApp extends StatelessWidget {
     if (name == '/submit-feedback' && args != null) {
       return _page(
         SubmitFeedbackScreen(
-          assignmentId: args['assignmentId'] as int,
-          revieweeName: args['revieweeName'] as String? ?? '',
+          assignment: args['assignment'] as Map<String, dynamic>,
         ),
         settings,
       );

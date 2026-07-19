@@ -149,17 +149,32 @@ class ReviewService {
 
   Future<({bool success, String? error})> createSession({
     required int classId,
+    required int activityId,
     required String title,
     required String startDate,
     required String endDate,
   }) async {
     final res = await _api.post(ApiConfig.createReviewSession, data: {
       'classId': classId,
+      'activityId': activityId,
       'title': title,
       'startDate': startDate,
       'endDate': endDate,
       'autoAssign': true,
     });
+    return (success: res['success'] == true, error: res['message'] as String?);
+  }
+
+  Future<List<Map<String, dynamic>>> getClassActivities(int classId) async {
+    final res = await _api.get('/activities/class/$classId');
+    if (res['success'] == true) {
+      return (res['data'] as List<dynamic>).cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  Future<({bool success, String? error})> deleteSession(int id) async {
+    final res = await _api.delete('/review-sessions/$id');
     return (success: res['success'] == true, error: res['message'] as String?);
   }
 

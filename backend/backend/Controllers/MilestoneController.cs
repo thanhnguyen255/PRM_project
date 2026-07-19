@@ -49,7 +49,7 @@ public class MilestoneController : BaseController
         return Ok(ApiResponse.Success<object?>(null));
     }
 
-    [HttpPost("milestone-submissions")]
+    [HttpPost("submissions")]
     public async Task<IActionResult> SubmitMilestone([FromForm] CreateMilestoneSubmissionDto dto)
     {
         try

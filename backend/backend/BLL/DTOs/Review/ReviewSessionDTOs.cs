@@ -4,6 +4,8 @@ public class ReviewSessionDto
 {
     public int Id { get; set; }
     public int ClassId { get; set; }
+    public int ActivityId { get; set; }
+    public string ActivityTitle { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
@@ -18,6 +20,7 @@ public class ReviewSessionDto
 public class CreateReviewSessionDto
 {
     public int ClassId { get; set; }
+    public int ActivityId { get; set; }
     public string Title { get; set; } = string.Empty;
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }

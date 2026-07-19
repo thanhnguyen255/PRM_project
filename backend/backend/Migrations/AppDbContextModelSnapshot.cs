@@ -469,6 +469,9 @@ namespace backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ActivityId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ClassId")
                         .HasColumnType("int");
 
@@ -484,6 +487,8 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ActivityId");
 
                     b.HasIndex("ClassId");
 
@@ -735,11 +740,19 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.DAL.Models.ReviewSession", b =>
                 {
+                    b.HasOne("backend.DAL.Models.Activity", "Activity")
+                        .WithMany()
+                        .HasForeignKey("ActivityId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("backend.DAL.Models.Class", "Class")
                         .WithMany("ReviewSessions")
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Activity");
 
                     b.Navigation("Class");
                 });

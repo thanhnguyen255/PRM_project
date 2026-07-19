@@ -163,10 +163,14 @@ class _ReviewDetailState extends State<ReviewDetailScreen> {
                 else
                   ...assignments.map((a) => _AssignmentCard(
                     assignment: a,
-                    onReview: () => Navigator.pushNamed(context, '/submit-feedback', arguments: {
-                      'assignmentId': a['id'],
-                      'revieweeName': a['revieweeName'] ?? '',
-                    }),
+                    onReview: () async {
+                      await Navigator.pushNamed(context, '/submit-feedback', arguments: {
+                        'assignment': a,
+                      });
+                      if (context.mounted) {
+                        context.read<ReviewViewModel>().loadReviewDetail(widget.sessionId);
+                      }
+                    },
                   )),
 
                 const SizedBox(height: 16),
@@ -223,7 +227,15 @@ class _AssignmentCard extends StatelessWidget {
             child: const Text('Review', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           )
         else
-          const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
+          TextButton.icon(
+            onPressed: onReview,
+            icon: const Icon(Icons.edit_rounded, size: 14, color: AppColors.success),
+            label: const Text('Xem & Sửa', style: TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w700)),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: const Size(0, 36),
+            ),
+          ),
       ]),
     );
   }
@@ -286,9 +298,8 @@ class _ReceivedFeedbackSectionState extends State<_ReceivedFeedbackSection> {
 
 // SCR-L19 — Submit Feedback Screen
 class SubmitFeedbackScreen extends StatefulWidget {
-  final int assignmentId;
-  final String revieweeName;
-  const SubmitFeedbackScreen({super.key, required this.assignmentId, required this.revieweeName});
+  final Map<String, dynamic> assignment;
+  const SubmitFeedbackScreen({super.key, required this.assignment});
   @override
   State<SubmitFeedbackScreen> createState() => _SubmitFeedbackState();
 }
@@ -299,9 +310,20 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
 
+  bool _isEditing = false;
+
   @override
   void initState() {
     super.initState();
+    final oldContent = widget.assignment['feedbackContent'] as String?;
+    final oldRating = widget.assignment['feedbackRating'] as int?;
+    if (oldContent != null) {
+      _contentCtrl.text = oldContent;
+      _isEditing = true;
+    }
+    if (oldRating != null) {
+      _rating = oldRating;
+    }
     _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
@@ -326,7 +348,11 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
     }
     
     final vm  = context.read<ReviewViewModel>();
-    final err = await vm.submitFeedback(assignmentId: widget.assignmentId, content: content, rating: _rating);
+    final err = await vm.submitFeedback(
+      assignmentId: widget.assignment['id'] as int,
+      content: content,
+      rating: _rating,
+    );
     if (!mounted) return;
     
     if (err == null) {
@@ -337,13 +363,17 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
     }
   }
 
+  String _fmtDate(DateTime dt) =>
+      '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ReviewViewModel>();
+    final revieweeName = widget.assignment['revieweeName'] as String? ?? '';
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Review: ${widget.revieweeName}'),
+        title: Text('Review: $revieweeName'),
         elevation: 0,
         backgroundColor: AppColors.background,
         flexibleSpace: Container(
@@ -362,13 +392,17 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Reviewer Info Card
-            _buildRevieweeCard(),
+            _buildRevieweeCard(revieweeName),
+            const SizedBox(height: 20),
+
+            // Class / Course detail block
+            _buildContextBlock(),
             const SizedBox(height: 28),
 
             // Evidence Preview
             const Text('Bằng chứng học tập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             const SizedBox(height: 12),
-            _buildEvidenceCard(),
+            _buildEvidenceCard(revieweeName),
             const SizedBox(height: 32),
 
             // Star rating
@@ -403,7 +437,7 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
               child: ElevatedButton.icon(
                 onPressed: vm.isSaving ? null : _submit,
                 icon: vm.isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send_rounded),
-                label: Text(vm.isSaving ? 'ĐANG GỬI...' : 'GỬI FEEDBACK', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                label: Text(vm.isSaving ? 'ĐANG GỬI...' : (_isEditing ? 'CẬP NHẬT FEEDBACK' : 'GỬI FEEDBACK'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -418,7 +452,7 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
     );
   }
 
-  Widget _buildRevieweeCard() {
+  Widget _buildRevieweeCard(String revieweeName) {
     return Center(
       child: Column(children: [
         Container(
@@ -432,13 +466,13 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
             radius: 40,
             backgroundColor: AppColors.surface,
             child: Text(
-              widget.revieweeName.isNotEmpty ? widget.revieweeName[0].toUpperCase() : '?',
+              revieweeName.isNotEmpty ? revieweeName[0].toUpperCase() : '?',
               style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        Text(widget.revieweeName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(revieweeName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -449,7 +483,88 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
     );
   }
 
-  Widget _buildEvidenceCard() {
+  Widget _buildContextBlock() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _contextRow(Icons.book_rounded, 'Khóa học', widget.assignment['courseName'] as String?),
+          const SizedBox(height: 8),
+          _contextRow(Icons.class_rounded, 'Lớp học', widget.assignment['className'] as String?),
+          const SizedBox(height: 8),
+          _contextRow(Icons.assignment_rounded, 'Hoạt động', widget.assignment['activityTitle'] as String?),
+          if (widget.assignment['activityDescription'] != null && (widget.assignment['activityDescription'] as String).isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Divider(),
+            const SizedBox(height: 6),
+            const Text('Yêu cầu hoạt động:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            const SizedBox(height: 4),
+            Text(widget.assignment['activityDescription'] as String, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _contextRow(IconData icon, String label, String? value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: AppColors.textHint),
+        const SizedBox(width: 8),
+        Text('$label: ', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+        Expanded(
+          child: Text(
+            value ?? 'N/A',
+            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEvidenceCard(String revieweeName) {
+    final fileUrl = widget.assignment['submissionFileUrl'] as String?;
+    final note = widget.assignment['submissionNote'] as String?;
+    final dateStr = widget.assignment['submissionDate'] as String?;
+    final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
+
+    if (fileUrl == null || fileUrl.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.error.withOpacity(0.2)),
+        ),
+        child: Column(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 36),
+            SizedBox(height: 8),
+            Text(
+              'Học viên chưa nộp bài tập cho hoạt động này.',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.error),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final filename = fileUrl.split('/').last;
+
+    return _buildEvidenceCardInternal(filename, date, note, fileUrl, revieweeName);
+  }
+
+  Widget _buildEvidenceCardInternal(String filename, DateTime? date, String? note, String fileUrl, String revieweeName) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -462,26 +577,37 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
         Row(children: [
           Container(
             width: 48, height: 48,
-            decoration: BoxDecoration(color: AppColors.errorLight, borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.error, size: 24),
+            decoration: BoxDecoration(
+              color: filename.endsWith('.pdf') ? AppColors.errorLight : AppColors.primaryLight, 
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              filename.endsWith('.pdf') ? Icons.picture_as_pdf_rounded : Icons.insert_drive_file_rounded, 
+              color: filename.endsWith('.pdf') ? AppColors.error : AppColors.primary, 
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Bao_cao_hoat_dong_${widget.revieweeName.replaceAll(' ', '_')}.pdf', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(filename, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 4),
-            const Text('Kích thước: 2.4 MB  •  2 ngày trước', style: TextStyle(fontSize: 12, color: AppColors.textHint)),
+            Text(
+              date != null ? 'Đã nộp: ${_fmtDate(date)}' : 'Đã nộp', 
+              style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+            ),
           ])),
         ]),
         const SizedBox(height: 16),
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-            Text('Ghi chú của học viên:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
-            SizedBox(height: 6),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Ghi chú của học viên:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+            const SizedBox(height: 6),
             Text(
-              'Đây là báo cáo hoạt động nhóm của chúng em. Chúng em đã nghiên cứu tài liệu pre-class và thực hiện thảo luận. Mong nhận được ý kiến đóng góp từ bạn!',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+              (note != null && note.isNotEmpty) ? note : 'Không có ghi chú.',
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
             ),
           ]),
         ),
@@ -491,7 +617,7 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
           height: 44,
           child: OutlinedButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đang mở tài liệu báo cáo của ${widget.revieweeName}...')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đang tải/mở tài liệu báo cáo của $revieweeName...')));
             },
             icon: const Icon(Icons.remove_red_eye_rounded, size: 18),
             label: const Text('XEM TÀI LIỆU ĐÍNH KÈM', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
