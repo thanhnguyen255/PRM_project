@@ -79,6 +79,10 @@ public class ClassController : BaseController
         {
             return StatusCode(403, ApiResponse.Fail(ex.Message));
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse.Fail(ex.Message));
+        }
     }
 
     [HttpPost("{id}/members")]

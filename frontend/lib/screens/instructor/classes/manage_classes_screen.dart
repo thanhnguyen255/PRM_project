@@ -25,11 +25,14 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+  Future<void> _selectDate(BuildContext context, TextEditingController controller, {DateTime? minDate}) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final initial = minDate != null && minDate.isAfter(now) ? minDate : today;
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      initialDate: initial,
+      firstDate: minDate ?? today,
       lastDate: DateTime(2100),
     );
     if (picked != null) {
@@ -65,7 +68,7 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
             readOnly: true,
             onTap: () => _selectDate(ctx, startCtrl),
             decoration: InputDecoration(
-              labelText: 'Ngày bắt đầu (YYYY-MM-DD)',
+              labelText: 'Ngày bắt đầu (YYYY-MM-DD) *',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
             ),
@@ -74,9 +77,15 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
           TextField(
             controller: endCtrl,
             readOnly: true,
-            onTap: () => _selectDate(ctx, endCtrl),
+            onTap: () {
+              DateTime? minDate;
+              if (startCtrl.text.isNotEmpty) {
+                minDate = DateTime.tryParse(startCtrl.text);
+              }
+              _selectDate(ctx, endCtrl, minDate: minDate);
+            },
             decoration: InputDecoration(
-              labelText: 'Ngày kết thúc (YYYY-MM-DD)',
+              labelText: 'Ngày kết thúc (YYYY-MM-DD) *',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               suffixIcon: const Icon(Icons.event_rounded, size: 18),
             ),
@@ -101,14 +110,47 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () async {
-                    if (nameCtrl.text.trim().isEmpty) return;
+                    if (nameCtrl.text.trim().isEmpty) {
+                      AppSnackBar.show(context, 'Vui lòng nhập tên lớp học!', type: SnackType.error);
+                      return;
+                    }
+                    
+                    final now = DateTime.now();
+                    final today = DateTime(now.year, now.month, now.day);
+                    
+                    DateTime? startDate;
+                    if (startCtrl.text.trim().isNotEmpty) {
+                      startDate = DateTime.tryParse(startCtrl.text.trim());
+                    }
+                    DateTime? endDate;
+                    if (endCtrl.text.trim().isNotEmpty) {
+                      endDate = DateTime.tryParse(endCtrl.text.trim());
+                    }
+
+                    if (startDate == null) {
+                      AppSnackBar.show(context, 'Vui lòng chọn ngày bắt đầu!', type: SnackType.error);
+                      return;
+                    }
+                    if (startDate.isBefore(today)) {
+                      AppSnackBar.show(context, 'Ngày bắt đầu không được trước hôm nay!', type: SnackType.error);
+                      return;
+                    }
+                    if (endDate == null) {
+                      AppSnackBar.show(context, 'Vui lòng chọn ngày kết thúc!', type: SnackType.error);
+                      return;
+                    }
+                    if (endDate.isBefore(startDate)) {
+                      AppSnackBar.show(context, 'Ngày kết thúc không được trước ngày bắt đầu!', type: SnackType.error);
+                      return;
+                    }
+
                     Navigator.pop(ctx);
                     final vm  = context.read<InstructorManageViewModel>();
                     final err = await vm.createClass(
                       courseId:  widget.courseId,
                       name:      nameCtrl.text.trim(),
-                      startDate: startCtrl.text.trim().isEmpty ? null : startCtrl.text.trim(),
-                      endDate:   endCtrl.text.trim().isEmpty   ? null : endCtrl.text.trim(),
+                      startDate: startCtrl.text.trim(),
+                      endDate:   endCtrl.text.trim(),
                     );
                     if (!mounted) return;
                     if (err == null) {
@@ -165,19 +207,26 @@ class _ManageClassesScreenState extends State<ManageClassesScreen> {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _ClassCard(
                     cls: vm.classes[i],
-                    onTap: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}'),
-                    onManageMembers: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/members'),
-                    onManagePaths: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/paths'),
-                    onManageProjects: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/projects'),
-                    onViewAnalytics: () => Navigator.pushNamed(context, '/instructor/analytics/${vm.classes[i].id}'),
-                    onManageReviews: () => Navigator.pushNamed(context, '/instructor/review/${vm.classes[i].id}'),
+                    onTap: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}').then((_) {
+                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                    }),
+                    onManageMembers: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/members').then((_) {
+                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                    }),
+                    onManagePaths: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/paths').then((_) {
+                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                    }),
+                    onManageProjects: () => Navigator.pushNamed(context, '/instructor/classes/${vm.classes[i].id}/projects').then((_) {
+                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                    }),
+                    onViewAnalytics: () => Navigator.pushNamed(context, '/instructor/analytics/${vm.classes[i].id}').then((_) {
+                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                    }),
+                    onManageReviews: () => Navigator.pushNamed(context, '/instructor/review/${vm.classes[i].id}').then((_) {
+                      if (context.mounted) context.read<ClassViewModel>().loadClassesByCourse(widget.courseId);
+                    }),
                   ),
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateDialog,
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add_rounded, color: Colors.white),
-      ),
     );
   }
 }
