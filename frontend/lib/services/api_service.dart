@@ -79,7 +79,9 @@ class ApiService {
 
   Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? params}) async {
     try {
-      final res = await dio.get(path, queryParameters: params);
+      final query = params ?? <String, dynamic>{};
+      query['_t'] = DateTime.now().millisecondsSinceEpoch; // Ngăn browser cache (đặc biệt trên Web)
+      final res = await dio.get(path, queryParameters: query);
       return {'success': true, 'data': _unwrap(res)};
     } on DioException catch (e) {
       return {'success': false, 'message': _errorMessage(e)};

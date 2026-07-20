@@ -112,9 +112,9 @@ class ProjectViewModel extends ChangeNotifier {
     return r.success ? null : r.error;
   }
 
-  Future<String?> submitMilestone({required int milestoneId, String? description, String? filePath}) async {
+  Future<String?> submitMilestone({required int milestoneId, String? description, List<int>? fileBytes, String? fileName}) async {
     _isSaving = true; notifyListeners();
-    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description, filePath: filePath);
+    final r = await _milestoneSvc.submitMilestone(milestoneId: milestoneId, description: description, fileBytes: fileBytes, fileName: fileName);
     _isSaving = false; notifyListeners();
     if (r.success) {
       await loadMilestoneDetail(milestoneId);

@@ -324,7 +324,6 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
     if (oldRating != null) {
       _rating = oldRating;
     }
-
     _animCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
@@ -378,7 +377,7 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
         elevation: 0,
         backgroundColor: AppColors.background,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [AppColors.background, AppColors.surface],
               begin: Alignment.topCenter,
@@ -562,6 +561,10 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
 
     final filename = fileUrl.split('/').last;
 
+    return _buildEvidenceCardInternal(filename, date, note, fileUrl, revieweeName);
+  }
+
+  Widget _buildEvidenceCardInternal(String filename, DateTime? date, String? note, String fileUrl, String revieweeName) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

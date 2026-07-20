@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 export 'course_viewmodel.dart';
+import '../config/app_colors.dart';
 import '../models/models.dart';
 import '../services/auth_service.dart';
 import '../services/services.dart';
@@ -11,13 +12,21 @@ class AuthViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   int? _userId;
+  List<String> _instructorTabs = ['Dashboard', 'Courses', 'Evidence', 'Analytics'];
 
   AuthViewModel() {
     _loadUserId();
   }
 
+  List<String> get instructorTabs => _instructorTabs;
+
   Future<void> _loadUserId() async {
     _userId = await _auth.getUserId();
+    final role = await _auth.getRole();
+    if (role != null) {
+      AppColors.isInstructorMode = role == 'Instructor';
+    }
+    _instructorTabs = await _auth.getInstructorTabs();
     notifyListeners();
   }
 
@@ -29,6 +38,12 @@ class AuthViewModel extends ChangeNotifier {
   void _setError(String? v) { _error = v; notifyListeners(); }
   void clearError() => _setError(null);
 
+  Future<void> updateInstructorTabs(List<String> tabs) async {
+    _instructorTabs = tabs;
+    notifyListeners();
+    await _auth.saveInstructorTabs(tabs);
+  }
+
   Future<String?> login(String email, String password) async {
     _setLoading(true); _setError(null);
     final result = await _auth.login(email: email, password: password);
@@ -37,6 +52,7 @@ class AuthViewModel extends ChangeNotifier {
       _setError(result.error);
     } else if (result.data != null) {
       _userId = result.data!.userId;
+      AppColors.isInstructorMode = result.data!.role == 'Instructor';
       notifyListeners();
     }
     return result.success ? result.data!.role : null;
@@ -50,6 +66,7 @@ class AuthViewModel extends ChangeNotifier {
       _setError(result.error);
     } else if (result.data != null) {
       _userId = result.data!.userId;
+      AppColors.isInstructorMode = result.data!.role == 'Instructor';
       notifyListeners();
     }
     return result.success ? result.data!.role : null;
@@ -218,11 +235,13 @@ class ActivityViewModel extends ChangeNotifier {
   List<ActivityModel>   _activities = [];
   Map<String, dynamic>? _detail;
   bool                  _isLoading  = false;
+  bool                  _isDetailLoading = false;
   String                _typeFilter = 'PreClass';
 
   List<ActivityModel>   get activities => _activities;
   Map<String, dynamic>? get detail     => _detail;
   bool                  get isLoading  => _isLoading;
+  bool                  get isDetailLoading => _isDetailLoading;
   String                get typeFilter => _typeFilter;
 
   void setTypeFilter(String t) { _typeFilter = t; notifyListeners(); }
@@ -234,9 +253,9 @@ class ActivityViewModel extends ChangeNotifier {
   }
 
   Future<void> loadDetail(int id) async {
-    _isLoading = true; notifyListeners();
+    _isDetailLoading = true; notifyListeners();
     _detail    = await _service.getActivityDetail(id);
-    _isLoading = false; notifyListeners();
+    _isDetailLoading = false; notifyListeners();
   }
 }
 
@@ -248,6 +267,7 @@ class EvidenceViewModel extends ChangeNotifier {
   EvidenceModel?             _detail;
   List<EvidenceCommentModel> _comments   = [];
   bool                       _isLoading  = false;
+  bool                       _isDetailLoading = false;
   bool                       _isSubmitting = false;
   String?                    _error;
   String                     _statusFilter = 'All';
@@ -257,6 +277,7 @@ class EvidenceViewModel extends ChangeNotifier {
   EvidenceModel?             get detail       => _detail;
   List<EvidenceCommentModel> get comments     => _comments;
   bool                       get isLoading    => _isLoading;
+  bool                       get isDetailLoading => _isDetailLoading;
   bool                       get isSubmitting => _isSubmitting;
   String?                    get error        => _error;
   String                     get statusFilter => _statusFilter;
@@ -272,9 +293,9 @@ class EvidenceViewModel extends ChangeNotifier {
   }
 
   Future<void> loadDetail(int id) async {
-    _isLoading = true; notifyListeners();
+    _isDetailLoading = true; notifyListeners();
     _detail    = await _service.getEvidenceDetail(id);
-    _isLoading = false; notifyListeners();
+    _isDetailLoading = false; notifyListeners();
   }
 
   Future<void> loadComments(int evidenceId) async {

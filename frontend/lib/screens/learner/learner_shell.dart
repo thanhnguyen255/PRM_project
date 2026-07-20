@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
+import '../../config/app_theme.dart';
 import '../../viewmodels/viewmodels.dart';
 
 import 'home_screen.dart';
@@ -70,38 +71,42 @@ class _LearnerShellState extends State<LearnerShell> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) {
-          final nav = _navKeys[_currentIndex].currentState;
-          if (nav != null && nav.canPop()) nav.pop();
-        }
-      },
-      child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: [
-            _TabNavigator(navigatorKey: _navKeys[0], initialRoute: '/home-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[1], initialRoute: '/courses-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[2], initialRoute: '/progress-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[3], initialRoute: '/profile-tab', onSwitchTab: _switchTab),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _switchTab,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textHint,
-          backgroundColor: AppColors.surface,
-          elevation: 12,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.book_rounded), label: 'Courses'),
-            BottomNavigationBarItem(icon: Icon(Icons.insights_rounded), label: 'Progress'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
-          ],
+    return Theme(
+      data: AppTheme.learnerTheme,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (!didPop) {
+            final nav = _navKeys[_currentIndex].currentState;
+            if (nav != null && nav.canPop()) nav.pop();
+          }
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: IndexedStack(
+            index: _currentIndex,
+            children: [
+              _TabNavigator(navigatorKey: _navKeys[0], initialRoute: '/home-tab', onSwitchTab: _switchTab),
+              _TabNavigator(navigatorKey: _navKeys[1], initialRoute: '/courses-tab', onSwitchTab: _switchTab),
+              _TabNavigator(navigatorKey: _navKeys[2], initialRoute: '/progress-tab', onSwitchTab: _switchTab),
+              _TabNavigator(navigatorKey: _navKeys[3], initialRoute: '/profile-tab', onSwitchTab: _switchTab),
+            ],
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: _switchTab,
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: AppColors.primary,
+            unselectedItemColor: AppColors.textHint,
+            backgroundColor: AppColors.surface,
+            elevation: 12,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.book_rounded), label: 'Courses'),
+              BottomNavigationBarItem(icon: Icon(Icons.insights_rounded), label: 'Progress'),
+              BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+            ],
+          ),
         ),
       ),
     );

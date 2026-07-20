@@ -46,7 +46,7 @@ public class EvidenceService : IEvidenceService
         });
     }
 
-    public async Task<EvidenceDto?> GetEvidenceByIdAsync(int id, int instructorId)
+    public async Task<EvidenceDto?> GetEvidenceByIdAsync(int id, int userId)
     {
         var s = await _unitOfWork.Repository<ActivitySubmission>().GetQueryable()
             .Include(s => s.User)
@@ -54,7 +54,8 @@ public class EvidenceService : IEvidenceService
             .ThenInclude(a => a.LearningPath)
             .ThenInclude(lp => lp.Class)
             .ThenInclude(c => c.Course)
-            .FirstOrDefaultAsync(s => s.Id == id && s.Activity.LearningPath.Class.Course.InstructorId == instructorId);
+            .FirstOrDefaultAsync(s => s.Id == id && 
+                (s.Activity.LearningPath.Class.Course.InstructorId == userId || s.UserId == userId));
 
         if (s == null) return null;
 
@@ -184,7 +185,7 @@ public class EvidenceService : IEvidenceService
         string? fileUrl = null;
         if (dto.File != null && dto.File.Length > 0)
         {
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            var uploadsFolder = backend.BLL.Helpers.UploadPaths.Root;
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
