@@ -25,6 +25,8 @@ class AppColors {
 
   // Background / Surface
   static const Color background     = Color(0xFFF8FAFC);
+  static const Color instructorBackground = Color(0xFFF1F5F9);
+  static const Color learnerBackground    = Color(0xFFEEF2FF);
   static const Color surface        = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF1F5F9);
   static const Color border         = Color(0xFFE2E8F0);

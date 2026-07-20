@@ -112,4 +112,12 @@ class AppTheme {
       labelLarge: TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600),
     ),
   );
+
+  static ThemeData get instructorTheme => light.copyWith(
+        scaffoldBackgroundColor: AppColors.instructorBackground,
+      );
+
+  static ThemeData get learnerTheme => light.copyWith(
+        scaffoldBackgroundColor: AppColors.learnerBackground,
+      );
 }

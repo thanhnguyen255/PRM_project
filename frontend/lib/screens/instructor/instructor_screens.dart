@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
+import '../../config/app_theme.dart';
 import '../../viewmodels/viewmodels.dart';
 import '../../widgets/widgets.dart';
 import 'courses/manage_courses_screen.dart';
@@ -47,37 +48,40 @@ class _InstructorDashboardState extends State<InstructorDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) {
-          final nav = _navKeys[_currentIndex].currentState;
-          if (nav != null && nav.canPop()) {
-            nav.pop();
+    return Theme(
+      data: AppTheme.instructorTheme,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (!didPop) {
+            final nav = _navKeys[_currentIndex].currentState;
+            if (nav != null && nav.canPop()) {
+              nav.pop();
+            }
           }
-        }
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.background,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: [
-            _TabNavigator(navigatorKey: _navKeys[0], initialRoute: '/dashboard-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[1], initialRoute: '/courses-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[2], initialRoute: '/evidence-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[3], initialRoute: '/analytics-tab', onSwitchTab: _switchTab),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: _switchTab,
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
-            NavigationDestination(icon: Icon(Icons.school_rounded), label: 'Khóa học'),
-            NavigationDestination(icon: Icon(Icons.task_alt_rounded), label: 'Evidence'),
-            NavigationDestination(icon: Icon(Icons.bar_chart_rounded), label: 'Analytics'),
-          ],
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: AppColors.instructorBackground,
+          body: IndexedStack(
+            index: _currentIndex,
+            children: [
+              _TabNavigator(navigatorKey: _navKeys[0], initialRoute: '/dashboard-tab', onSwitchTab: _switchTab),
+              _TabNavigator(navigatorKey: _navKeys[1], initialRoute: '/courses-tab', onSwitchTab: _switchTab),
+              _TabNavigator(navigatorKey: _navKeys[2], initialRoute: '/evidence-tab', onSwitchTab: _switchTab),
+              _TabNavigator(navigatorKey: _navKeys[3], initialRoute: '/analytics-tab', onSwitchTab: _switchTab),
+            ],
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: _switchTab,
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
+              NavigationDestination(icon: Icon(Icons.school_rounded), label: 'Khóa học'),
+              NavigationDestination(icon: Icon(Icons.task_alt_rounded), label: 'Evidence'),
+              NavigationDestination(icon: Icon(Icons.bar_chart_rounded), label: 'Analytics'),
+            ],
+          ),
         ),
       ),
     );
