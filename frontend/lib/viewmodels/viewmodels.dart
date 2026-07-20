@@ -12,13 +12,21 @@ class AuthViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   int? _userId;
+  List<String> _instructorTabs = ['Dashboard', 'Courses', 'Evidence', 'Analytics'];
 
   AuthViewModel() {
     _loadUserId();
   }
 
+  List<String> get instructorTabs => _instructorTabs;
+
   Future<void> _loadUserId() async {
     _userId = await _auth.getUserId();
+    final role = await _auth.getRole();
+    if (role != null) {
+      AppColors.isInstructorMode = role == 'Instructor';
+    }
+    _instructorTabs = await _auth.getInstructorTabs();
     notifyListeners();
   }
 
@@ -29,6 +37,12 @@ class AuthViewModel extends ChangeNotifier {
   void _setLoading(bool v) { _isLoading = v; notifyListeners(); }
   void _setError(String? v) { _error = v; notifyListeners(); }
   void clearError() => _setError(null);
+
+  Future<void> updateInstructorTabs(List<String> tabs) async {
+    _instructorTabs = tabs;
+    notifyListeners();
+    await _auth.saveInstructorTabs(tabs);
+  }
 
   Future<String?> login(String email, String password) async {
     _setLoading(true); _setError(null);

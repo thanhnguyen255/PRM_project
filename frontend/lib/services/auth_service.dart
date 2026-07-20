@@ -11,6 +11,7 @@ class AuthService {
   static const _keyFullName = 'fullName';
   static const _keyRole     = 'role';
   static const _keyAvatar   = 'avatarUrl';
+  static const _keyInstTabs = 'instructor_tabs';
 
   // ── Login ──────────────────────────────────────────────────────────────────
   Future<({bool success, String? error, AuthResponse? data})> login({
@@ -77,6 +78,16 @@ class AuthService {
       return UserModel.fromJson(res['data'] as Map<String, dynamic>);
     }
     return null;
+  }
+
+  Future<List<String>> getInstructorTabs() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_keyInstTabs) ?? ['Dashboard', 'Courses', 'Evidence', 'Analytics'];
+  }
+
+  Future<void> saveInstructorTabs(List<String> tabs) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_keyInstTabs, tabs);
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────
