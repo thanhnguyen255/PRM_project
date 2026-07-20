@@ -79,6 +79,7 @@ class _LearnerShellState extends State<LearnerShell> {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: IndexedStack(
           index: _currentIndex,
           children: [

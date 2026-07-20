@@ -308,8 +308,8 @@ class EvidenceModel {
       activityId:    json['activityId'] as int? ?? 0,
       activityTitle: json['activityTitle'] as String? ?? '',
       activityType:  json['activityType'] as String? ?? 'PreClass',
-      learnerId:     json['learnerId'] as int? ?? 0,
-      learnerName:   json['learnerName'] as String? ?? '',
+      learnerId:     json['learnerId'] as int? ?? json['userId'] as int? ?? 0,
+      learnerName:   json['learnerName'] as String? ?? json['userFullName'] as String? ?? '',
       learnerAvatar: json['learnerAvatar'] as String?,
       fileUrl:       json['fileUrl'] as String?,
       note:          json['note'] as String?,
@@ -355,8 +355,8 @@ class EvidenceCommentModel {
 
     return EvidenceCommentModel(
       id:           json['id'] as int,
-      authorId:     json['authorId'] as int? ?? 0,
-      authorName:   json['authorName'] as String? ?? '',
+      authorId:     json['authorId'] as int? ?? json['userId'] as int? ?? 0,
+      authorName:   json['authorName'] as String? ?? json['userFullName'] as String? ?? '',
       authorAvatar: json['authorAvatar'] as String?,
       isInstructor: isInst,
       content:      json['content'] as String,

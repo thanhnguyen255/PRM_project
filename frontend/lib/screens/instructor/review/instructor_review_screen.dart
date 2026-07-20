@@ -240,13 +240,26 @@ class _ReviewMonitorScreenState extends State<ReviewMonitorScreen> {
                                 ),
                               ),
                             ),
-                            title: Text(p['reviewerName'] as String? ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                            title: Text(
+                              p['reviewerName'] as String? ?? '',
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             subtitle: Row(
                               children: [
-                                Text('→ ${p['revieweeName'] as String? ?? ''}', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+                                Expanded(
+                                  child: Text(
+                                    '→ ${p['revieweeName'] as String? ?? ''}',
+                                    style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
                                 const SizedBox(width: 8),
                                 if (isCompleted && p['rating'] != null)
                                   Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: List.generate(5, (idx) => Icon(
                                       idx < (p['rating'] as int) ? Icons.star_rounded : Icons.star_outline_rounded,
                                       size: 14,

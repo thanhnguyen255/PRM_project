@@ -351,7 +351,7 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                     );
                     if (!context.mounted) return;
                     if (err == null) {
-                      context.read<ActivityViewModel>().loadActivities(widget.pathId);
+                      context.read<ActivityViewModel>().loadActivities(widget.pathId, type: '');
                       AppSnackBar.show(context, 'Tạo phiên review thành công!', type: SnackType.success);
                     } else {
                       AppSnackBar.show(context, err, type: SnackType.error);
@@ -474,7 +474,7 @@ class _ManageActivitiesScreenState extends State<ManageActivitiesScreen> {
                               final err = await vm.deleteSession(a.reviewSessionId!, classId);
                               if (context.mounted) {
                                 if (err == null) {
-                                  context.read<ActivityViewModel>().loadActivities(widget.pathId);
+                                  context.read<ActivityViewModel>().loadActivities(widget.pathId, type: '');
                                   AppSnackBar.show(context, 'Xóa phiên review thành công!', type: SnackType.success);
                                 } else {
                                   AppSnackBar.show(context, err, type: SnackType.error);

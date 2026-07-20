@@ -218,11 +218,13 @@ class ActivityViewModel extends ChangeNotifier {
   List<ActivityModel>   _activities = [];
   Map<String, dynamic>? _detail;
   bool                  _isLoading  = false;
+  bool                  _isDetailLoading = false;
   String                _typeFilter = 'PreClass';
 
   List<ActivityModel>   get activities => _activities;
   Map<String, dynamic>? get detail     => _detail;
   bool                  get isLoading  => _isLoading;
+  bool                  get isDetailLoading => _isDetailLoading;
   String                get typeFilter => _typeFilter;
 
   void setTypeFilter(String t) { _typeFilter = t; notifyListeners(); }
@@ -234,9 +236,9 @@ class ActivityViewModel extends ChangeNotifier {
   }
 
   Future<void> loadDetail(int id) async {
-    _isLoading = true; notifyListeners();
+    _isDetailLoading = true; notifyListeners();
     _detail    = await _service.getActivityDetail(id);
-    _isLoading = false; notifyListeners();
+    _isDetailLoading = false; notifyListeners();
   }
 }
 
@@ -248,6 +250,7 @@ class EvidenceViewModel extends ChangeNotifier {
   EvidenceModel?             _detail;
   List<EvidenceCommentModel> _comments   = [];
   bool                       _isLoading  = false;
+  bool                       _isDetailLoading = false;
   bool                       _isSubmitting = false;
   String?                    _error;
   String                     _statusFilter = 'All';
@@ -257,6 +260,7 @@ class EvidenceViewModel extends ChangeNotifier {
   EvidenceModel?             get detail       => _detail;
   List<EvidenceCommentModel> get comments     => _comments;
   bool                       get isLoading    => _isLoading;
+  bool                       get isDetailLoading => _isDetailLoading;
   bool                       get isSubmitting => _isSubmitting;
   String?                    get error        => _error;
   String                     get statusFilter => _statusFilter;
@@ -272,9 +276,9 @@ class EvidenceViewModel extends ChangeNotifier {
   }
 
   Future<void> loadDetail(int id) async {
-    _isLoading = true; notifyListeners();
+    _isDetailLoading = true; notifyListeners();
     _detail    = await _service.getEvidenceDetail(id);
-    _isLoading = false; notifyListeners();
+    _isDetailLoading = false; notifyListeners();
   }
 
   Future<void> loadComments(int evidenceId) async {
