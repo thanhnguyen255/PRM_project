@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 export 'course_viewmodel.dart';
+import '../config/app_colors.dart';
 import '../models/models.dart';
 import '../services/auth_service.dart';
 import '../services/services.dart';
@@ -11,13 +12,21 @@ class AuthViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   int? _userId;
+  List<String> _instructorTabs = ['Dashboard', 'Courses', 'Evidence', 'Analytics'];
 
   AuthViewModel() {
     _loadUserId();
   }
 
+  List<String> get instructorTabs => _instructorTabs;
+
   Future<void> _loadUserId() async {
     _userId = await _auth.getUserId();
+    final role = await _auth.getRole();
+    if (role != null) {
+      AppColors.isInstructorMode = role == 'Instructor';
+    }
+    _instructorTabs = await _auth.getInstructorTabs();
     notifyListeners();
   }
 
@@ -29,6 +38,12 @@ class AuthViewModel extends ChangeNotifier {
   void _setError(String? v) { _error = v; notifyListeners(); }
   void clearError() => _setError(null);
 
+  Future<void> updateInstructorTabs(List<String> tabs) async {
+    _instructorTabs = tabs;
+    notifyListeners();
+    await _auth.saveInstructorTabs(tabs);
+  }
+
   Future<String?> login(String email, String password) async {
     _setLoading(true); _setError(null);
     final result = await _auth.login(email: email, password: password);
@@ -37,6 +52,7 @@ class AuthViewModel extends ChangeNotifier {
       _setError(result.error);
     } else if (result.data != null) {
       _userId = result.data!.userId;
+      AppColors.isInstructorMode = result.data!.role == 'Instructor';
       notifyListeners();
     }
     return result.success ? result.data!.role : null;
@@ -50,6 +66,7 @@ class AuthViewModel extends ChangeNotifier {
       _setError(result.error);
     } else if (result.data != null) {
       _userId = result.data!.userId;
+      AppColors.isInstructorMode = result.data!.role == 'Instructor';
       notifyListeners();
     }
     return result.success ? result.data!.role : null;

@@ -24,7 +24,11 @@ class AppColors {
   static const Color textHint       = Color(0xFF94A3B8);
 
   // Background / Surface
-  static const Color background     = Color(0xFFF8FAFC);
+  static const Color instructorBackground = Color(0xFFF0FDF4); // Soft Mint Green
+  static const Color learnerBackground    = Color(0xFFEFF6FF); // Soft Sky Blue
+
+  static bool isInstructorMode = false;
+  static Color get background => isInstructorMode ? instructorBackground : learnerBackground;
   static const Color surface        = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF1F5F9);
   static const Color border         = Color(0xFFE2E8F0);

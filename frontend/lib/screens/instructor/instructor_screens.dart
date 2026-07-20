@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
+import '../../config/app_theme.dart';
 import '../../viewmodels/viewmodels.dart';
 import '../../widgets/widgets.dart';
 import 'courses/manage_courses_screen.dart';
@@ -27,72 +28,286 @@ class InstructorDashboardScreen extends StatefulWidget {
   State<InstructorDashboardScreen> createState() => _InstructorDashboardState();
 }
 
+
 class _InstructorDashboardState extends State<InstructorDashboardScreen> {
   int _currentIndex = 0;
 
-  final List<GlobalKey<NavigatorState>> _navKeys = [
-    GlobalKey<NavigatorState>(), // 0 - Dashboard
-    GlobalKey<NavigatorState>(), // 1 - Courses
-    GlobalKey<NavigatorState>(), // 2 - Evidence
-    GlobalKey<NavigatorState>(), // 3 - Analytics
-  ];
+  // One persistent nav key per possible tab (order: Dashboard, Courses, Evidence, Analytics)
+  static const _allTabKeys = ['Dashboard', 'Courses', 'Evidence', 'Analytics'];
+  final Map<String, GlobalKey<NavigatorState>> _navKeys = {
+    'Dashboard': GlobalKey<NavigatorState>(),
+    'Courses':   GlobalKey<NavigatorState>(),
+    'Evidence':  GlobalKey<NavigatorState>(),
+    'Analytics': GlobalKey<NavigatorState>(),
+  };
 
   void _switchTab(int index) {
     if (_currentIndex == index) {
-      _navKeys[index].currentState?.popUntil((r) => r.isFirst);
+      final activeTabs = context.read<AuthViewModel>().instructorTabs;
+      _navKeys[activeTabs[index]]?.currentState?.popUntil((r) => r.isFirst);
     } else {
       setState(() => _currentIndex = index);
     }
   }
 
+  // ── Tab metadata ────────────────────────────────────────────────────────────
+  static const _tabRoutes = {
+    'Dashboard': '/dashboard-tab',
+    'Courses':   '/courses-tab',
+    'Evidence':  '/evidence-tab',
+    'Analytics': '/analytics-tab',
+  };
+  static const _tabIcons = {
+    'Dashboard': Icons.dashboard_rounded,
+    'Courses':   Icons.school_rounded,
+    'Evidence':  Icons.task_alt_rounded,
+    'Analytics': Icons.bar_chart_rounded,
+  };
+  static const _tabLabels = {
+    'Dashboard': 'Dashboard',
+    'Courses':   'Khóa học',
+    'Evidence':  'Evidence',
+    'Analytics': 'Analytics',
+  };
+
+  // ── Customize dialog ────────────────────────────────────────────────────────
+  void _showCustomizeDialog(BuildContext context, List<String> currentTabs) {
+    // orderedItems: list of {key, visible}. Always has all 4 tabs.
+    // Items in currentTabs are visible; the rest are hidden at the end.
+    final hiddenTabs = _allTabKeys.where((k) => !currentTabs.contains(k)).toList();
+    final orderedItems = [
+      ...currentTabs.map((k) => {'key': k, 'visible': true}),
+      ...hiddenTabs.map((k) => {'key': k, 'visible': false}),
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) {
+          final activeCount = orderedItems.where((e) => e['visible'] == true).length;
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.tune_rounded, color: Color(0xFF6366F1)),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Text('Tuỳ chỉnh thanh điều hướng',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Kéo ☰ để sắp xếp lại vị trí. Bật/tắt để ẩn/hiện tab.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 4 * 64.0,
+                    child: ReorderableListView(
+                      shrinkWrap: true,
+                      onReorder: (oldIndex, newIndex) {
+                        setS(() {
+                          if (newIndex > oldIndex) newIndex--;
+                          final item = orderedItems.removeAt(oldIndex);
+                          orderedItems.insert(newIndex, item);
+                        });
+                      },
+                      children: [
+                        for (final entry in orderedItems)
+                          _buildTabReorderItem(
+                            key: ValueKey(entry['key']),
+                            tabKey: entry['key'] as String,
+                            isVisible: entry['visible'] as bool,
+                            canToggle: entry['key'] != 'Dashboard' &&
+                                (entry['visible'] == false || activeCount > 2),
+                            onToggle: (v) {
+                              if (entry['key'] == 'Dashboard') return;
+                              if (!v && activeCount <= 2) return;
+                              setS(() => entry['visible'] = v);
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Hiển thị: $activeCount tab  •  Tối thiểu 2 tab',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: activeCount < 2 ? const Color(0xFFEF4444) : const Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Huỷ'),
+              ),
+              FilledButton(
+                onPressed: activeCount < 2 ? null : () {
+                  Navigator.pop(ctx);
+                  final newTabs = orderedItems
+                      .where((e) => e['visible'] == true)
+                      .map((e) => e['key'] as String)
+                      .toList();
+                  // Keep current active tab if still present, else go to 0
+                  final currentKey = currentTabs.length > _currentIndex
+                      ? currentTabs[_currentIndex]
+                      : 'Dashboard';
+                  final newIndex = newTabs.indexOf(currentKey);
+                  setState(() => _currentIndex = newIndex < 0 ? 0 : newIndex);
+                  context.read<AuthViewModel>().updateInstructorTabs(newTabs);
+                },
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
+                child: const Text('Lưu'),
+              ),
+            ],
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTabReorderItem({
+    required Key key,
+    required String tabKey,
+    required bool isVisible,
+    required bool canToggle,
+    required ValueChanged<bool> onToggle,
+  }) {
+    return Container(
+      key: key,
+      height: 60,
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: isVisible
+            ? const Color(0xFF6366F1).withValues(alpha: 0.06)
+            : const Color(0xFF94A3B8).withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isVisible
+              ? const Color(0xFF6366F1).withValues(alpha: 0.2)
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Drag handle
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Icon(Icons.drag_handle_rounded, color: Color(0xFF94A3B8), size: 22),
+          ),
+          // Icon
+          Container(
+            width: 34, height: 34,
+            decoration: BoxDecoration(
+              color: isVisible
+                  ? const Color(0xFF6366F1).withValues(alpha: 0.12)
+                  : const Color(0xFF94A3B8).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              _tabIcons[tabKey],
+              color: isVisible ? const Color(0xFF6366F1) : const Color(0xFF94A3B8),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Label
+          Expanded(
+            child: Text(
+              _tabLabels[tabKey]!,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isVisible ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+              ),
+            ),
+          ),
+          // Toggle switch
+          Switch(
+            value: isVisible,
+            onChanged: canToggle ? onToggle : null,
+            activeColor: const Color(0xFF6366F1),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) {
-          final nav = _navKeys[_currentIndex].currentState;
-          if (nav != null && nav.canPop()) {
-            nav.pop();
+    final activeTabs = context.watch<AuthViewModel>().instructorTabs;
+
+    // Clamp index in case tabs list shrank
+    final safeIndex = _currentIndex.clamp(0, activeTabs.length - 1);
+    if (safeIndex != _currentIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _currentIndex = safeIndex);
+      });
+    }
+
+    return Theme(
+      data: AppTheme.instructorTheme,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (!didPop) {
+            final key = activeTabs[_currentIndex];
+            final nav = _navKeys[key]?.currentState;
+            if (nav != null && nav.canPop()) nav.pop();
           }
-        }
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: AppColors.background,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: [
-            _TabNavigator(navigatorKey: _navKeys[0], initialRoute: '/dashboard-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[1], initialRoute: '/courses-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[2], initialRoute: '/evidence-tab', onSwitchTab: _switchTab),
-            _TabNavigator(navigatorKey: _navKeys[3], initialRoute: '/analytics-tab', onSwitchTab: _switchTab),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: _switchTab,
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
-            NavigationDestination(icon: Icon(Icons.school_rounded), label: 'Khóa học'),
-            NavigationDestination(icon: Icon(Icons.task_alt_rounded), label: 'Evidence'),
-            NavigationDestination(icon: Icon(Icons.bar_chart_rounded), label: 'Analytics'),
-          ],
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: AppColors.instructorBackground,
+          body: IndexedStack(
+            index: _currentIndex,
+            children: activeTabs.map((tab) => _TabNavigator(
+              navigatorKey: _navKeys[tab]!,
+              initialRoute: _tabRoutes[tab]!,
+              onSwitchTab: _switchTab,
+              onCustomizeNav: () => _showCustomizeDialog(context, activeTabs),
+            )).toList(),
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: _switchTab,
+            destinations: activeTabs.map((tab) => NavigationDestination(
+              icon: Icon(_tabIcons[tab]),
+              label: _tabLabels[tab]!,
+            )).toList(),
+          ),
         ),
       ),
     );
   }
 }
 
+
+
 class _TabNavigator extends StatelessWidget {
   final GlobalKey<NavigatorState> navigatorKey;
   final String initialRoute;
   final void Function(int) onSwitchTab;
+  final VoidCallback onCustomizeNav;
 
   const _TabNavigator({
     required this.navigatorKey,
     required this.initialRoute,
     required this.onSwitchTab,
+    required this.onCustomizeNav,
   });
 
   static Route<dynamic>? _p(Widget w, RouteSettings s) =>
@@ -113,7 +328,7 @@ class _TabNavigator extends StatelessWidget {
     final args = settings.arguments as Map<String, dynamic>?;
 
     if (name == '/dashboard-tab') {
-      return _p(_DashboardTab(onTabSelected: onSwitchTab), settings);
+      return _p(_DashboardTab(onTabSelected: onSwitchTab, onCustomizeNav: onCustomizeNav), settings);
     }
     if (name == '/courses-tab') {
       return _p(const ManageCoursesTab(), settings);
@@ -254,7 +469,8 @@ class _TabNavigator extends StatelessWidget {
 // ─── Dashboard Tab ────────────────────────────────────────────────────────────
 class _DashboardTab extends StatefulWidget {
   final Function(int) onTabSelected;
-  const _DashboardTab({required this.onTabSelected});
+  final VoidCallback onCustomizeNav;
+  const _DashboardTab({required this.onTabSelected, required this.onCustomizeNav});
   @override
   State<_DashboardTab> createState() => _DashboardTabState();
 }
@@ -325,6 +541,15 @@ class _DashboardTabState extends State<_DashboardTab> {
                         ),
                       ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: widget.onCustomizeNav,
+                child: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(51), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
                 ),
               ),
               const SizedBox(width: 8),

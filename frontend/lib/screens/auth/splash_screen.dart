@@ -35,8 +35,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (session.token == null) {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     } else if (session.role == 'Instructor') {
+      AppColors.isInstructorMode = true;
       Navigator.pushNamedAndRemoveUntil(context, '/instructor/dashboard', (_) => false);
     } else {
+      AppColors.isInstructorMode = false;
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     }
   }
