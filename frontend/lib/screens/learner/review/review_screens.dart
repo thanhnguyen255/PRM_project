@@ -377,7 +377,7 @@ class _SubmitFeedbackState extends State<SubmitFeedbackScreen> with SingleTicker
         elevation: 0,
         backgroundColor: AppColors.background,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [AppColors.background, AppColors.surface],
               begin: Alignment.topCenter,

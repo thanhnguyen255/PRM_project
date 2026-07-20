@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 export 'course_viewmodel.dart';
+import '../config/app_colors.dart';
 import '../models/models.dart';
 import '../services/auth_service.dart';
 import '../services/services.dart';
@@ -37,6 +38,7 @@ class AuthViewModel extends ChangeNotifier {
       _setError(result.error);
     } else if (result.data != null) {
       _userId = result.data!.userId;
+      AppColors.isInstructorMode = result.data!.role == 'Instructor';
       notifyListeners();
     }
     return result.success ? result.data!.role : null;
@@ -50,6 +52,7 @@ class AuthViewModel extends ChangeNotifier {
       _setError(result.error);
     } else if (result.data != null) {
       _userId = result.data!.userId;
+      AppColors.isInstructorMode = result.data!.role == 'Instructor';
       notifyListeners();
     }
     return result.success ? result.data!.role : null;
