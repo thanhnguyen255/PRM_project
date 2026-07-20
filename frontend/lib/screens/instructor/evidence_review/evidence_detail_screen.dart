@@ -174,149 +174,158 @@ class _EvidenceDetailScreenState extends State<EvidenceDetailScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<EvidenceViewModel>();
     final e  = vm.detail;
+    final currentUserId = context.watch<AuthViewModel>().userId ?? 1;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Chi tiết Evidence')),
-      body: vm.isLoading
-          ? const LoadingWidget()
-          : e == null
-              ? const EmptyState(icon: Icons.error_outline_rounded, title: 'Không tìm thấy', message: '')
-              : Column(children: [
-                  Expanded(child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      // Learner info card
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8)],
-                        ),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Row(children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppColors.primaryLight,
-                              child: Text(e.learnerName.isNotEmpty ? e.learnerName[0] : '?',
-                                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 18)),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(e.learnerName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 2),
-                              Text(e.activityTitle, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                            ])),
-                            StatusBadge(status: StatusBadge.fromString(e.status)),
-                          ]),
-                          const Divider(height: 20),
-                          _InfoRow(Icons.calendar_today_rounded, 'Nộp lúc:', '${e.submittedAt.day.toString().padLeft(2,'0')}/${e.submittedAt.month.toString().padLeft(2,'0')}/${e.submittedAt.year} · ${e.submittedAt.hour.toString().padLeft(2,'0')}:${e.submittedAt.minute.toString().padLeft(2,'0')}'),
-                          // Evidence attachment note
-                          if ((e.note ?? '').isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            const Text('Ghi chú của học viên:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 6),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10)),
-                              child: Text(e.note!, style: const TextStyle(fontSize: 14, height: 1.6)),
-                            ),
-                          ],
-                        ]),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Action buttons (only if pending)
-                      if (e.status == 'Pending') ...[
-                        Row(children: [
-                          Expanded(child: ElevatedButton.icon(
-                            onPressed: _approve,
-                            icon: const Icon(Icons.check_circle_rounded, size: 18),
-                            label: const Text('APPROVE', style: TextStyle(fontWeight: FontWeight.w700)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.success, foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              elevation: 0,
-                            ),
-                          )),
-                          const SizedBox(width: 12),
-                          Expanded(child: ElevatedButton.icon(
-                            onPressed: _reject,
-                            icon: const Icon(Icons.cancel_rounded, size: 18),
-                            label: const Text('REJECT', style: TextStyle(fontWeight: FontWeight.w700)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.error, foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              elevation: 0,
-                            ),
-                          )),
-                        ]),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Comments section
-                      const Text('Bình luận & Phản hồi', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 12),
-
-                      if (vm.comments.isEmpty)
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          FocusManager.instance.primaryFocus?.unfocus();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(title: const Text('Chi tiết Evidence')),
+        body: vm.isDetailLoading
+            ? const LoadingWidget()
+            : e == null
+                ? const EmptyState(icon: Icons.error_outline_rounded, title: 'Không tìm thấy', message: '')
+                : Column(children: [
+                    Expanded(child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        // Learner info card
                         Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(12)),
-                          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textHint, size: 20),
-                            SizedBox(width: 8),
-                            Text('Chưa có bình luận nào', style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
+                            boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8)],
+                          ),
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Row(children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: AppColors.primaryLight,
+                                child: Text(e.learnerName.isNotEmpty ? e.learnerName[0] : '?',
+                                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 18)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(e.learnerName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 2),
+                                Text(e.activityTitle, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                              ])),
+                              StatusBadge(status: StatusBadge.fromString(e.status)),
+                            ]),
+                            const Divider(height: 20),
+                            _InfoRow(Icons.calendar_today_rounded, 'Nộp lúc:', '${e.submittedAt.day.toString().padLeft(2,'0')}/${e.submittedAt.month.toString().padLeft(2,'0')}/${e.submittedAt.year} · ${e.submittedAt.hour.toString().padLeft(2,'0')}:${e.submittedAt.minute.toString().padLeft(2,'0')}'),
+                            // Evidence attachment note
+                            if ((e.note ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              const Text('Ghi chú của học viên:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 6),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10)),
+                                child: Text(e.note!, style: const TextStyle(fontSize: 14, height: 1.6)),
+                              ),
+                            ],
                           ]),
-                        )
-                      else
-                        ...vm.comments.map((c) => CommentTile(
-                          authorName:   c.authorName,
-                          authorAvatar: c.authorAvatar,
-                          authorId:     c.authorId,
-                          isInstructor: c.isInstructor,
-                          content:      c.content,
-                          createdAt:    c.createdAt,
-                          currentUserId: context.watch<AuthViewModel>().userId ?? 1,
-                        )),
-                    ]),
-                  )),
+                        ),
+                        const SizedBox(height: 16),
 
-                  // Comment input bar
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 8, 16),
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      border: Border(top: BorderSide(color: AppColors.border)),
-                    ),
-                    child: SafeArea(child: Row(children: [
-                      Expanded(child: TextField(
-                        controller: _commentCtrl,
-                        decoration: InputDecoration(
-                          hintText: 'Nhận xét hoặc phản hồi...',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: AppColors.border)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        ),
-                        maxLines: null,
-                        textInputAction: TextInputAction.newline,
-                      )),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: _sendComment,
-                        icon: const Icon(Icons.send_rounded, color: Colors.white),
-                        style: IconButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.all(12),
-                        ),
+                        // Action buttons (only if pending)
+                        if (e.status == 'Pending') ...[
+                          Row(children: [
+                            Expanded(child: ElevatedButton.icon(
+                              onPressed: _approve,
+                              icon: const Icon(Icons.check_circle_rounded, size: 18),
+                              label: const Text('APPROVE', style: TextStyle(fontWeight: FontWeight.w700)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success, foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                elevation: 0,
+                              ),
+                            )),
+                            const SizedBox(width: 12),
+                            Expanded(child: ElevatedButton.icon(
+                              onPressed: _reject,
+                              icon: const Icon(Icons.cancel_rounded, size: 18),
+                              label: const Text('REJECT', style: TextStyle(fontWeight: FontWeight.w700)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.error, foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                elevation: 0,
+                              ),
+                            )),
+                          ]),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Comments section
+                        const Text('Bình luận & Phản hồi', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 12),
+
+                        if (vm.comments.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(12)),
+                            child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textHint, size: 20),
+                              SizedBox(width: 8),
+                              Text('Chưa có bình luận nào', style: TextStyle(color: AppColors.textHint, fontSize: 13)),
+                            ]),
+                          )
+                        else
+                          ...vm.comments.map((c) => CommentTile(
+                            authorName:   c.authorName,
+                            authorAvatar: c.authorAvatar,
+                            authorId:     c.authorId,
+                            isInstructor: c.isInstructor,
+                            content:      c.content,
+                            createdAt:    c.createdAt,
+                            currentUserId: currentUserId,
+                          )),
+                      ]),
+                    )),
+
+                    // Comment input bar
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 8, 16),
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border(top: BorderSide(color: AppColors.border)),
                       ),
-                    ])),
-                  ),
-                ]),
+                      child: SafeArea(child: Row(children: [
+                        Expanded(child: TextField(
+                          controller: _commentCtrl,
+                          decoration: InputDecoration(
+                            hintText: 'Nhận xét hoặc phản hồi...',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: AppColors.border)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          ),
+                          maxLines: null,
+                          textInputAction: TextInputAction.newline,
+                        )),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: _sendComment,
+                          icon: const Icon(Icons.send_rounded, color: Colors.white),
+                          style: IconButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.all(12),
+                          ),
+                        ),
+                      ])),
+                    ),
+                  ]),
+      ),
     );
   }
 }

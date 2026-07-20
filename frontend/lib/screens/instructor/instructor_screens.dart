@@ -58,6 +58,7 @@ class _InstructorDashboardState extends State<InstructorDashboardScreen> {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.background,
         body: IndexedStack(
           index: _currentIndex,

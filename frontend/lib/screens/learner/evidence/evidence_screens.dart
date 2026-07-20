@@ -220,11 +220,19 @@ class _LearnerEvidenceDetailState extends State<LearnerEvidenceDetailScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<EvidenceViewModel>();
     final e  = vm.detail;
+    final currentUserId = context.watch<AuthViewModel>().userId ?? 1;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Chi tiết Evidence')),
-      body: vm.isLoading
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          FocusManager.instance.primaryFocus?.unfocus();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(title: const Text('Chi tiết Evidence')),
+      body: vm.isDetailLoading
           ? const LoadingWidget()
           : e == null
               ? const EmptyState(icon: Icons.error_outline, title: 'Không tìm thấy', message: '')
@@ -281,7 +289,7 @@ class _LearnerEvidenceDetailState extends State<LearnerEvidenceDetailScreen> {
                           isInstructor: c.isInstructor,
                           content:      c.content,
                           createdAt:    c.createdAt,
-                          currentUserId: 1,
+                          currentUserId: currentUserId,
                         )),
                     ]),
                   )),
@@ -313,6 +321,7 @@ class _LearnerEvidenceDetailState extends State<LearnerEvidenceDetailScreen> {
                     ])),
                   ),
                 ]),
+      ),
     );
   }
 }
